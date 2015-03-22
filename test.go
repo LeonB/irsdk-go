@@ -18,6 +18,7 @@ const (
 	IRSDK_DATAVALIDEVENTNAME = "Local\\IRSDKDataValidEvent"
 	SECTION_MAP_READ         = 4
 	FILE_MAP_READ            = SECTION_MAP_READ
+	INT_MAX                  = 2147483647
 	SYNCHRONIZE              = 1048576
 
 	IRSDK_MAX_BUFS   = 4
@@ -27,6 +28,20 @@ const (
 
 	irsdk_stConnected = 1
 	TIMEOUT           = time.Duration(30) // timeout after 30 seconds with no communication
+)
+
+const (
+	// 1 byte
+	irsdk_char = iota
+	irsdk_bool = iota
+
+	// 4 bytes
+	irsdk_int = iota
+	irsdk_bitField = iota
+	irsdk_float = iota
+
+	// 8 bytes
+	irsdk_double = iota
 )
 
 type irsdk_varBuf struct {
@@ -58,14 +73,14 @@ type irsdk_header struct {
 
 type irsdk_varHeader struct {
 	Type   C.int // irsdk_VarType
-	offset C.int // offset fron start of buffer row
-	count  C.int // number of entrys (array)
+	Offset C.int // offset fron start of buffer row
+	Count  C.int // number of entrys (array)
 	// so length in bytes would be irsdk_VarTypeBytes[type] * count
-	pad [1]C.int // (16 byte align)
+	Pad [1]C.int // (16 byte align)
 
-	name [IRSDK_MAX_STRING]byte
-	desc [IRSDK_MAX_DESC]byte
-	unit [IRSDK_MAX_STRING]byte // something like "kg/m^2"
+	Name [IRSDK_MAX_STRING]byte
+	Desc [IRSDK_MAX_DESC]byte
+	Unit [IRSDK_MAX_STRING]byte // something like "kg/m^2"
 }
 
 func irsdk_getVarHeaderPtr() *irsdk_varHeader {
@@ -101,6 +116,7 @@ var isInitialized bool
 var lastValidTime time.Time
 var timeout time.Duration
 var pSharedMem []byte
+var lastTickCount = INT_MAX
 
 func main() {
 	_, err := irsdk_startup()
@@ -114,6 +130,60 @@ func main() {
 	fmt.Println("irsdk_getSessionInfoStr: ", s)
 	// irsdk_getVarHeaderEntry(0)
 	// irsdk_getVarHeaderPtr()
+
+	varHeader := &irsdk_varHeader{}
+	size := int(unsafe.Sizeof(*varHeader))
+
+	fmt.Println(size)
+	fmt.Println(pHeader.VarHeaderOffset)
+	// fmt.Println(string(pSharedMem[pHeader.VarHeaderOffset:131484]))
+	varHeaderOffset := int(pHeader.VarHeaderOffset)
+	numVars := int(pHeader.NumVars)
+
+	latest := 0
+	for i := 0; i < int(pHeader.NumBuf); i++ {
+		if pHeader.VarBuf[latest].TickCount < pHeader.VarBuf[i].TickCount {
+			latest = i
+		}
+	}
+
+	fmt.Println("latest: ", latest)
+
+	for i := 0; i < int(pHeader.NumBuf); i++ {
+		for count := 0; count < 2; count++ {
+			curTickCount := int(pHeader.VarBuf[latest].TickCount)
+			// memcpy(data, pSharedMem + pHeader->varBuf[latest].bufOffset, pHeader->bufLen)
+
+			if curTickCount == int(pHeader.VarBuf[latest].TickCount) {
+				fmt.Println("2")
+				lastTickCount = curTickCount
+				lastValidTime = time.Now()
+			}
+		}
+	}
+
+	for i := 0; i <= numVars; i++ {
+		startByte := varHeaderOffset + (i * size)
+		endByte := startByte + size
+
+		b := bytes.NewBuffer(pSharedMem[startByte:endByte])
+		// read []byte and convert it into irsd_header
+		err = binary.Read(b, binary.LittleEndian, varHeader)
+
+		// fmt.Printf("%+v\n", varHeader)
+		// fmt.Println(string(varHeader.Name[:32]))
+		// fmt.Println(varHeader.Type)
+		// fmt.Println(string(varHeader.Desc[:]))
+		// fmt.Println(string(varHeader.Unit[:]))
+		// fmt.Println(varHeader.Count)
+
+		// Type is also number of bytes?
+		if varHeader.Type == irsdk_int {
+			fmt.Println(string(varHeader.Name[:32]))
+			// fprintf(file, "%s", (char *)(lineBuf+rec->offset) ); break;
+		}
+	}
+
 }
 
 func irsdk_startup() (bool, error) {
@@ -128,7 +198,7 @@ func irsdk_startup() (bool, error) {
 	pSharedMem = (*[1 << 30]byte)(unsafe.Pointer(sharedMemPtr))[:]
 
 	// create a io.Reader
-	b := bytes.NewBuffer(pSharedMem)
+	b := bytes.NewBuffer(pSharedMem[:unsafe.Sizeof(*pHeader)])
 	// read []byte and convert it into irsd_header
 	pHeader = &irsdk_header{}
 	err := binary.Read(b, binary.LittleEndian, pHeader)
@@ -143,8 +213,6 @@ func irsdk_startup() (bool, error) {
 		return isInitialized, nil
 	}
 
-	println("got:", pSharedMem)
-	println("got:", hDataValidEvent)
 	return false, nil
 }
 
