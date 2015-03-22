@@ -2,7 +2,10 @@ package main
 
 import "C"
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
+	"log"
 	"syscall"
 	"time"
 	"unsafe"
@@ -33,24 +36,24 @@ type irsdk_varBuf struct {
 }
 
 type irsdk_header struct {
-	ver      C.int // api version 1 for now
-	status   C.int // bitfield using irsdk_StatusField
-	tickRate C.int // ticks per second (60 or 360 etc)
+	Ver      C.int // api version 1 for now
+	Status   C.int // bitfield using irsdk_StatusField
+	TickRate C.int // ticks per second (60 or 360 etc)
 
 	// session information, updated periodicaly
-	sessionInfoUpdate C.int // Incremented when session info changes
-	sessionInfoLen    C.int // Length in bytes of session info string
-	sessionInfoOffset C.int // Session info, encoded in YAML format
+	SessionInfoUpdate C.int // Incremented when session info changes
+	SessionInfoLen    C.int // Length in bytes of session info string
+	SessionInfoOffset C.int // Session info, encoded in YAML format
 
 	// State data, output at tickRate
 
-	numVars         C.int // length of array pointed to by varHeaderOffset
-	varHeaderOffset C.int // offset to irsdk_varHeader[numVars] array, Describes the variables recieved in varBuf
+	NumVars         C.int // length of array pointed to by varHeaderOffset
+	VarHeaderOffset C.int // offset to irsdk_varHeader[numVars] array, Describes the variables recieved in varBuf
 
-	numBuf C.int // <= IRSDK_MAX_BUFS (3 for now)
-	bufLen C.int // length in bytes for one line
-	pad    [1]C.int
-	varBuf [IRSDK_MAX_BUFS]irsdk_varBuf
+	NumBuf C.int // <= IRSDK_MAX_BUFS (3 for now)
+	BufLen C.int // length in bytes for one line
+	Pad    [1]C.int
+	VarBuf [IRSDK_MAX_BUFS]irsdk_varBuf
 }
 
 type irsdk_varHeader struct {
@@ -97,10 +100,14 @@ var pHeader *irsdk_header
 var isInitialized bool
 var lastValidTime time.Time
 var timeout time.Duration
-var pSharedMem unsafe.Pointer
+var pSharedMem *[]byte
 
 func main() {
-	irsdk_startup()
+	_, err := irsdk_startup()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Println("connected: ", irsdk_isConnected())
 	byteArray := irsdk_getSessionInfoStr()
 	s := string(byteArray[:])
@@ -117,13 +124,35 @@ func irsdk_startup() (bool, error) {
 		return false, try.Err
 	}
 
-	pSharedMem = unsafe.Pointer(uintptr(try.N("MapViewOfFile", hMemMapFile, FILE_MAP_READ, 0, 0, 0)))
-	pHeader = (*irsdk_header)(pSharedMem)
+	// sharedMemPtr := try.N("MapViewOfFile", hMemMapFile, syscall.FILE_MAP_READ, 0, 0, 0)
+	// pHeader = (*irsdk_header)(unsafe.Pointer(sharedMemPtr))
 
-	fmt.Println("pHeader.ver: ", pHeader.ver)
-	fmt.Println("pHeader.status: ", pHeader.status)
-	fmt.Println("pHeader.sessionInfoOffset: ", pHeader.sessionInfoOffset)
-	fmt.Println("pHeader.sessionInfoUpdate: ", pHeader.sessionInfoUpdate)
+	// fmt.Println("pHeader.ver: ", pHeader.Ver)
+	// fmt.Println("pHeader.status: ", pHeader.Status)
+	// fmt.Println("pHeader.sessionInfoOffset: ", pHeader.SessionInfoOffset)
+	// fmt.Println("pHeader.sessionInfoUpdate: ", pHeader.SessionInfoUpdate)
+	// return false, nil
+
+	sharedMemPtr := try.N("MapViewOfFile", hMemMapFile, syscall.FILE_MAP_READ, 0, 0, 0)
+	// Convert uintptr to []byte
+	pSharedMem := (*[1 << 30]byte)(unsafe.Pointer(sharedMemPtr))[:]
+
+	// I know yaml starts at byte 112: gives back a correct string
+	fmt.Println(string(pSharedMem[112:600]))
+
+	// create a io.Reader
+	b := bytes.NewBuffer(pSharedMem)
+	// read []byte and convert it into irsd_header
+	pHeader := &irsdk_header{}
+	err := binary.Read(b, binary.LittleEndian, pHeader)
+	if err != nil {
+		return false, err
+	}
+
+	fmt.Println("pHeader.ver: ", pHeader.Ver)
+	fmt.Println("pHeader.status: ", pHeader.Status)
+	fmt.Println("pHeader.sessionInfoOffset: ", pHeader.SessionInfoOffset)
+	fmt.Println("pHeader.sessionInfoUpdate: ", pHeader.SessionInfoUpdate)
 
 	hDataValidEvent := try.N("OpenEvent", SYNCHRONIZE, false, syscall.StringToUTF16Ptr(IRSDK_DATAVALIDEVENTNAME))
 
@@ -139,11 +168,11 @@ func irsdk_startup() (bool, error) {
 
 func irsdk_getSessionInfoStr() []byte {
 	if isInitialized {
+		return nil
 
-		// fmt.Println(C.GoString((*C.char)(pSharedMem)))
-		byteSlice := C.GoBytes(pSharedMem, pHeader.sessionInfoLen)
-		return byteSlice[pHeader.sessionInfoOffset:]
-		return C.GoBytes(pSharedMem, pHeader.sessionInfoOffset)
+		// byteSlice := C.GoBytes(pSharedMem, pHeader.sessionInfoLen)
+		// return byteSlice[pHeader.sessionInfoOffset:]
+		// return C.GoBytes(pSharedMem, pHeader.sessionInfoOffset)
 	}
 	return nil
 }
@@ -153,8 +182,8 @@ func irsdk_isConnected() bool {
 		elapsed := time.Now().Sub(lastValidTime)
 		fmt.Println("elapsed: ", elapsed)
 		fmt.Println("timeout: ", timeout)
-		fmt.Println("pHeader.status&irsdk_stConnected: ", pHeader.status&irsdk_stConnected)
-		if (pHeader.status&irsdk_stConnected) > 0 && (elapsed < timeout) {
+		fmt.Println("pHeader.status&irsdk_stConnected: ", pHeader.Status&irsdk_stConnected)
+		if (pHeader.Status&irsdk_stConnected) > 0 && (elapsed < timeout) {
 			return true
 		}
 	}
