@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"log"
 	"syscall"
 	"time"
 	"unsafe"
@@ -36,9 +35,9 @@ const (
 	irsdk_bool = iota
 
 	// 4 bytes
-	irsdk_int = iota
+	irsdk_int      = iota
 	irsdk_bitField = iota
-	irsdk_float = iota
+	irsdk_float    = iota
 
 	// 8 bytes
 	irsdk_double = iota
@@ -119,70 +118,23 @@ var pSharedMem []byte
 var lastTickCount = INT_MAX
 
 func main() {
-	_, err := irsdk_startup()
-	if err != nil {
-		log.Fatal(err)
+	// _, err := irsdk_startup()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	for i := 0; i < 90000; i++ {
+		data, success := irsdk_getNewData()
+		fmt.Println("success: ", success)
+		fmt.Println("len(data): ", len(data))
 	}
 
-	fmt.Println("connected: ", irsdk_isConnected())
-	byteArray := irsdk_getSessionInfoStr()
-	s := string(byteArray[:])
-	fmt.Println("irsdk_getSessionInfoStr: ", s)
-	// irsdk_getVarHeaderEntry(0)
-	// irsdk_getVarHeaderPtr()
+	return
 
-	varHeader := &irsdk_varHeader{}
-	size := int(unsafe.Sizeof(*varHeader))
-
-	fmt.Println(size)
-	fmt.Println(pHeader.VarHeaderOffset)
-	// fmt.Println(string(pSharedMem[pHeader.VarHeaderOffset:131484]))
-	varHeaderOffset := int(pHeader.VarHeaderOffset)
-	numVars := int(pHeader.NumVars)
-
-	latest := 0
-	for i := 0; i < int(pHeader.NumBuf); i++ {
-		if pHeader.VarBuf[latest].TickCount < pHeader.VarBuf[i].TickCount {
-			latest = i
-		}
-	}
-
-	fmt.Println("latest: ", latest)
-
-	for i := 0; i < int(pHeader.NumBuf); i++ {
-		for count := 0; count < 2; count++ {
-			curTickCount := int(pHeader.VarBuf[latest].TickCount)
-			// memcpy(data, pSharedMem + pHeader->varBuf[latest].bufOffset, pHeader->bufLen)
-
-			if curTickCount == int(pHeader.VarBuf[latest].TickCount) {
-				fmt.Println("2")
-				lastTickCount = curTickCount
-				lastValidTime = time.Now()
-			}
-		}
-	}
-
-	for i := 0; i <= numVars; i++ {
-		startByte := varHeaderOffset + (i * size)
-		endByte := startByte + size
-
-		b := bytes.NewBuffer(pSharedMem[startByte:endByte])
-		// read []byte and convert it into irsd_header
-		err = binary.Read(b, binary.LittleEndian, varHeader)
-
-		// fmt.Printf("%+v\n", varHeader)
-		// fmt.Println(string(varHeader.Name[:32]))
-		// fmt.Println(varHeader.Type)
-		// fmt.Println(string(varHeader.Desc[:]))
-		// fmt.Println(string(varHeader.Unit[:]))
-		// fmt.Println(varHeader.Count)
-
-		// Type is also number of bytes?
-		if varHeader.Type == irsdk_int {
-			fmt.Println(string(varHeader.Name[:32]))
-			// fprintf(file, "%s", (char *)(lineBuf+rec->offset) ); break;
-		}
-	}
+	// fmt.Println("connected: ", irsdk_isConnected())
+	// byteArray := irsdk_getSessionInfoStr()
+	// s := string(byteArray[:])
+	// fmt.Println("irsdk_getSessionInfoStr: ", s)
 
 }
 
@@ -245,3 +197,76 @@ func irsdk_isConnected() bool {
 // 	}
 // 	return NULL;
 // }
+
+func irsdk_getNewData() ([]byte, bool) {
+	var data []byte
+	returnData := true
+
+	if !isInitialized {
+		success, _ := irsdk_startup()
+		if !success {
+			return nil, false
+		}
+	}
+
+	// if sim is not active, then no new data
+	if (int(pHeader.Status) & irsdk_stConnected) == 0 {
+		lastTickCount = INT_MAX
+		return nil, false
+	}
+
+	latest := 0
+	for i := 0; i < int(pHeader.NumBuf); i++ {
+		fmt.Println("i: ", i)
+		fmt.Println("pHeader.VarBuf[latest].TickCount: ", pHeader.VarBuf[latest].TickCount)
+		fmt.Println("pHeader.VarBuf[i].TickCount: ", pHeader.VarBuf[i].TickCount)
+		if pHeader.VarBuf[latest].TickCount < pHeader.VarBuf[i].TickCount {
+			latest = i
+		}
+	}
+
+	fmt.Println("latest: ", latest)
+
+	fmt.Println("lastTickCount: ", lastTickCount)
+	fmt.Println("pHeader.VarBuf[latest].TickCount: ", int(pHeader.VarBuf[latest].TickCount))
+
+	// if newer than last recieved, than report new data
+	if lastTickCount < int(pHeader.VarBuf[latest].TickCount) {
+		// if asked to retrieve the data
+		if returnData == true {
+
+			for count := 0; count < 2; count++ {
+				curTickCount := int(pHeader.VarBuf[latest].TickCount)
+				// memcpy(data, pSharedMem + pHeader->varBuf[latest].bufOffset, pHeader->bufLen)
+				startByte := int(pHeader.VarBuf[latest].BufOffset)
+				startByte = 1358715
+				endByte := startByte + int(pHeader.BufLen)
+				fmt.Println("startByte: ", startByte)
+				fmt.Println("endByte: ", endByte)
+				fmt.Println("len(pSharedMem): ", len(pSharedMem))
+				data = pSharedMem[startByte:endByte]
+				fmt.Println("len(data): ", len(data))
+				// fmt.Println("data: ", string(data[:]))
+
+				if curTickCount == int(pHeader.VarBuf[latest].TickCount) {
+					lastTickCount = curTickCount
+					lastValidTime = time.Now()
+					return data, true
+				}
+			}
+			// if here, the data changed out from under us.
+			return nil, false
+		} else {
+			lastTickCount = int(pHeader.VarBuf[latest].TickCount)
+			lastValidTime = time.Now()
+			return data, true
+		}
+	} else if lastTickCount > int(pHeader.VarBuf[latest].TickCount) {
+		// if older than last recieved, than reset, we probably disconnected
+		lastTickCount = int(pHeader.VarBuf[latest].TickCount)
+		return nil, false
+	}
+	// else the same, and nothing changed this tick
+
+	return nil, false
+}
