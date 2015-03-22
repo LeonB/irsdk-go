@@ -30,9 +30,9 @@ const (
 )
 
 type irsdk_varBuf struct {
-	tickCount C.int    // used to detect changes in data
-	bufOffset C.int    // offset from header
-	pad       [2]C.int // (16 byte align)
+	TickCount C.int    // used to detect changes in data
+	BufOffset C.int    // offset from header
+	Pad       [2]C.int // (16 byte align)
 }
 
 type irsdk_header struct {
@@ -100,7 +100,7 @@ var pHeader *irsdk_header
 var isInitialized bool
 var lastValidTime time.Time
 var timeout time.Duration
-var pSharedMem *[]byte
+var pSharedMem []byte
 
 func main() {
 	_, err := irsdk_startup()
@@ -124,35 +124,17 @@ func irsdk_startup() (bool, error) {
 		return false, try.Err
 	}
 
-	// sharedMemPtr := try.N("MapViewOfFile", hMemMapFile, syscall.FILE_MAP_READ, 0, 0, 0)
-	// pHeader = (*irsdk_header)(unsafe.Pointer(sharedMemPtr))
-
-	// fmt.Println("pHeader.ver: ", pHeader.Ver)
-	// fmt.Println("pHeader.status: ", pHeader.Status)
-	// fmt.Println("pHeader.sessionInfoOffset: ", pHeader.SessionInfoOffset)
-	// fmt.Println("pHeader.sessionInfoUpdate: ", pHeader.SessionInfoUpdate)
-	// return false, nil
-
 	sharedMemPtr := try.N("MapViewOfFile", hMemMapFile, syscall.FILE_MAP_READ, 0, 0, 0)
-	// Convert uintptr to []byte
-	pSharedMem := (*[1 << 30]byte)(unsafe.Pointer(sharedMemPtr))[:]
-
-	// I know yaml starts at byte 112: gives back a correct string
-	fmt.Println(string(pSharedMem[112:600]))
+	pSharedMem = (*[1 << 30]byte)(unsafe.Pointer(sharedMemPtr))[:]
 
 	// create a io.Reader
 	b := bytes.NewBuffer(pSharedMem)
 	// read []byte and convert it into irsd_header
-	pHeader := &irsdk_header{}
+	pHeader = &irsdk_header{}
 	err := binary.Read(b, binary.LittleEndian, pHeader)
 	if err != nil {
 		return false, err
 	}
-
-	fmt.Println("pHeader.ver: ", pHeader.Ver)
-	fmt.Println("pHeader.status: ", pHeader.Status)
-	fmt.Println("pHeader.sessionInfoOffset: ", pHeader.SessionInfoOffset)
-	fmt.Println("pHeader.sessionInfoUpdate: ", pHeader.SessionInfoUpdate)
 
 	hDataValidEvent := try.N("OpenEvent", SYNCHRONIZE, false, syscall.StringToUTF16Ptr(IRSDK_DATAVALIDEVENTNAME))
 
@@ -168,11 +150,7 @@ func irsdk_startup() (bool, error) {
 
 func irsdk_getSessionInfoStr() []byte {
 	if isInitialized {
-		return nil
-
-		// byteSlice := C.GoBytes(pSharedMem, pHeader.sessionInfoLen)
-		// return byteSlice[pHeader.sessionInfoOffset:]
-		// return C.GoBytes(pSharedMem, pHeader.sessionInfoOffset)
+		return pSharedMem[pHeader.SessionInfoOffset:pHeader.SessionInfoLen]
 	}
 	return nil
 }
