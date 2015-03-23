@@ -115,6 +115,7 @@ var isInitialized bool
 var lastValidTime time.Time
 var timeout time.Duration
 var pSharedMem []byte
+var sharedMemPtr uintptr
 var lastTickCount = INT_MAX
 
 func main() {
@@ -146,14 +147,9 @@ func irsdk_startup() (bool, error) {
 		return false, try.Err
 	}
 
-	sharedMemPtr := try.N("MapViewOfFile", hMemMapFile, syscall.FILE_MAP_READ, 0, 0, 0)
-	pSharedMem = (*[1 << 30]byte)(unsafe.Pointer(sharedMemPtr))[:]
+	sharedMemPtr = try.N("MapViewOfFile", hMemMapFile, syscall.FILE_MAP_READ, 0, 0, 0)
 
-	// create a io.Reader
-	b := bytes.NewBuffer(pSharedMem[:unsafe.Sizeof(*pHeader)])
-	// read []byte and convert it into irsd_header
-	pHeader = &irsdk_header{}
-	err := binary.Read(b, binary.LittleEndian, pHeader)
+	err := updateSharedMem()
 	if err != nil {
 		return false, err
 	}
@@ -269,4 +265,21 @@ func irsdk_getNewData() ([]byte, bool) {
 	// else the same, and nothing changed this tick
 
 	return nil, false
+}
+
+func updateSharedMem() error {
+	pHeader = (*irsdk_header)(unsafe.Pointer(sharedMemPtr))
+
+	pSharedMem = (*[1 << 30]byte)(unsafe.Pointer(sharedMemPtr))[:]
+	return nil
+
+	// This is also an option:
+
+	// create a io.Reader
+	endByte := unsafe.Sizeof(*pHeader)
+	b := bytes.NewBuffer(pSharedMem[:endByte])
+	// read []byte and convert it into irsd_header
+	pHeader = &irsdk_header{}
+	err := binary.Read(b, binary.LittleEndian, pHeader)
+	return err
 }
