@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"log"
 	"syscall"
 	"time"
 	"unsafe"
@@ -60,7 +61,6 @@ type irsdk_header struct {
 	SessionInfoOffset C.int // Session info, encoded in YAML format
 
 	// State data, output at tickRate
-
 	NumVars         C.int // length of array pointed to by varHeaderOffset
 	VarHeaderOffset C.int // offset to irsdk_varHeader[numVars] array, Describes the variables recieved in varBuf
 
@@ -75,6 +75,7 @@ type irsdk_varHeader struct {
 	Offset C.int // offset fron start of buffer row
 	Count  C.int // number of entrys (array)
 	// so length in bytes would be irsdk_VarTypeBytes[type] * count
+
 	Pad [1]C.int // (16 byte align)
 
 	Name [IRSDK_MAX_STRING]byte
@@ -94,21 +95,35 @@ func irsdk_getVarHeaderPtr() *irsdk_varHeader {
 	return nil
 }
 
-// func irsdk_getVarHeaderEntry(index int) *irsdk_varHeader {
-// 	if isInitialized {
-// 		if index >= 0 && index < (int)(pHeader.numVars) {
+func irsdk_getVarHeaderEntry(index int) *irsdk_varHeader {
+	if isInitialized {
+		if index >= 0 && index < (int)(pHeader.NumVars) {
 
-// 			varHeader := (*irsdk_varHeader)((unsafe.Pointer((uintptr(pSharedMem) + unsafe.Sizeof(pHeader.varHeaderOffset)))))
-// 			fmt.Printf("%+v\n", varHeader.name)
-// 			fmt.Println(string(varHeader.name[:10]))
-// 			fmt.Println(string(varHeader.desc[:10]))
-// 			fmt.Println(string(varHeader.unit[:10]))
-// 			return nil
-// 			// return &((irsdk_varHeader*)(pSharedMem + pHeader->varHeaderOffset))[index];
-// 		}
-// 	}
-// 	return nil
-// }
+			varHeaderOffset := int(pHeader.VarHeaderOffset)
+			varHeader := &irsdk_varHeader{}
+			varHeaderSize := int(unsafe.Sizeof(*varHeader))
+
+			startByte := varHeaderOffset + (index * varHeaderSize)
+			endByte := startByte + varHeaderSize
+
+			// fmt.Println("varHeaderOffset: ", varHeaderOffset)
+			// fmt.Println("index: ", index)
+			// fmt.Println("varHeaderSize: ", varHeaderSize)
+			// fmt.Println("index * varHeaderSize: ", index * varHeaderSize)
+			// fmt.Println("startByte: ", startByte)
+			// fmt.Println("endByte: ", endByte)
+			// fmt.Println("-----------------")
+
+			// create a io.Reader
+			b := bytes.NewBuffer(pSharedMem[startByte:endByte])
+			// read []byte and convert it into irsdk_varHeader
+			binary.Read(b, binary.LittleEndian, varHeader)
+
+			return varHeader
+		}
+	}
+	return nil
+}
 
 var pHeader *irsdk_header
 var isInitialized bool
@@ -119,23 +134,56 @@ var sharedMemPtr uintptr
 var lastTickCount = INT_MAX
 
 func main() {
-	// _, err := irsdk_startup()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	_, err := irsdk_startup()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	for i := 0; i < 90000; i++ {
-		data, success := irsdk_getNewData()
-		fmt.Println("success: ", success)
-		fmt.Println("len(data): ", len(data))
+	byteArray := irsdk_getSessionInfoStr()
+	s := string(byteArray[:])
+	fmt.Println("irsdk_getSessionInfoStr: ", s)
+
+	var data []byte
+	result := false
+	for result == false {
+		data, result = irsdk_getNewData()
+
+		if result == true {
+			numVars := int(pHeader.NumVars)
+
+			for i := 0; i <= numVars; i++ {
+				varHeader := irsdk_getVarHeaderEntry(i)
+
+				if varHeader != nil {
+					fmt.Println("varHeader.Offset: ", varHeader.Offset)
+
+					if varHeader.Type == irsdk_int {
+						startByte := int(varHeader.Offset)
+						endByte := startByte + 4
+						bytez := data[startByte:endByte]
+
+						fmt.Println("startByte: ", startByte)
+						// fmt.Println("endByte: ", endByte)
+
+						// fmt.Println(string(bytez[:]))
+						// fmt.Println(bytez)
+
+						b := bytes.NewBuffer(bytez)
+						// read []byte and convert it into irsd_header
+						var tInt C.int
+						binary.Read(b, binary.LittleEndian, tInt)
+						fmt.Println("tInt: ", tInt)
+
+						// fprintf(file, "%s", (char *)(lineBuf+rec->offset) ); break;
+					}
+				}
+			}
+		}
+
+		// try.N("Sleep", 10)
 	}
 
 	return
-
-	// fmt.Println("connected: ", irsdk_isConnected())
-	// byteArray := irsdk_getSessionInfoStr()
-	// s := string(byteArray[:])
-	// fmt.Println("irsdk_getSessionInfoStr: ", s)
 
 }
 
@@ -213,36 +261,31 @@ func irsdk_getNewData() ([]byte, bool) {
 
 	latest := 0
 	for i := 0; i < int(pHeader.NumBuf); i++ {
-		fmt.Println("i: ", i)
-		fmt.Println("pHeader.VarBuf[latest].TickCount: ", pHeader.VarBuf[latest].TickCount)
-		fmt.Println("pHeader.VarBuf[i].TickCount: ", pHeader.VarBuf[i].TickCount)
 		if pHeader.VarBuf[latest].TickCount < pHeader.VarBuf[i].TickCount {
 			latest = i
 		}
 	}
 
-	fmt.Println("latest: ", latest)
-
-	fmt.Println("lastTickCount: ", lastTickCount)
-	fmt.Println("pHeader.VarBuf[latest].TickCount: ", int(pHeader.VarBuf[latest].TickCount))
-
 	// if newer than last recieved, than report new data
 	if lastTickCount < int(pHeader.VarBuf[latest].TickCount) {
+
 		// if asked to retrieve the data
 		if returnData == true {
 
 			for count := 0; count < 2; count++ {
 				curTickCount := int(pHeader.VarBuf[latest].TickCount)
-				// memcpy(data, pSharedMem + pHeader->varBuf[latest].bufOffset, pHeader->bufLen)
+				bufLen := int(pHeader.BufLen)
 				startByte := int(pHeader.VarBuf[latest].BufOffset)
-				startByte = 1358715
-				endByte := startByte + int(pHeader.BufLen)
+				endByte := startByte + bufLen
+
 				fmt.Println("startByte: ", startByte)
 				fmt.Println("endByte: ", endByte)
 				fmt.Println("len(pSharedMem): ", len(pSharedMem))
-				data = pSharedMem[startByte:endByte]
-				fmt.Println("len(data): ", len(data))
-				// fmt.Println("data: ", string(data[:]))
+
+				// memcpy(data, pSharedMem + pHeader->varBuf[latest].bufOffset, pHeader->bufLen)
+
+				data = make([]byte, bufLen)
+				copy(data, pSharedMem[startByte:endByte])
 
 				if curTickCount == int(pHeader.VarBuf[latest].TickCount) {
 					lastTickCount = curTickCount
