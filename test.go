@@ -64,9 +64,9 @@ type irsdk_header struct {
 	NumVars         C.int // length of array pointed to by varHeaderOffset
 	VarHeaderOffset C.int // offset to irsdk_varHeader[numVars] array, Describes the variables recieved in varBuf
 
-	NumBuf C.int // <= IRSDK_MAX_BUFS (3 for now)
-	BufLen C.int // length in bytes for one line
-	Pad    [1]C.int
+	NumBuf C.int    // <= IRSDK_MAX_BUFS (3 for now)
+	BufLen C.int    // length in bytes for one line
+	Pad1   [2]C.int // (16 byte align)
 	VarBuf [IRSDK_MAX_BUFS]irsdk_varBuf
 }
 
