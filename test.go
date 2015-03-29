@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"reflect"
 	"syscall"
 	"time"
 	"unsafe"
@@ -91,7 +90,7 @@ var pHeader *irsdk_header
 var isInitialized bool
 var lastValidTime time.Time
 var timeout time.Duration
-var pSharedMem *[]byte
+var pSharedMem []byte
 
 // var sharedMemPtr uintptr
 var lastTickCount = INT_MAX
@@ -101,7 +100,7 @@ func main() {
 
 	result := false
 	for result == false {
-		data, result = irsdk_getNewData(data)
+		result = irsdk_getNewData(data)
 
 		if result == true {
 			fmt.Println("data:", data)
@@ -171,15 +170,14 @@ func irsdk_startup() (bool, error) {
 	}
 
 	if hMemMapFile != 0 {
-		if pSharedMem == nil {
+		if len(pSharedMem) == 0 {
 			sharedMemPtr := try.N("MapViewOfFile", hMemMapFile, syscall.FILE_MAP_READ, 0, 0, 0)
 			pHeader = (*irsdk_header)(unsafe.Pointer(sharedMemPtr))
-			// pSharedMem = (*[1 << 30]byte)(sharedMemPtr)[:]
-			pSharedMem = (*[]byte)(unsafe.Pointer(sharedMemPtr))
+			pSharedMem = (*[1 << 30]byte)(unsafe.Pointer(sharedMemPtr))[:]
 			lastTickCount = INT_MAX
 		}
 
-		if len(*pSharedMem) != 0 {
+		if len(pSharedMem) != 0 {
 			if hDataValidEvent == 0 {
 				hDataValidEvent = try.N("OpenEvent", SYNCHRONIZE, false, syscall.StringToUTF16Ptr(IRSDK_DATAVALIDEVENTNAME))
 				lastTickCount = INT_MAX
@@ -205,7 +203,7 @@ func irsdk_shutdown() {
 	if hDataValidEvent != 0 {
 		try.N("CloseHandle", hDataValidEvent)
 
-		if len(*pSharedMem) != 0 {
+		if len(pSharedMem) != 0 {
 			sharedMemPtr := uintptr(unsafe.Pointer(&pSharedMem))
 			try.N("UnmapViewOfFile", sharedMemPtr)
 
@@ -223,20 +221,27 @@ func irsdk_shutdown() {
 		}
 	}
 }
-func irsdk_getNewData(data []byte) ([]byte, bool) {
+func irsdk_getNewData(data []byte) (bool) {
 	returnData := true
+
+	fmt.Println(unsafe.Pointer(&data))
+	data = []byte("hellø")
+	fmt.Println(unsafe.Pointer(&data))
+	fmt.Println("data:", data)
+	fmt.Println("len(data): ", len(data))
+	return true
 
 	if !isInitialized {
 		success, _ := irsdk_startup()
 		if !success {
-			return nil, false
+			return false
 		}
 	}
 
 	// if sim is not active, then no new data
 	if (int(pHeader.Status) & irsdk_stConnected) == 0 {
 		lastTickCount = INT_MAX
-		return nil, false
+		return false
 	}
 
 	latest := 0
@@ -263,12 +268,9 @@ func irsdk_getNewData(data []byte) ([]byte, bool) {
 
 				// memcpy(data, pSharedMem + pHeader->varBuf[latest].bufOffset, pHeader->bufLen)
 
-				// data = make([]byte, bufLen)
-				// copy(data, pSharedMem[startByte:endByte])
-				slice := (*pSharedMem)[:]
-				fmt.Println(reflect.TypeOf(slice))
-				fmt.Println("len(lice): ", len(slice))
-				data = slice[startByte:endByte]
+				data = make([]byte, bufLen)
+				copy(data, pSharedMem[startByte:endByte])
+				data = pSharedMem[startByte:endByte]
 
 				fmt.Println("bufLen: ", bufLen)
 				fmt.Println("len(data): ", len(data))
@@ -276,24 +278,24 @@ func irsdk_getNewData(data []byte) ([]byte, bool) {
 				if curTickCount == int(pHeader.VarBuf[latest].TickCount) {
 					lastTickCount = curTickCount
 					lastValidTime = time.Now()
-					return data, true
+					return true
 				}
 			}
 			// if here, the data changed out from under us.
-			return nil, false
+			return false
 		} else {
 			lastTickCount = int(pHeader.VarBuf[latest].TickCount)
 			lastValidTime = time.Now()
-			return data, true
+			return true
 		}
 	} else if lastTickCount > int(pHeader.VarBuf[latest].TickCount) {
 		// if older than last recieved, than reset, we probably disconnected
 		lastTickCount = int(pHeader.VarBuf[latest].TickCount)
-		return nil, false
+		return false
 	}
 	// else the same, and nothing changed this tick
 
-	return nil, false
+	return false
 }
 
 func irsdk_waitForDataReady(timeOut int, data []byte) bool {
@@ -314,8 +316,7 @@ func irsdk_waitForDataReady(timeOut int, data []byte) bool {
 	}
 
 	// just to be sure, check before we sleep
-	data, result := irsdk_getNewData(data)
-	if result {
+	if irsdk_getNewData(data) {
 		return true
 	}
 
@@ -323,8 +324,7 @@ func irsdk_waitForDataReady(timeOut int, data []byte) bool {
 	try.N("WaitForSingleObject", hDataValidEvent, timeOut)
 
 	// we woke up, so check for data
-	data, result = irsdk_getNewData(data)
-	if result {
+	if irsdk_getNewData(data) {
 		return true
 	} else {
 		return false
@@ -356,7 +356,7 @@ func irsdk_isConnected() bool {
 func irsdk_getData(index int) []byte {
 	if isInitialized {
 		endByte := int(pHeader.VarBuf[index].BufOffset)
-		return (*pSharedMem)[:endByte]
+		return pSharedMem[:endByte]
 	}
 
 	return nil
@@ -364,7 +364,7 @@ func irsdk_getData(index int) []byte {
 
 func irsdk_getSessionInfoStr() []byte {
 	if isInitialized {
-		return (*pSharedMem)[pHeader.SessionInfoOffset:pHeader.SessionInfoLen]
+		return pSharedMem[pHeader.SessionInfoOffset:pHeader.SessionInfoLen]
 	}
 	return nil
 }
@@ -379,7 +379,7 @@ func irsdk_getVarHeaderPtr() *irsdk_varHeader {
 		endByte := startByte + varHeaderSize
 
 		// create a io.Reader
-		b := bytes.NewBuffer((*pSharedMem)[startByte:endByte])
+		b := bytes.NewBuffer(pSharedMem[startByte:endByte])
 		// read []byte and convert it into irsdk_varHeader
 		binary.Read(b, binary.LittleEndian, varHeader)
 
@@ -399,7 +399,7 @@ func irsdk_getVarHeaderEntry(index int) *irsdk_varHeader {
 			endByte := startByte + varHeaderSize
 
 			// create a io.Reader
-			b := bytes.NewBuffer((*pSharedMem)[startByte:endByte])
+			b := bytes.NewBuffer(pSharedMem[startByte:endByte])
 			// read []byte and convert it into irsdk_varHeader
 			binary.Read(b, binary.LittleEndian, varHeader)
 
