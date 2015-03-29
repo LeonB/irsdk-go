@@ -4,8 +4,8 @@ import "C"
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
-	"log"
 	"syscall"
 	"time"
 	"unsafe"
@@ -16,8 +16,6 @@ import (
 const (
 	IRSDK_MEMMAPFILENAME     = "Local\\IRSDKMemMapFileName"
 	IRSDK_DATAVALIDEVENTNAME = "Local\\IRSDKDataValidEvent"
-	SECTION_MAP_READ         = 4
-	FILE_MAP_READ            = SECTION_MAP_READ
 	INT_MAX                  = 2147483647
 	SYNCHRONIZE              = 1048576
 
@@ -83,98 +81,64 @@ type irsdk_varHeader struct {
 	Unit [IRSDK_MAX_STRING]byte // something like "kg/m^2"
 }
 
-func irsdk_getVarHeaderPtr() *irsdk_varHeader {
-	// if isInitialized {
-	// 	varHeaderoffset := unsafe.Sizeof(pHeader.varHeaderOffset)
-	// 	varHeader := (*irsdk_varHeader)(unsafe.Pointer(pSharedMem) + varHeaderoffset)
+// Local memory
 
-	// 	fmt.Printf("%+v\n", varHeader)
-	// 	fmt.Println(string(varHeader.name[:10]))
-	// 	return nil
-	// }
-	return nil
-}
-
-func irsdk_getVarHeaderEntry(index int) *irsdk_varHeader {
-	if isInitialized {
-		if index >= 0 && index < (int)(pHeader.NumVars) {
-
-			varHeaderOffset := int(pHeader.VarHeaderOffset)
-			varHeader := &irsdk_varHeader{}
-			varHeaderSize := int(unsafe.Sizeof(*varHeader))
-
-			startByte := varHeaderOffset + (index * varHeaderSize)
-			endByte := startByte + varHeaderSize
-
-			// fmt.Println("varHeaderOffset: ", varHeaderOffset)
-			// fmt.Println("index: ", index)
-			// fmt.Println("varHeaderSize: ", varHeaderSize)
-			// fmt.Println("index * varHeaderSize: ", index * varHeaderSize)
-			// fmt.Println("startByte: ", startByte)
-			// fmt.Println("endByte: ", endByte)
-			// fmt.Println("-----------------")
-
-			// create a io.Reader
-			b := bytes.NewBuffer(pSharedMem[startByte:endByte])
-			// read []byte and convert it into irsdk_varHeader
-			binary.Read(b, binary.LittleEndian, varHeader)
-
-			return varHeader
-		}
-	}
-	return nil
-}
+var hDataValidEvent uintptr
+var hMemMapFile uintptr
 
 var pHeader *irsdk_header
 var isInitialized bool
 var lastValidTime time.Time
 var timeout time.Duration
 var pSharedMem []byte
-var sharedMemPtr uintptr
+
+// var sharedMemPtr uintptr
 var lastTickCount = INT_MAX
 
 func main() {
-	_, err := irsdk_startup()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	byteArray := irsdk_getSessionInfoStr()
-	s := string(byteArray[:])
-	fmt.Println("irsdk_getSessionInfoStr: ", s)
-
 	var data []byte
+
 	result := false
 	for result == false {
-		data, result = irsdk_getNewData()
+		result = irsdk_getNewData(data)
 
 		if result == true {
+			fmt.Println("data:", data)
+			fmt.Println("len(data): ", len(data))
 			numVars := int(pHeader.NumVars)
 
 			for i := 0; i <= numVars; i++ {
 				varHeader := irsdk_getVarHeaderEntry(i)
 
 				if varHeader != nil {
-					fmt.Println("varHeader.Offset: ", varHeader.Offset)
+					// fmt.Println("varHeader.Offset: ", varHeader.Offset)
 
 					if varHeader.Type == irsdk_int {
+						var myvar C.int
+						count := int(varHeader.Count)
 						startByte := int(varHeader.Offset)
-						endByte := startByte + 4
-						bytez := data[startByte:endByte]
+						varLen := int(unsafe.Sizeof(myvar))
+						endByte := startByte + varLen
+						fmt.Println("varHeader.Name:", CToGoString(varHeader.Name[:]))
+						fmt.Println("count:", count)
+						fmt.Println("type:", "int")
 
-						fmt.Println("startByte: ", startByte)
-						// fmt.Println("endByte: ", endByte)
+						buf := bytes.NewBuffer(data[startByte:endByte])
+						binary.Read(buf, binary.LittleEndian, &myvar)
+						fmt.Println("myvar: ", myvar)
+					} else if varHeader.Type == irsdk_float {
+						var myvar C.float
+						count := int(varHeader.Count)
+						startByte := int(varHeader.Offset)
+						varLen := int(unsafe.Sizeof(myvar))
+						endByte := startByte + varLen
+						fmt.Println("varHeader.Name:", CToGoString(varHeader.Name[:]))
+						fmt.Println("count: ", count)
+						fmt.Println("type:", "float")
 
-						// fmt.Println(string(bytez[:]))
-						// fmt.Println(bytez)
-
-						b := bytes.NewBuffer(bytez)
-						// read []byte and convert it into irsd_header
-						var tInt C.int
-						binary.Read(b, binary.LittleEndian, tInt)
-						fmt.Println("tInt: ", tInt)
-
-						// fprintf(file, "%s", (char *)(lineBuf+rec->offset) ); break;
+						buf := bytes.NewBuffer(data[startByte:endByte])
+						binary.Read(buf, binary.LittleEndian, &myvar)
+						fmt.Println("myvar: ", myvar)
 					}
 				}
 			}
@@ -183,6 +147,13 @@ func main() {
 		// try.N("Sleep", 10)
 	}
 
+	irsdk_shutdown()
+	irsdk_startup()
+
+	// byteArray := irsdk_getSessionInfoStr()
+	// s := string(byteArray[:])
+	// fmt.Println("irsdk_getSessionInfoStr: ", s)
+
 	return
 
 }
@@ -190,73 +161,87 @@ func main() {
 func irsdk_startup() (bool, error) {
 	var try winq.Try
 
-	hMemMapFile := try.N("OpenFileMappingW", FILE_MAP_READ, false, syscall.StringToUTF16Ptr(IRSDK_MEMMAPFILENAME))
-	if try.Err != nil {
-		return false, try.Err
+	if hMemMapFile == 0 {
+		hMemMapFile = try.N("OpenFileMappingW", syscall.FILE_MAP_READ, false, syscall.StringToUTF16Ptr(IRSDK_MEMMAPFILENAME))
+		if try.Err != nil {
+			return false, try.Err
+		}
+		lastTickCount = INT_MAX
 	}
 
-	sharedMemPtr = try.N("MapViewOfFile", hMemMapFile, syscall.FILE_MAP_READ, 0, 0, 0)
+	if hMemMapFile != 0 {
+		if len(pSharedMem) == 0 {
+			sharedMemPtr := try.N("MapViewOfFile", hMemMapFile, syscall.FILE_MAP_READ, 0, 0, 0)
+			pHeader = (*irsdk_header)(unsafe.Pointer(sharedMemPtr))
+			pSharedMem = (*[1 << 30]byte)(unsafe.Pointer(sharedMemPtr))[:]
+			lastTickCount = INT_MAX
+		}
 
-	err := updateSharedMem()
-	if err != nil {
-		return false, err
+		if len(pSharedMem) != 0 {
+			if hDataValidEvent == 0 {
+				hDataValidEvent = try.N("OpenEvent", SYNCHRONIZE, false, syscall.StringToUTF16Ptr(IRSDK_DATAVALIDEVENTNAME))
+				lastTickCount = INT_MAX
+			}
+
+			if hDataValidEvent != 0 {
+				isInitialized = true
+				return isInitialized, nil
+			}
+			//else printf("Error opening event: %d\n", GetLastError());
+		}
+		//else printf("Error mapping file: %d\n", GetLastError());
 	}
+	//else printf("Error opening file: %d\n", GetLastError()); `
 
-	hDataValidEvent := try.N("OpenEvent", SYNCHRONIZE, false, syscall.StringToUTF16Ptr(IRSDK_DATAVALIDEVENTNAME))
-
-	if hDataValidEvent > 0 {
-		isInitialized = true
-		return isInitialized, nil
-	}
-
-	return false, nil
+	isInitialized = false
+	return isInitialized, errors.New("Failed to initialize")
 }
 
-func irsdk_getSessionInfoStr() []byte {
-	if isInitialized {
-		return pSharedMem[pHeader.SessionInfoOffset:pHeader.SessionInfoLen]
-	}
-	return nil
-}
+func irsdk_shutdown() {
+	var try winq.Try
 
-func irsdk_isConnected() bool {
-	if isInitialized {
-		elapsed := time.Now().Sub(lastValidTime)
-		fmt.Println("elapsed: ", elapsed)
-		fmt.Println("timeout: ", timeout)
-		fmt.Println("pHeader.status&irsdk_stConnected: ", pHeader.Status&irsdk_stConnected)
-		if (pHeader.Status&irsdk_stConnected) > 0 && (elapsed < timeout) {
-			return true
+	if hDataValidEvent != 0 {
+		try.N("CloseHandle", hDataValidEvent)
+
+		if len(pSharedMem) != 0 {
+			sharedMemPtr := uintptr(unsafe.Pointer(&pSharedMem))
+			try.N("UnmapViewOfFile", sharedMemPtr)
+
+			if hMemMapFile != 0 {
+				try.N("CloseHandle", hMemMapFile)
+
+				hDataValidEvent = 0
+				pSharedMem = nil
+				pHeader = nil
+				hMemMapFile = 0
+
+				isInitialized = false
+				lastTickCount = INT_MAX
+			}
 		}
 	}
-
-	return false
 }
-
-// func irsdk_varHeader *irsdk_getVarHeaderPtr()
-// {
-// 	if(isInitialized)
-// 	{
-// 		return ((irsdk_varHeader*)(pSharedMem + pHeader->varHeaderOffset));
-// 	}
-// 	return NULL;
-// }
-
-func irsdk_getNewData() ([]byte, bool) {
-	var data []byte
+func irsdk_getNewData(data []byte) (bool) {
 	returnData := true
+
+	fmt.Println(unsafe.Pointer(&data))
+	data = []byte("hellø")
+	fmt.Println(unsafe.Pointer(&data))
+	fmt.Println("data:", data)
+	fmt.Println("len(data): ", len(data))
+	return true
 
 	if !isInitialized {
 		success, _ := irsdk_startup()
 		if !success {
-			return nil, false
+			return false
 		}
 	}
 
 	// if sim is not active, then no new data
 	if (int(pHeader.Status) & irsdk_stConnected) == 0 {
 		lastTickCount = INT_MAX
-		return nil, false
+		return false
 	}
 
 	latest := 0
@@ -280,49 +265,231 @@ func irsdk_getNewData() ([]byte, bool) {
 
 				fmt.Println("startByte: ", startByte)
 				fmt.Println("endByte: ", endByte)
-				fmt.Println("len(pSharedMem): ", len(pSharedMem))
 
 				// memcpy(data, pSharedMem + pHeader->varBuf[latest].bufOffset, pHeader->bufLen)
 
 				data = make([]byte, bufLen)
 				copy(data, pSharedMem[startByte:endByte])
+				data = pSharedMem[startByte:endByte]
+
+				fmt.Println("bufLen: ", bufLen)
+				fmt.Println("len(data): ", len(data))
 
 				if curTickCount == int(pHeader.VarBuf[latest].TickCount) {
 					lastTickCount = curTickCount
 					lastValidTime = time.Now()
-					return data, true
+					return true
 				}
 			}
 			// if here, the data changed out from under us.
-			return nil, false
+			return false
 		} else {
 			lastTickCount = int(pHeader.VarBuf[latest].TickCount)
 			lastValidTime = time.Now()
-			return data, true
+			return true
 		}
 	} else if lastTickCount > int(pHeader.VarBuf[latest].TickCount) {
 		// if older than last recieved, than reset, we probably disconnected
 		lastTickCount = int(pHeader.VarBuf[latest].TickCount)
-		return nil, false
+		return false
 	}
 	// else the same, and nothing changed this tick
 
-	return nil, false
+	return false
 }
 
-func updateSharedMem() error {
-	pHeader = (*irsdk_header)(unsafe.Pointer(sharedMemPtr))
+func irsdk_waitForDataReady(timeOut int, data []byte) bool {
+	var try winq.Try
 
-	pSharedMem = (*[1 << 30]byte)(unsafe.Pointer(sharedMemPtr))[:]
+	if !isInitialized {
+		success, _ := irsdk_startup()
+
+		if !success {
+			// sleep if error
+			// @TODO: fix this
+			if timeOut > 0 {
+				try.N("Sleep", timeout)
+			}
+
+			return false
+		}
+	}
+
+	// just to be sure, check before we sleep
+	if irsdk_getNewData(data) {
+		return true
+	}
+
+	// sleep till signaled
+	try.N("WaitForSingleObject", hDataValidEvent, timeOut)
+
+	// we woke up, so check for data
+	if irsdk_getNewData(data) {
+		return true
+	} else {
+		return false
+	}
+
+	// sleep if error
+	if timeOut > 0 {
+		try.N("Sleep", timeOut)
+	}
+
+	return false
+}
+
+func irsdk_isConnected() bool {
+	if isInitialized {
+		elapsed := time.Now().Sub(lastValidTime)
+		if (pHeader.Status&irsdk_stConnected) > 0 && (elapsed < timeout) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// direct access to the data buffer
+// // Warnign! This buffer is volitile so read it out fast!
+// // Use the cached copy from irsdk_waitForDataReady() or irsdk_getNewData()
+// instead
+func irsdk_getData(index int) []byte {
+	if isInitialized {
+		endByte := int(pHeader.VarBuf[index].BufOffset)
+		return pSharedMem[:endByte]
+	}
+
 	return nil
-
-	// This is also an option:
-
-	// create a io.Reader
-	endByte := unsafe.Sizeof(*pHeader)
-	b := bytes.NewBuffer(pSharedMem[:endByte])
-	// read []byte and convert it into irsd_header
-	pHeader = &irsdk_header{}
-	err := binary.Read(b, binary.LittleEndian, pHeader)
-	return err
 }
+
+func irsdk_getSessionInfoStr() []byte {
+	if isInitialized {
+		return pSharedMem[pHeader.SessionInfoOffset:pHeader.SessionInfoLen]
+	}
+	return nil
+}
+
+func irsdk_getVarHeaderPtr() *irsdk_varHeader {
+	if isInitialized {
+		varHeaderOffset := int(pHeader.VarHeaderOffset)
+		varHeader := &irsdk_varHeader{}
+		varHeaderSize := int(unsafe.Sizeof(*varHeader))
+
+		startByte := varHeaderOffset
+		endByte := startByte + varHeaderSize
+
+		// create a io.Reader
+		b := bytes.NewBuffer(pSharedMem[startByte:endByte])
+		// read []byte and convert it into irsdk_varHeader
+		binary.Read(b, binary.LittleEndian, varHeader)
+
+		return varHeader
+	}
+	return nil
+}
+
+func irsdk_getVarHeaderEntry(index int) *irsdk_varHeader {
+	if isInitialized {
+		if index >= 0 && index < (int)(pHeader.NumVars) {
+			varHeaderOffset := int(pHeader.VarHeaderOffset)
+			varHeader := &irsdk_varHeader{}
+			varHeaderSize := int(unsafe.Sizeof(*varHeader))
+
+			startByte := varHeaderOffset + (index * varHeaderSize)
+			endByte := startByte + varHeaderSize
+
+			// create a io.Reader
+			b := bytes.NewBuffer(pSharedMem[startByte:endByte])
+			// read []byte and convert it into irsdk_varHeader
+			binary.Read(b, binary.LittleEndian, varHeader)
+
+			return varHeader
+		}
+	}
+	return nil
+}
+
+// Note: this is a linear search, so cache the results
+func irsdk_varNameToIndex(name string) int {
+	var pVar *irsdk_varHeader
+
+	if name != "" {
+		numVars := int(pHeader.NumVars)
+		for index := 0; index <= numVars; index++ {
+			pVar = irsdk_getVarHeaderEntry(index)
+			pVarName := CToGoString(pVar.Name[:])
+			if pVar != nil && pVarName == name {
+				return index
+			}
+		}
+	}
+
+	return -1
+}
+
+func irsdk_varNameToOffset(name string) C.int {
+	var pVar *irsdk_varHeader
+
+	if name != "" {
+		numVars := int(pHeader.NumVars)
+		for index := 0; index <= numVars; index++ {
+			pVar = irsdk_getVarHeaderEntry(index)
+			pVarName := CToGoString(pVar.Name[:])
+			if pVar != nil && pVarName == name {
+				return pVar.Offset
+			}
+		}
+	}
+
+	return -1
+}
+
+func CToGoString(c []byte) string {
+	n := -1
+	for i, b := range c {
+		if b == 0 {
+			break
+		}
+		n = i
+	}
+	return string(c[:n+1])
+}
+
+// unsigned int irsdk_getBroadcastMsgID()
+// {
+// 	static unsigned int msgId = RegisterWindowMessageA(IRSDK_BROADCASTMSGNAME);
+
+// 	return msgId;
+// }
+
+// void irsdk_broadcastMsg(irsdk_BroadcastMsg msg, int var1, int var2, int var3)
+// {
+// 	irsdk_broadcastMsg(msg, var1, MAKELONG(var2, var3));
+// }
+
+// void irsdk_broadcastMsg(irsdk_BroadcastMsg msg, int var1, int var2)
+// {
+// 	static unsigned int msgId = irsdk_getBroadcastMsgID();
+
+// 	if(msgId && msg >= 0 && msg < irsdk_BroadcastLast)
+// 	{
+// 		SendNotifyMessage(HWND_BROADCAST, msgId, MAKELONG(msg, var1), var2);
+// 	}
+// }
+
+// int irsdk_padCarNum(int num, int zero)
+// {
+// 	int retVal = num;
+// 	int numPlace = 1;
+// 	if(num > 99)
+// 		numPlace = 3;
+// 	else if(num > 9)
+// 		numPlace = 2;
+// 	if(zero)
+// 	{
+// 		numPlace += zero;
+// 		retVal = num + 1000*numPlace;
+// 	}
+
+// 	return retVal;
+// }
