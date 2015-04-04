@@ -9,12 +9,14 @@ import (
 )
 
 var (
-	kernel32          = syscall.NewLazyDLL("kernel32.dll")
-	wSleep            = kernel32.NewProc("Sleep")
-	wOpenFileMappingW = kernel32.NewProc("OpenFileMappingW")
-	wMapViewOfFile    = kernel32.NewProc("MapViewOfFile")
-	wCloseHandle      = kernel32.NewProc("CloseHandle")
-	wUnmapViewOfFile  = kernel32.NewProc("UnmapViewOfFile")
+	kernel32             = syscall.NewLazyDLL("kernel32.dll")
+	wSleep               = kernel32.NewProc("Sleep")
+	wOpenFileMappingW    = kernel32.NewProc("OpenFileMappingW")
+	wMapViewOfFile       = kernel32.NewProc("MapViewOfFile")
+	wCloseHandle         = kernel32.NewProc("CloseHandle")
+	wUnmapViewOfFile     = kernel32.NewProc("UnmapViewOfFile")
+	wOpenEvent           = kernel32.NewProc("OpenEventW")
+	wWaitForSingleObject = kernel32.NewProc("WaitForSingleObject")
 )
 
 func sleep(timeout int) error {
@@ -88,5 +90,36 @@ func unmapViewOfFile(lpBaseAddress uintptr) error {
 	return nil
 }
 
-func openEvent
-func waitForSingleObject
+func openEvent(lpName string) (uintptr, error) {
+	dwDesiredAccess := syscall.SYNCHRONIZE
+	bInheritHandle := 0
+
+	hDataValidEvent, _, err := wOpenEvent.Call(
+		uintptr(dwDesiredAccess),                                  // DWORD
+		uintptr(bInheritHandle),                                   // BOOL
+		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(lpName))), // LPCTSTR
+	)
+
+	if hDataValidEvent == 0 {
+		errMsg := fmt.Sprintf("OpenEvent failed (%s)", err)
+		return hDataValidEvent, errors.New(errMsg)
+	}
+
+	return hDataValidEvent, nil
+}
+
+func waitForSingleObject(hDataValidEvent uintptr, timeOut int) error {
+	dwMilliseconds := timeOut
+
+	result, _, err := wWaitForSingleObject.Call(
+		hDataValidEvent, // HANDLE
+		uintptr(dwMilliseconds), // DWORD
+	)
+
+	if result != 0 {
+		errMsg := fmt.Sprintf("WaitForSingleObject failed (%s)", err)
+		return errors.New(errMsg)
+	}
+
+	return nil
+}

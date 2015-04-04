@@ -5,20 +5,16 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"syscall"
 	"time"
 	"unsafe"
 
 	"encoding/binary"
-
-	"github.com/akavel/winq"
 )
 
 const (
 	IRSDK_MEMMAPFILENAME     = "Local\\IRSDKMemMapFileName"
 	IRSDK_DATAVALIDEVENTNAME = "Local\\IRSDKDataValidEvent"
 	INT_MAX                  = 2147483647
-	SYNCHRONIZE              = 1048576
 	MEMMAPFILESIZE           = 780 * 1024
 
 	IRSDK_MAX_BUFS   = 4
@@ -98,7 +94,6 @@ var pSharedMem []byte
 var lastTickCount = INT_MAX
 
 func irsdk_startup() error {
-	var try winq.Try
 	var err error
 
 	if hMemMapFile == 0 {
@@ -124,7 +119,12 @@ func irsdk_startup() error {
 
 		if len(pSharedMem) != 0 {
 			if hDataValidEvent == 0 {
-				hDataValidEvent = try.N("OpenEvent", SYNCHRONIZE, false, syscall.StringToUTF16Ptr(IRSDK_DATAVALIDEVENTNAME))
+				// hDataValidEvent = try.N("OpenEvent", SYNCHRONIZE, false, syscall.StringToUTF16Ptr(IRSDK_DATAVALIDEVENTNAME))
+				hDataValidEvent, err = openEvent(IRSDK_DATAVALIDEVENTNAME)
+				if err != nil {
+					return err
+				}
+
 				lastTickCount = INT_MAX
 			}
 
@@ -219,7 +219,6 @@ func irsdk_getNewData() ([]byte, error) {
 }
 
 func irsdk_waitForDataReady(timeOut int) ([]byte, error) {
-	var try winq.Try
 	var data []byte
 	var err error
 
@@ -244,7 +243,7 @@ func irsdk_waitForDataReady(timeOut int) ([]byte, error) {
 	}
 
 	// sleep till signaled
-	try.N("WaitForSingleObject", hDataValidEvent, timeOut)
+	waitForSingleObject(hDataValidEvent, timeOut)
 
 	// we woke up, so check for data
 	data, err = irsdk_getNewData()
