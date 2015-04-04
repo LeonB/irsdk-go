@@ -247,18 +247,11 @@ func irsdk_waitForDataReady(timeOut int) ([]byte, error) {
 
 	// we woke up, so check for data
 	data, err = irsdk_getNewData()
-	if err == nil {
-		return data, err
-	} else {
+	if err != nil {
 		return nil, err
 	}
 
-	// sleep if error
-	if timeOut > 0 {
-		sleep(timeOut)
-	}
-
-	return nil, nil
+	return data, err
 }
 func irsdk_isConnected() bool {
 	if isInitialized {
