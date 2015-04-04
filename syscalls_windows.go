@@ -112,7 +112,7 @@ func waitForSingleObject(hDataValidEvent uintptr, timeOut int) error {
 	dwMilliseconds := timeOut
 
 	result, _, err := wWaitForSingleObject.Call(
-		hDataValidEvent, // HANDLE
+		hDataValidEvent,         // HANDLE
 		uintptr(dwMilliseconds), // DWORD
 	)
 
