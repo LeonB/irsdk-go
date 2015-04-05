@@ -13,6 +13,7 @@ import (
 
 const (
 	IRSDK_MEMMAPFILENAME     = "Local\\IRSDKMemMapFileName"
+	IRSDK_BROADCASTMSGNAME   = "IRSDK_BROADCASTMSG"
 	IRSDK_DATAVALIDEVENTNAME = "Local\\IRSDKDataValidEvent"
 	INT_MAX                  = 2147483647
 	MEMMAPFILESIZE           = 780 * 1024
@@ -26,18 +27,38 @@ const (
 	TIMEOUT           = time.Duration(30) // timeout after 30 seconds with no communication
 )
 
+type irsdk_VarType C.int
+
 const (
 	// 1 byte
-	irsdk_char = iota
-	irsdk_bool = iota
+	irsdk_char irsdk_VarType = 0
+	irsdk_bool irsdk_VarType = iota
 
 	// 4 bytes
-	irsdk_int      = iota
-	irsdk_bitField = iota
-	irsdk_float    = iota
+	irsdk_int      irsdk_VarType = iota
+	irsdk_bitField irsdk_VarType = iota
+	irsdk_float    irsdk_VarType = iota
 
 	// 8 bytes
-	irsdk_double = iota
+	irsdk_double irsdk_VarType = iota
+)
+
+type irsdk_BroadcastMsg C.int
+
+const (
+	irsdk_BroadcastCamSwitchPos          irsdk_BroadcastMsg = 0    // car position, group, camera
+	irsdk_BroadcastCamSwitchNum          irsdk_BroadcastMsg = iota // driver #, group, camera
+	irsdk_BroadcastCamSetState           irsdk_BroadcastMsg = iota // irsdk_CameraState, unused, unused
+	irsdk_BroadcastReplaySetPlaySpeed    irsdk_BroadcastMsg = iota // speed, slowMotion, unused
+	irskd_BroadcastReplaySetPlayPosition irsdk_BroadcastMsg = iota // irsdk_RpyPosMode, Frame Number (high, low)
+	irsdk_BroadcastReplaySearch          irsdk_BroadcastMsg = iota // irsdk_RpySrchMode, unused, unused
+	irsdk_BroadcastReplaySetState        irsdk_BroadcastMsg = iota // irsdk_RpyStateMode, unused, unused
+	irsdk_BroadcastReloadTextures        irsdk_BroadcastMsg = iota // irsdk_ReloadTexturesMode, carIdx, unused
+	irsdk_BroadcastChatComand            irsdk_BroadcastMsg = iota // irsdk_ChatCommandMode, subCommand, unused
+	irsdk_BroadcastPitCommand            irsdk_BroadcastMsg = iota // irsdk_PitCommandMode, parameter
+	irsdk_BroadcastTelemCommand          irsdk_BroadcastMsg = iota // irsdk_TelemCommandMode, unused, unused
+	irsdk_BroadcastLast                  irsdk_BroadcastMsg = iota // unused placeholder
+
 )
 
 type irsdk_varBuf struct {
@@ -67,9 +88,9 @@ type irsdk_header struct {
 }
 
 type irsdk_varHeader struct {
-	Type   C.int // irsdk_VarType
-	Offset C.int // offset fron start of buffer row
-	Count  C.int // number of entrys (array)
+	Type   irsdk_VarType // irsdk_VarType
+	Offset C.int         // offset fron start of buffer row
+	Count  C.int         // number of entrys (array)
 	// so length in bytes would be irsdk_VarTypeBytes[type] * count
 
 	Pad [1]C.int // (16 byte align)
@@ -370,17 +391,20 @@ func CToGoString(c []byte) string {
 	return string(c[:n+1])
 }
 
-// unsigned int irsdk_getBroadcastMsgID()
-// {
-// 	static unsigned int msgId = RegisterWindowMessageA(IRSDK_BROADCASTMSGNAME);
+func irsdk_getBroadcastMsgID() (uint, error) {
+	return registerWindowMessageA(IRSDK_BROADCASTMSGNAME)
+}
 
-// 	return msgId;
-// }
+func irsdk_broadcastMsg(msg irsdk_BroadcastMsg, var1 uint16, var2 uint16, var3 uint16) {
+	msgID, _ := irsdk_getBroadcastMsgID()
 
-// void irsdk_broadcastMsg(irsdk_BroadcastMsg msg, int var1, int var2, int var3)
-// {
-// 	irsdk_broadcastMsg(msg, var1, MAKELONG(var2, var3));
-// }
+	wParam := MAKELONG(var2, var3)
+	msg2 := MAKELONG(uint16(msg), var1)
+
+	if msgID > 0 && msg >= 0 && msg < irsdk_BroadcastLast {
+		sendNotifyMessage(msgID, msg2, wParam)
+	}
+}
 
 // void irsdk_broadcastMsg(irsdk_BroadcastMsg msg, int var1, int var2)
 // {
@@ -392,19 +416,18 @@ func CToGoString(c []byte) string {
 // 	}
 // }
 
-// int irsdk_padCarNum(int num, int zero)
-// {
-// 	int retVal = num;
-// 	int numPlace = 1;
-// 	if(num > 99)
-// 		numPlace = 3;
-// 	else if(num > 9)
-// 		numPlace = 2;
-// 	if(zero)
-// 	{
-// 		numPlace += zero;
-// 		retVal = num + 1000*numPlace;
-// 	}
+func irsdk_padCarNum(num int, zero int) int {
+	retVal := num
+	numPlace := 1
+	if num > 99 {
+		numPlace = 3
+	} else if num > 9 {
+		numPlace = 2
+	}
+	if zero != 0 {
+		numPlace += zero
+		retVal = num + 1000*numPlace
+	}
 
-// 	return retVal;
-// }
+	return retVal
+}

@@ -8,15 +8,21 @@ import (
 	"unsafe"
 )
 
+const (
+	HWND_BROADCAST = 0xffff
+)
+
 var (
-	kernel32             = syscall.NewLazyDLL("kernel32.dll")
-	wSleep               = kernel32.NewProc("Sleep")
-	wOpenFileMappingW    = kernel32.NewProc("OpenFileMappingW")
-	wMapViewOfFile       = kernel32.NewProc("MapViewOfFile")
-	wCloseHandle         = kernel32.NewProc("CloseHandle")
-	wUnmapViewOfFile     = kernel32.NewProc("UnmapViewOfFile")
-	wOpenEvent           = kernel32.NewProc("OpenEventW")
-	wWaitForSingleObject = kernel32.NewProc("WaitForSingleObject")
+	kernel32                = syscall.NewLazyDLL("kernel32.dll")
+	wSleep                  = kernel32.NewProc("Sleep")
+	wOpenFileMappingW       = kernel32.NewProc("OpenFileMappingW")
+	wMapViewOfFile          = kernel32.NewProc("MapViewOfFile")
+	wCloseHandle            = kernel32.NewProc("CloseHandle")
+	wUnmapViewOfFile        = kernel32.NewProc("UnmapViewOfFile")
+	wOpenEvent              = kernel32.NewProc("OpenEventW")
+	wWaitForSingleObject    = kernel32.NewProc("WaitForSingleObject")
+	wRegisterWindowMessageA = kernel32.NewProc("RegisterWindowMessageA")
+	wSendNotifyMessage      = kernel32.NewProc("SendNotifyMessage")
 )
 
 func sleep(timeout int) error {
@@ -122,4 +128,39 @@ func waitForSingleObject(hDataValidEvent uintptr, timeOut int) error {
 	}
 
 	return nil
+}
+
+func registerWindowMessageA(lpString string) (uint, error) {
+	msgID, _, err := wRegisterWindowMessageA.Call(
+		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(lpString))), // LPCTSTR
+	)
+
+	if msgID == 0 {
+		errMsg := fmt.Sprintf("registerWindowMessageA failed (%s)", err)
+		return 0, errors.New(errMsg)
+	}
+
+	return uint(msgID), nil
+}
+
+func sendNotifyMessage(msgID uint, msg uint32, wParam uint32) error {
+	hWnd := HWND_BROADCAST
+
+	result, _, err := wSendNotifyMessage.Call(
+		uintptr(hWnd), // HWND
+		uintptr(msg), // UINT
+		uintptr(wParam), // WPARAM
+		0, // LPARAM
+	)
+
+	if result == 0 {
+		errMsg := fmt.Sprintf("sendNotifyMessage failed (%s)", err)
+		return errors.New(errMsg)
+	}
+
+	return nil
+}
+
+func MAKELONG(lo, hi uint16) uint32 {
+	return uint32(uint32(lo) | ((uint32(hi)) << 16))
 }
