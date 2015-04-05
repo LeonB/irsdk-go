@@ -13,7 +13,9 @@ const (
 )
 
 var (
-	kernel32                = syscall.NewLazyDLL("kernel32.dll")
+	kernel32 = syscall.NewLazyDLL("kernel32.dll")
+	user32   = syscall.NewLazyDLL("user32.dll")
+
 	wSleep                  = kernel32.NewProc("Sleep")
 	wOpenFileMappingW       = kernel32.NewProc("OpenFileMappingW")
 	wMapViewOfFile          = kernel32.NewProc("MapViewOfFile")
@@ -21,8 +23,8 @@ var (
 	wUnmapViewOfFile        = kernel32.NewProc("UnmapViewOfFile")
 	wOpenEvent              = kernel32.NewProc("OpenEventW")
 	wWaitForSingleObject    = kernel32.NewProc("WaitForSingleObject")
-	wRegisterWindowMessageA = kernel32.NewProc("RegisterWindowMessageA")
-	wSendNotifyMessage      = kernel32.NewProc("SendNotifyMessage")
+	wRegisterWindowMessageA = user32.NewProc("RegisterWindowMessageW")
+	wSendNotifyMessage      = user32.NewProc("SendNotifyMessageW")
 )
 
 func sleep(timeout int) error {
@@ -147,10 +149,10 @@ func sendNotifyMessage(msgID uint, msg uint32, wParam uint32) error {
 	hWnd := HWND_BROADCAST
 
 	result, _, err := wSendNotifyMessage.Call(
-		uintptr(hWnd), // HWND
-		uintptr(msg), // UINT
+		uintptr(hWnd),   // HWND
+		uintptr(msg),    // UINT
 		uintptr(wParam), // WPARAM
-		0, // LPARAM
+		0,               // LPARAM
 	)
 
 	if result == 0 {

@@ -23,82 +23,8 @@ const (
 	// descriptions can be longer than max_string!
 	IRSDK_MAX_DESC = 64
 
-	irsdk_stConnected = 1
-	TIMEOUT           = time.Duration(30) // timeout after 30 seconds with no communication
+	TIMEOUT = time.Duration(30) // timeout after 30 seconds with no communication
 )
-
-type irsdk_VarType C.int
-
-const (
-	// 1 byte
-	irsdk_char irsdk_VarType = 0
-	irsdk_bool irsdk_VarType = iota
-
-	// 4 bytes
-	irsdk_int      irsdk_VarType = iota
-	irsdk_bitField irsdk_VarType = iota
-	irsdk_float    irsdk_VarType = iota
-
-	// 8 bytes
-	irsdk_double irsdk_VarType = iota
-)
-
-type irsdk_BroadcastMsg C.int
-
-const (
-	irsdk_BroadcastCamSwitchPos          irsdk_BroadcastMsg = 0    // car position, group, camera
-	irsdk_BroadcastCamSwitchNum          irsdk_BroadcastMsg = iota // driver #, group, camera
-	irsdk_BroadcastCamSetState           irsdk_BroadcastMsg = iota // irsdk_CameraState, unused, unused
-	irsdk_BroadcastReplaySetPlaySpeed    irsdk_BroadcastMsg = iota // speed, slowMotion, unused
-	irskd_BroadcastReplaySetPlayPosition irsdk_BroadcastMsg = iota // irsdk_RpyPosMode, Frame Number (high, low)
-	irsdk_BroadcastReplaySearch          irsdk_BroadcastMsg = iota // irsdk_RpySrchMode, unused, unused
-	irsdk_BroadcastReplaySetState        irsdk_BroadcastMsg = iota // irsdk_RpyStateMode, unused, unused
-	irsdk_BroadcastReloadTextures        irsdk_BroadcastMsg = iota // irsdk_ReloadTexturesMode, carIdx, unused
-	irsdk_BroadcastChatComand            irsdk_BroadcastMsg = iota // irsdk_ChatCommandMode, subCommand, unused
-	irsdk_BroadcastPitCommand            irsdk_BroadcastMsg = iota // irsdk_PitCommandMode, parameter
-	irsdk_BroadcastTelemCommand          irsdk_BroadcastMsg = iota // irsdk_TelemCommandMode, unused, unused
-	irsdk_BroadcastLast                  irsdk_BroadcastMsg = iota // unused placeholder
-
-)
-
-type irsdk_varBuf struct {
-	TickCount C.int    // used to detect changes in data
-	BufOffset C.int    // offset from header
-	Pad       [2]C.int // (16 byte align)
-}
-
-type irsdk_header struct {
-	Ver      C.int // api version 1 for now
-	Status   C.int // bitfield using irsdk_StatusField
-	TickRate C.int // ticks per second (60 or 360 etc)
-
-	// session information, updated periodicaly
-	SessionInfoUpdate C.int // Incremented when session info changes
-	SessionInfoLen    C.int // Length in bytes of session info string
-	SessionInfoOffset C.int // Session info, encoded in YAML format
-
-	// State data, output at tickRate
-	NumVars         C.int // length of array pointed to by varHeaderOffset
-	VarHeaderOffset C.int // offset to irsdk_varHeader[numVars] array, Describes the variables recieved in varBuf
-
-	NumBuf C.int    // <= IRSDK_MAX_BUFS (3 for now)
-	BufLen C.int    // length in bytes for one line
-	Pad1   [2]C.int // (16 byte align)
-	VarBuf [IRSDK_MAX_BUFS]irsdk_varBuf
-}
-
-type irsdk_varHeader struct {
-	Type   irsdk_VarType // irsdk_VarType
-	Offset C.int         // offset fron start of buffer row
-	Count  C.int         // number of entrys (array)
-	// so length in bytes would be irsdk_VarTypeBytes[type] * count
-
-	Pad [1]C.int // (16 byte align)
-
-	Name [IRSDK_MAX_STRING]byte
-	Desc [IRSDK_MAX_DESC]byte
-	Unit [IRSDK_MAX_STRING]byte // something like "kg/m^2"
-}
 
 // Local memory
 
@@ -195,7 +121,7 @@ func irsdk_getNewData() ([]byte, error) {
 	}
 
 	// if sim is not active, then no new data
-	if (int(pHeader.Status) & irsdk_stConnected) == 0 {
+	if (int(pHeader.Status) & int(irsdk_stConnected)) == 0 {
 		lastTickCount = INT_MAX
 		return nil, nil
 	}
