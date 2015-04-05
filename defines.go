@@ -227,7 +227,7 @@ type irsdk_diskSubHeader struct {
 // camera and replay commands only work when you are out of your car,
 // pit commands only work when in your car
 
-type irsdk_BroadcastMsg int
+type irsdk_BroadcastMsg uint16
 
 const (
 	irsdk_BroadcastCamSwitchPos          irsdk_BroadcastMsg = 0    // car position, group, camera

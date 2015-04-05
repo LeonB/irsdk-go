@@ -321,26 +321,29 @@ func irsdk_getBroadcastMsgID() (uint, error) {
 	return registerWindowMessageA(IRSDK_BROADCASTMSGNAME)
 }
 
-func irsdk_broadcastMsg(msg irsdk_BroadcastMsg, var1 uint16, var2 uint16, var3 uint16) {
+func irsdk_broadcastMsg(msg irsdk_BroadcastMsg, var1 uint16, var2 uint16, var3 uint16) error {
 	msgID, _ := irsdk_getBroadcastMsgID()
 
-	wParam := MAKELONG(var2, var3)
-	msg2 := MAKELONG(uint16(msg), var1)
+	wParam := MAKELONG(uint16(msg), var1)
+	lParam := MAKELONG(var2, var3)
+
+	fmt.Println("msgID:", msgID)
+	fmt.Println("msg:", msg)
+	fmt.Println("var1:", var1)
+	fmt.Println("var2:", var2)
+	fmt.Println("var3:", var3)
+	fmt.Println("wParam", wParam)
+	fmt.Println("lParam", lParam)
 
 	if msgID > 0 && msg >= 0 && msg < irsdk_BroadcastLast {
-		sendNotifyMessage(msgID, msg2, wParam)
+		err := sendNotifyMessage(msgID, wParam, lParam)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
-
-// void irsdk_broadcastMsg(irsdk_BroadcastMsg msg, int var1, int var2)
-// {
-// 	static unsigned int msgId = irsdk_getBroadcastMsgID();
-
-// 	if(msgId && msg >= 0 && msg < irsdk_BroadcastLast)
-// 	{
-// 		SendNotifyMessage(HWND_BROADCAST, msgId, MAKELONG(msg, var1), var2);
-// 	}
-// }
 
 func irsdk_padCarNum(num int, zero int) int {
 	retVal := num

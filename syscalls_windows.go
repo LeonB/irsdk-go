@@ -9,7 +9,12 @@ import (
 )
 
 const (
-	HWND_BROADCAST = 0xffff
+	HWND_BROADCAST = HWND(0xffff)
+)
+
+type (
+	HWND   HANDLE
+	HANDLE uintptr
 )
 
 var (
@@ -23,7 +28,8 @@ var (
 	wUnmapViewOfFile        = kernel32.NewProc("UnmapViewOfFile")
 	wOpenEvent              = kernel32.NewProc("OpenEventW")
 	wWaitForSingleObject    = kernel32.NewProc("WaitForSingleObject")
-	wRegisterWindowMessageA = user32.NewProc("RegisterWindowMessageW")
+	wRegisterWindowMessageA = user32.NewProc("RegisterWindowMessageA")
+	wRegisterWindowMessageW = user32.NewProc("RegisterWindowMessageW")
 	wSendNotifyMessage      = user32.NewProc("SendNotifyMessageW")
 )
 
@@ -133,7 +139,7 @@ func waitForSingleObject(hDataValidEvent uintptr, timeOut int) error {
 }
 
 func registerWindowMessageA(lpString string) (uint, error) {
-	msgID, _, err := wRegisterWindowMessageA.Call(
+	msgID, _, err := wRegisterWindowMessageW.Call(
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(lpString))), // LPCTSTR
 	)
 
@@ -145,16 +151,17 @@ func registerWindowMessageA(lpString string) (uint, error) {
 	return uint(msgID), nil
 }
 
-func sendNotifyMessage(msgID uint, msg uint32, wParam uint32) error {
+func sendNotifyMessage(msgID uint, wParam uint32, lParam uint32) error {
 	hWnd := HWND_BROADCAST
 
 	result, _, err := wSendNotifyMessage.Call(
 		uintptr(hWnd),   // HWND
-		uintptr(msg),    // UINT
+		uintptr(msgID),  // UINT
 		uintptr(wParam), // WPARAM
-		0,               // LPARAM
+		uintptr(lParam), // LPARAM
 	)
 
+	fmt.Println(err)
 	if result == 0 {
 		errMsg := fmt.Sprintf("sendNotifyMessage failed (%s)", err)
 		return errors.New(errMsg)
