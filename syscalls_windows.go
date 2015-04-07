@@ -1,7 +1,13 @@
 package main
 
+/*
+// for timeBeginPeriod()
+#pragma comment(lib, "Winmm")
+// for RegisterWindowMessageA() and SendMessage()
+#pragma comment(lib, "User32")
+*/
+import "C"
 import (
-	"C"
 	"errors"
 	"fmt"
 	"syscall"
@@ -29,8 +35,7 @@ var (
 	wOpenEvent              = kernel32.NewProc("OpenEventW")
 	wWaitForSingleObject    = kernel32.NewProc("WaitForSingleObject")
 	wRegisterWindowMessageA = user32.NewProc("RegisterWindowMessageA")
-	wRegisterWindowMessageW = user32.NewProc("RegisterWindowMessageW")
-	wSendNotifyMessage      = user32.NewProc("SendNotifyMessageW")
+	wSendNotifyMessageA     = user32.NewProc("SendNotifyMessageA")
 )
 
 func sleep(timeout int) error {
@@ -139,7 +144,7 @@ func waitForSingleObject(hDataValidEvent uintptr, timeOut int) error {
 }
 
 func registerWindowMessageA(lpString string) (uint, error) {
-	msgID, _, err := wRegisterWindowMessageW.Call(
+	msgID, _, err := wRegisterWindowMessageA.Call(
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(lpString))), // LPCTSTR
 	)
 
@@ -154,7 +159,7 @@ func registerWindowMessageA(lpString string) (uint, error) {
 func sendNotifyMessage(msgID uint, wParam uint32, lParam uint32) error {
 	hWnd := HWND_BROADCAST
 
-	result, _, err := wSendNotifyMessage.Call(
+	result, _, err := wSendNotifyMessageA.Call(
 		uintptr(hWnd),   // HWND
 		uintptr(msgID),  // UINT
 		uintptr(wParam), // WPARAM
