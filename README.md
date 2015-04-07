@@ -30,3 +30,4 @@ GOARCH=386 GOOS=windows go get github.com/LeonB/irsdk-go
 - When running it under wine, Go time functions do not work:
   [go-nuts thread](https://groups.google.com/forum/#!topic/golang-nuts/nhJOw71rw7k) /
   [wine bug](https://bugs.winehq.org/show_bug.cgi?id=38272)
+- broadcastmsg doesn't work (no idea why)
