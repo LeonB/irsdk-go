@@ -29,9 +29,9 @@ const (
 )
 
 var (
-	ErrInitialize = errors.New("Failed to initialize")
-	ErrDataChanged = errors.New("Data changed out from under us")
-	ErrDisconnected = errors.New("We probably disconnected")
+	ErrInitialize     = errors.New("Failed to initialize")
+	ErrDataChanged    = errors.New("Data changed out from under us")
+	ErrDisconnected   = errors.New("We probably disconnected")
 	ErrNothingChanged = errors.New("Nothing changed this tick")
 )
 
@@ -43,7 +43,6 @@ var hMemMapFile uintptr
 var pHeader *irsdk_header
 var isInitialized bool
 var lastValidTime time.Time
-var timeout time.Duration
 var pSharedMem []byte
 
 // var sharedMemPtr uintptr
@@ -182,7 +181,6 @@ func Irsdk_waitForDataReady(timeOut int) ([]byte, error) {
 
 		if err != nil {
 			// sleep if error
-			// @TODO: fix this
 			if timeOut > 0 {
 				sleep(timeOut)
 			}
@@ -193,11 +191,8 @@ func Irsdk_waitForDataReady(timeOut int) ([]byte, error) {
 
 	// just to be sure, check before we sleep
 	data, err = Irsdk_getNewData()
-	if err != nil {
-		return nil, err
-	}
 	if data != nil {
-		return data, nil
+		return data, err
 	}
 
 	// sleep till signaled
@@ -205,16 +200,13 @@ func Irsdk_waitForDataReady(timeOut int) ([]byte, error) {
 
 	// we woke up, so check for data
 	data, err = Irsdk_getNewData()
-	if err != nil {
-		return nil, err
-	}
-
 	return data, err
 }
+
 func Irsdk_isConnected() bool {
 	if isInitialized {
 		elapsed := time.Now().Sub(lastValidTime)
-		if (pHeader.Status&irsdk_stConnected) > 0 && (elapsed < timeout) {
+		if (pHeader.Status&irsdk_stConnected) > 0 && (elapsed < TIMEOUT) {
 			return true
 		}
 	}
