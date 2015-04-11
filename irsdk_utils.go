@@ -28,6 +28,13 @@ const (
 	TIMEOUT = time.Duration(30) // timeout after 30 seconds with no communication
 )
 
+var (
+	ErrInitialize = errors.New("Failed to initialize")
+	ErrDataChanged = errors.New("Data changed out from under us")
+	ErrDisconnected = errors.New("We probably disconnected")
+	ErrNothingChanged = errors.New("Nothing changed this tick")
+)
+
 // Local memory
 
 var hDataValidEvent uintptr
@@ -88,7 +95,7 @@ func irsdk_startup() error {
 	//else printf("Error opening file: %d\n", GetLastError()); `
 
 	isInitialized = false
-	return errors.New("Failed to initialize")
+	return ErrInitialize
 }
 
 func irsdk_shutdown() {
@@ -156,15 +163,15 @@ func irsdk_getNewData() ([]byte, error) {
 			}
 		}
 		// if here, the data changed out from under us.
-		return nil, errors.New("Data changed out from under us")
+		return nil, ErrDataChanged
 	} else if lastTickCount > int(pHeader.VarBuf[latest].TickCount) {
 		// if older than last recieved, than reset, we probably disconnected
 		lastTickCount = int(pHeader.VarBuf[latest].TickCount)
-		return nil, errors.New("We probably disconnected")
+		return nil, ErrDisconnected
 	}
 
 	// else the same, and nothing changed this tick
-	return nil, errors.New("Nothing changed this tick")
+	return nil, ErrNothingChanged
 }
 
 func irsdk_waitForDataReady(timeOut int) ([]byte, error) {
