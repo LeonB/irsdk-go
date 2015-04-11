@@ -34,7 +34,7 @@ var (
 	wMapViewOfFile          = kernel32.NewProc("MapViewOfFile")
 	wCloseHandle            = kernel32.NewProc("CloseHandle")
 	wUnmapViewOfFile        = kernel32.NewProc("UnmapViewOfFile")
-	wOpenEvent              = kernel32.NewProc("OpenEventW")
+	wOpenEventW             = kernel32.NewProc("OpenEventW")
 	wWaitForSingleObject    = kernel32.NewProc("WaitForSingleObject")
 	wRegisterWindowMessageA = user32.NewProc("RegisterWindowMessageA")
 	wSendNotifyMessageA     = user32.NewProc("SendNotifyMessageA")
@@ -115,7 +115,7 @@ func openEvent(lpName string) (uintptr, error) {
 	dwDesiredAccess := syscall.SYNCHRONIZE
 	bInheritHandle := 0
 
-	hDataValidEvent, _, err := wOpenEvent.Call(
+	hDataValidEvent, _, err := wOpenEventW.Call(
 		uintptr(dwDesiredAccess),                                  // DWORD
 		uintptr(bInheritHandle),                                   // BOOL
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(lpName))), // LPCTSTR
