@@ -1,6 +1,6 @@
 // +build windows
 
-package main
+package irsdk_utils
 
 import "C"
 import (
@@ -49,7 +49,7 @@ var pSharedMem []byte
 // var sharedMemPtr uintptr
 var lastTickCount = INT_MAX
 
-func irsdk_startup() error {
+func Irsdk_startup() error {
 	var err error
 
 	if hMemMapFile == 0 {
@@ -98,7 +98,7 @@ func irsdk_startup() error {
 	return ErrInitialize
 }
 
-func irsdk_shutdown() {
+func Irsdk_shutdown() {
 	if hDataValidEvent != 0 {
 		closeHandle(hDataValidEvent)
 
@@ -121,9 +121,9 @@ func irsdk_shutdown() {
 	}
 }
 
-func irsdk_getNewData() ([]byte, error) {
+func Irsdk_getNewData() ([]byte, error) {
 	if !isInitialized {
-		err := irsdk_startup()
+		err := Irsdk_startup()
 		if err != nil {
 			return nil, err
 		}
@@ -154,7 +154,6 @@ func irsdk_getNewData() ([]byte, error) {
 			// Copy data
 			data := make([]byte, bufLen)
 			copy(data, pSharedMem[startByte:endByte])
-			// data := pSharedMem[startByte:endByte]
 
 			if curTickCount == int(pHeader.VarBuf[latest].TickCount) {
 				lastTickCount = curTickCount
@@ -174,12 +173,12 @@ func irsdk_getNewData() ([]byte, error) {
 	return nil, ErrNothingChanged
 }
 
-func irsdk_waitForDataReady(timeOut int) ([]byte, error) {
+func Irsdk_waitForDataReady(timeOut int) ([]byte, error) {
 	var data []byte
 	var err error
 
 	if !isInitialized {
-		err = irsdk_startup()
+		err = Irsdk_startup()
 
 		if err != nil {
 			// sleep if error
@@ -193,23 +192,26 @@ func irsdk_waitForDataReady(timeOut int) ([]byte, error) {
 	}
 
 	// just to be sure, check before we sleep
-	data, err = irsdk_getNewData()
-	if err == nil {
-		return data, err
+	data, err = Irsdk_getNewData()
+	if err != nil {
+		return nil, err
+	}
+	if data != nil {
+		return data, nil
 	}
 
 	// sleep till signaled
 	waitForSingleObject(hDataValidEvent, timeOut)
 
 	// we woke up, so check for data
-	data, err = irsdk_getNewData()
+	data, err = Irsdk_getNewData()
 	if err != nil {
 		return nil, err
 	}
 
 	return data, err
 }
-func irsdk_isConnected() bool {
+func Irsdk_isConnected() bool {
 	if isInitialized {
 		elapsed := time.Now().Sub(lastValidTime)
 		if (pHeader.Status&irsdk_stConnected) > 0 && (elapsed < timeout) {
@@ -224,7 +226,7 @@ func irsdk_isConnected() bool {
 // // Warnign! This buffer is volitile so read it out fast!
 // // Use the cached copy from irsdk_waitForDataReady() or irsdk_getNewData()
 // instead
-func irsdk_getData(index int) []byte {
+func Irsdk_getData(index int) []byte {
 	if isInitialized {
 		endByte := int(pHeader.VarBuf[index].BufOffset)
 		return pSharedMem[:endByte]
@@ -233,17 +235,17 @@ func irsdk_getData(index int) []byte {
 	return nil
 }
 
-func irsdk_getSessionInfoStr() []byte {
+func Irsdk_getSessionInfoStr() []byte {
 	if isInitialized {
 		return pSharedMem[pHeader.SessionInfoOffset:pHeader.SessionInfoLen]
 	}
 	return nil
 }
 
-func irsdk_getVarHeaderPtr() *irsdk_varHeader {
+func Irsdk_getVarHeaderPtr() *Irsdk_varHeader {
 	if isInitialized {
 		varHeaderOffset := int(pHeader.VarHeaderOffset)
-		varHeader := &irsdk_varHeader{}
+		varHeader := &Irsdk_varHeader{}
 		varHeaderSize := int(unsafe.Sizeof(*varHeader))
 
 		startByte := varHeaderOffset
@@ -251,7 +253,7 @@ func irsdk_getVarHeaderPtr() *irsdk_varHeader {
 
 		// create a io.Reader
 		b := bytes.NewBuffer(pSharedMem[startByte:endByte])
-		// read []byte and convert it into irsdk_varHeader
+		// read []byte and convert it into Irsdk_varHeader
 		binary.Read(b, binary.LittleEndian, varHeader)
 
 		return varHeader
@@ -259,11 +261,11 @@ func irsdk_getVarHeaderPtr() *irsdk_varHeader {
 	return nil
 }
 
-func irsdk_getVarHeaderEntry(index int) *irsdk_varHeader {
+func Irsdk_getVarHeaderEntry(index int) *Irsdk_varHeader {
 	if isInitialized {
 		if index >= 0 && index < (int)(pHeader.NumVars) {
 			varHeaderOffset := int(pHeader.VarHeaderOffset)
-			varHeader := &irsdk_varHeader{}
+			varHeader := &Irsdk_varHeader{}
 			varHeaderSize := int(unsafe.Sizeof(*varHeader))
 
 			startByte := varHeaderOffset + (index * varHeaderSize)
@@ -271,7 +273,7 @@ func irsdk_getVarHeaderEntry(index int) *irsdk_varHeader {
 
 			// create a io.Reader
 			b := bytes.NewBuffer(pSharedMem[startByte:endByte])
-			// read []byte and convert it into irsdk_varHeader
+			// read []byte and convert it into Irsdk_varHeader
 			binary.Read(b, binary.LittleEndian, varHeader)
 
 			return varHeader
@@ -281,13 +283,13 @@ func irsdk_getVarHeaderEntry(index int) *irsdk_varHeader {
 }
 
 // Note: this is a linear search, so cache the results
-func irsdk_varNameToIndex(name string) int {
-	var pVar *irsdk_varHeader
+func Irsdk_varNameToIndex(name string) int {
+	var pVar *Irsdk_varHeader
 
 	if name != "" {
 		numVars := int(pHeader.NumVars)
 		for index := 0; index <= numVars; index++ {
-			pVar = irsdk_getVarHeaderEntry(index)
+			pVar = Irsdk_getVarHeaderEntry(index)
 			pVarName := CToGoString(pVar.Name[:])
 			if pVar != nil && pVarName == name {
 				return index
@@ -298,13 +300,13 @@ func irsdk_varNameToIndex(name string) int {
 	return -1
 }
 
-func irsdk_varNameToOffset(name string) C.int {
-	var pVar *irsdk_varHeader
+func Irsdk_varNameToOffset(name string) C.int {
+	var pVar *Irsdk_varHeader
 
 	if name != "" {
 		numVars := int(pHeader.NumVars)
 		for index := 0; index <= numVars; index++ {
-			pVar = irsdk_getVarHeaderEntry(index)
+			pVar = Irsdk_getVarHeaderEntry(index)
 			pVarName := CToGoString(pVar.Name[:])
 			if pVar != nil && pVarName == name {
 				return pVar.Offset
@@ -315,23 +317,8 @@ func irsdk_varNameToOffset(name string) C.int {
 	return -1
 }
 
-func CToGoString(c []byte) string {
-	n := -1
-	for i, b := range c {
-		if b == 0 {
-			break
-		}
-		n = i
-	}
-	return string(c[:n+1])
-}
-
-func irsdk_getBroadcastMsgID() (uint, error) {
-	return registerWindowMessageA(IRSDK_BROADCASTMSGNAME)
-}
-
-func irsdk_broadcastMsg(msg irsdk_BroadcastMsg, var1 uint16, var2 uint16, var3 uint16) error {
-	msgID, _ := irsdk_getBroadcastMsgID()
+func Irsdk_broadcastMsg(msg irsdk_BroadcastMsg, var1 uint16, var2 uint16, var3 uint16) error {
+	msgID, _ := Irsdk_getBroadcastMsgID()
 
 	wParam := MAKELONG(uint16(msg), var1)
 	lParam := MAKELONG(var2, var3)
@@ -344,7 +331,7 @@ func irsdk_broadcastMsg(msg irsdk_BroadcastMsg, var1 uint16, var2 uint16, var3 u
 	fmt.Println("wParam", wParam)
 	fmt.Println("lParam", lParam)
 
-	if msgID > 0 && msg >= 0 && msg < irsdk_BroadcastLast {
+	if msgID > 0 && msg >= 0 && msg < Irsdk_BroadcastLast {
 		err := sendNotifyMessage(msgID, wParam, lParam)
 		if err != nil {
 			return err
@@ -354,7 +341,7 @@ func irsdk_broadcastMsg(msg irsdk_BroadcastMsg, var1 uint16, var2 uint16, var3 u
 	return nil
 }
 
-func irsdk_padCarNum(num int, zero int) int {
+func Irsdk_padCarNum(num int, zero int) int {
 	retVal := num
 	numPlace := 1
 	if num > 99 {
@@ -368,4 +355,25 @@ func irsdk_padCarNum(num int, zero int) int {
 	}
 
 	return retVal
+}
+
+// Custom functions
+
+func Irsdk_getNumVars() int {
+	return int(pHeader.NumVars)
+}
+
+func CToGoString(c []byte) string {
+	n := -1
+	for i, b := range c {
+		if b == 0 {
+			break
+		}
+		n = i
+	}
+	return string(c[:n+1])
+}
+
+func Irsdk_getBroadcastMsgID() (uint, error) {
+	return registerWindowMessageA(IRSDK_BROADCASTMSGNAME)
 }
