@@ -53,7 +53,7 @@ import "C"
 type irsdk_StatusField int
 
 const (
-	irsdk_stConnected irsdk_StatusField = iota
+	irsdk_stConnected irsdk_StatusField = 1
 )
 
 type irsdk_VarType C.int
