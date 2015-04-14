@@ -68,7 +68,7 @@ func Irsdk_startup() error {
 			}
 
 			pHeader = (*irsdk_header)(unsafe.Pointer(sharedMemPtr))
-			pSharedMem = (*[1 << 30]byte)(unsafe.Pointer(sharedMemPtr))[:]
+			pSharedMem = (*[MEMMAPFILESIZE]byte)(unsafe.Pointer(sharedMemPtr))[:]
 			lastTickCount = INT_MAX
 		}
 
