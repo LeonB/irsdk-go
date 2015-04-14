@@ -88,50 +88,50 @@ var irsdk_VarTypeBytes = [Irsdk_ETCount]int{
 }
 
 // bit fields
-type irsdk_EngineWarnings int
+type Irsdk_EngineWarnings int
 
 const (
-	Irsdk_waterTempWarning    irsdk_EngineWarnings = 0x01
-	Irsdk_fuelPressureWarning irsdk_EngineWarnings = 0x02
-	Irsdk_oilPressureWarning  irsdk_EngineWarnings = 0x04
-	Irsdk_engineStalled       irsdk_EngineWarnings = 0x08
-	Irsdk_pitSpeedLimiter     irsdk_EngineWarnings = 0x10
-	Irsdk_revLimiterActive    irsdk_EngineWarnings = 0x20
+	Irsdk_waterTempWarning    Irsdk_EngineWarnings = 0x01
+	Irsdk_fuelPressureWarning Irsdk_EngineWarnings = 0x02
+	Irsdk_oilPressureWarning  Irsdk_EngineWarnings = 0x04
+	Irsdk_engineStalled       Irsdk_EngineWarnings = 0x08
+	Irsdk_pitSpeedLimiter     Irsdk_EngineWarnings = 0x10
+	Irsdk_revLimiterActive    Irsdk_EngineWarnings = 0x20
 )
 
-type irsdk_Flags uint32
+type Irsdk_Flags uint32
 
 const (
 	// global flags
-	Irsdk_checkered     irsdk_Flags = 0x00000001
-	Irsdk_white         irsdk_Flags = 0x00000002
-	Irsdk_green         irsdk_Flags = 0x00000004
-	Irsdk_yellow        irsdk_Flags = 0x00000008
-	Irsdk_red           irsdk_Flags = 0x00000010
-	Irsdk_blue          irsdk_Flags = 0x00000020
-	Irsdk_debris        irsdk_Flags = 0x00000040
-	Irsdk_crossed       irsdk_Flags = 0x00000080
-	Irsdk_yellowWaving  irsdk_Flags = 0x00000100
-	Irsdk_oneLapToGreen irsdk_Flags = 0x00000200
-	Irsdk_greenHeld     irsdk_Flags = 0x00000400
-	Irsdk_tenToGo       irsdk_Flags = 0x00000800
-	Irsdk_fiveToGo      irsdk_Flags = 0x00001000
-	Irsdk_randomWaving  irsdk_Flags = 0x00002000
-	Irsdk_caution       irsdk_Flags = 0x00004000
-	Irsdk_cautionWaving irsdk_Flags = 0x00008000
+	Irsdk_checkered     Irsdk_Flags = 0x00000001
+	Irsdk_white         Irsdk_Flags = 0x00000002
+	Irsdk_green         Irsdk_Flags = 0x00000004
+	Irsdk_yellow        Irsdk_Flags = 0x00000008
+	Irsdk_red           Irsdk_Flags = 0x00000010
+	Irsdk_blue          Irsdk_Flags = 0x00000020
+	Irsdk_debris        Irsdk_Flags = 0x00000040
+	Irsdk_crossed       Irsdk_Flags = 0x00000080
+	Irsdk_yellowWaving  Irsdk_Flags = 0x00000100
+	Irsdk_oneLapToGreen Irsdk_Flags = 0x00000200
+	Irsdk_greenHeld     Irsdk_Flags = 0x00000400
+	Irsdk_tenToGo       Irsdk_Flags = 0x00000800
+	Irsdk_fiveToGo      Irsdk_Flags = 0x00001000
+	Irsdk_randomWaving  Irsdk_Flags = 0x00002000
+	Irsdk_caution       Irsdk_Flags = 0x00004000
+	Irsdk_cautionWaving Irsdk_Flags = 0x00008000
 
 	// drivers black flags
-	Irsdk_black      irsdk_Flags = 0x00010000
-	Irsdk_disqualify irsdk_Flags = 0x00020000
-	Irsdk_servicible irsdk_Flags = 0x00040000 // car is allowed service (not a flag)
-	Irsdk_furled     irsdk_Flags = 0x00080000
-	Irsdk_repair     irsdk_Flags = 0x00100000
+	Irsdk_black      Irsdk_Flags = 0x00010000
+	Irsdk_disqualify Irsdk_Flags = 0x00020000
+	Irsdk_servicible Irsdk_Flags = 0x00040000 // car is allowed service (not a flag)
+	Irsdk_furled     Irsdk_Flags = 0x00080000
+	Irsdk_repair     Irsdk_Flags = 0x00100000
 
 	// start lights
-	Irsdk_startHidden irsdk_Flags = 0x10000000
-	Irsdk_startReady  irsdk_Flags = 0x20000000
-	Irsdk_startSet    irsdk_Flags = 0x40000000
-	Irsdk_startGo     irsdk_Flags = 0x80000000
+	Irsdk_startHidden Irsdk_Flags = 0x10000000
+	Irsdk_startReady  Irsdk_Flags = 0x20000000
+	Irsdk_startSet    Irsdk_Flags = 0x40000000
+	Irsdk_startGo     Irsdk_Flags = 0x80000000
 )
 
 type irsdk_TrkLoc int
@@ -157,20 +157,20 @@ const (
 	irsdk_StateCoolDown   irsdk_SessionState = iota
 )
 
-type irsdk_CameraState int
+type Irsdk_CameraState int
 
 const (
-	Irsdk_IsSessionScreen irsdk_CameraState = 0x0001 // the camera tool can only be activated if viewing the session screen (out of car)
-	Irsdk_IsScenicActive  irsdk_CameraState = 0x0002 // the scenic camera is active (no focus car)
+	Irsdk_IsSessionScreen Irsdk_CameraState = 0x0001 // the camera tool can only be activated if viewing the session screen (out of car)
+	Irsdk_IsScenicActive  Irsdk_CameraState = 0x0002 // the scenic camera is active (no focus car)
 
 	//these can be changed with a broadcast message
-	Irsdk_CamToolActive         irsdk_CameraState = 0x0004
-	Irsdk_UIHidden              irsdk_CameraState = 0x0008
-	Irsdk_UseAutoShotSelection  irsdk_CameraState = 0x0010
-	Irsdk_UseTemporaryEdits     irsdk_CameraState = 0x0020
-	Irsdk_UseKeyAcceleration    irsdk_CameraState = 0x0040
-	Irsdk_UseKey10xAcceleration irsdk_CameraState = 0x0080
-	Irsdk_UseMouseAimMode       irsdk_CameraState = 0x0100
+	Irsdk_CamToolActive         Irsdk_CameraState = 0x0004
+	Irsdk_UIHidden              Irsdk_CameraState = 0x0008
+	Irsdk_UseAutoShotSelection  Irsdk_CameraState = 0x0010
+	Irsdk_UseTemporaryEdits     Irsdk_CameraState = 0x0020
+	Irsdk_UseKeyAcceleration    Irsdk_CameraState = 0x0040
+	Irsdk_UseKey10xAcceleration Irsdk_CameraState = 0x0080
+	Irsdk_UseMouseAimMode       Irsdk_CameraState = 0x0100
 )
 
 //----

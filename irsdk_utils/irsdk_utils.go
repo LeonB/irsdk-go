@@ -45,7 +45,7 @@ var isInitialized bool
 var lastValidTime time.Time
 var pSharedMem []byte
 
-// var sharedMemPtr uintptr
+var sharedMemPtr uintptr
 var lastTickCount = INT_MAX
 
 func Irsdk_startup() error {
@@ -62,7 +62,7 @@ func Irsdk_startup() error {
 
 	if hMemMapFile != 0 {
 		if len(pSharedMem) == 0 {
-			sharedMemPtr, err := mapViewOfFile(hMemMapFile, MEMMAPFILESIZE)
+			sharedMemPtr, err = mapViewOfFile(hMemMapFile, MEMMAPFILESIZE)
 			if err != nil {
 				return err
 			}
@@ -74,7 +74,6 @@ func Irsdk_startup() error {
 
 		if len(pSharedMem) != 0 {
 			if hDataValidEvent == 0 {
-				// hDataValidEvent = try.N("OpenEvent", SYNCHRONIZE, false, syscall.StringToUTF16Ptr(IRSDK_DATAVALIDEVENTNAME))
 				hDataValidEvent, err = openEvent(IRSDK_DATAVALIDEVENTNAME)
 				if err != nil {
 					return err
@@ -368,4 +367,8 @@ func CToGoString(c []byte) string {
 
 func Irsdk_getBroadcastMsgID() (uint, error) {
 	return registerWindowMessageA(IRSDK_BROADCASTMSGNAME)
+}
+
+func Irsdk_getSharedMem() []byte {
+	return pSharedMem
 }

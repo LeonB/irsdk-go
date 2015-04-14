@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"log"
 	"unsafe"
 
 	utils "github.com/leonb/irsdk-go/irsdk_utils"
@@ -28,13 +29,72 @@ type irIntVar struct {
 }
 
 type irBitfieldVar struct {
-	name string
-	flags map[string]bool
+	name   string
+	fields map[string]bool
 }
 
 type irFloatVar struct {
 	name  string
 	value float32
+}
+
+type irDoubleVar struct {
+	name  string
+	value float64
+}
+
+var irsdkFlags = map[utils.Irsdk_Flags]string{
+	// global flags
+	utils.Irsdk_checkered:     "checkered",
+	utils.Irsdk_white:         "white",
+	utils.Irsdk_green:         "green",
+	utils.Irsdk_yellow:        "yellow",
+	utils.Irsdk_red:           "red",
+	utils.Irsdk_blue:          "blue",
+	utils.Irsdk_debris:        "debris",
+	utils.Irsdk_crossed:       "crossed",
+	utils.Irsdk_yellowWaving:  "yellowWaving",
+	utils.Irsdk_oneLapToGreen: "oneLapToGreen",
+	utils.Irsdk_greenHeld:     "greenHeld",
+	utils.Irsdk_tenToGo:       "tenToGo",
+	utils.Irsdk_fiveToGo:      "fiveToGo",
+	utils.Irsdk_randomWaving:  "randomWaving",
+	utils.Irsdk_caution:       "caution",
+	utils.Irsdk_cautionWaving: "cautionWaving",
+
+	// drivers black flags
+	utils.Irsdk_black:      "black",
+	utils.Irsdk_disqualify: "disqualify",
+	utils.Irsdk_servicible: "servicible", // car is allowed service (not a flag)
+	utils.Irsdk_furled:     "furled",
+	utils.Irsdk_repair:     "repair",
+
+	// start lights
+	utils.Irsdk_startHidden: "startHidden",
+	utils.Irsdk_startReady:  "startReady",
+	utils.Irsdk_startSet:    "startSet",
+	utils.Irsdk_startGo:     "startGo",
+}
+
+var irsdkEngineWarnings = map[utils.Irsdk_EngineWarnings]string{
+	utils.Irsdk_waterTempWarning:    "waterTempWarning",
+	utils.Irsdk_fuelPressureWarning: "fuelPressureWarning",
+	utils.Irsdk_oilPressureWarning:  "oilPressureWarning",
+	utils.Irsdk_engineStalled:       "engineStalled",
+	utils.Irsdk_pitSpeedLimiter:     "pitSpeedLimiter",
+	utils.Irsdk_revLimiterActive:    "revLimiterActive",
+}
+
+var irsdkCameraStates = map[utils.Irsdk_CameraState]string{
+	utils.Irsdk_IsSessionScreen:       "isSessionScreen",
+	utils.Irsdk_IsScenicActive:        "isScencActive",
+	utils.Irsdk_CamToolActive:         "camToolActive",
+	utils.Irsdk_UIHidden:              "uiHidden",
+	utils.Irsdk_UseAutoShotSelection:  "useAutoShotSelection",
+	utils.Irsdk_UseTemporaryEdits:     "useTemporaryEdits",
+	utils.Irsdk_UseKeyAcceleration:    "useKeyAcceleration",
+	utils.Irsdk_UseKey10xAcceleration: "useKey10xAcceleration",
+	utils.Irsdk_UseMouseAimMode:       "useMouseAimMode",
 }
 
 func main() {
@@ -67,44 +127,43 @@ func testTelemetryData() {
 			fmt.Println("Data changed")
 			changes++
 			testData(data)
-			break
 		}
 
-		// irsdk_shutdown()
-		// break
+		utils.Irsdk_shutdown()
+		break
 	}
 
 	return
 }
 
 func testData(data []byte) {
-	// fmt.Println("data:", data)
-	// fmt.Println("len(data): ", len(data))
 	numVars := utils.Irsdk_getNumVars()
 
 	for i := 0; i <= numVars; i++ {
 		varHeader := utils.Irsdk_getVarHeaderEntry(i)
 
 		if varHeader != nil {
-			// fmt.Println("varHeader.Offset: ", varHeader.Offset)
-
-			// make this a switch
-
 			switch varHeader.Type {
 			case utils.Irsdk_char:
-				continue
-				extractCharFromVarHeader(varHeader, data)
+				// irVar := extractCharFromVarHeader(varHeader, data)
+				// fmt.Printf("%v: %v\n", irVar.name, irVar.value)
 			case utils.Irsdk_bool:
-				continue
-				extractBoolFromVarHeader(varHeader, data)
+				// irVar := extractBoolFromVarHeader(varHeader, data)
+				// fmt.Printf("%v: %v\n", irVar.name, irVar.value)
 			case utils.Irsdk_int:
-				continue
-				extractIntFromVarHeader(varHeader, data)
+				// irVar := extractIntFromVarHeader(varHeader, data)
+				// fmt.Printf("%v: %v\n", irVar.name, irVar.value)
 			case utils.Irsdk_bitField:
-				extractBitfieldFromVarHeader(varHeader, data)
+				irVar := extractBitfieldFromVarHeader(varHeader, data)
+				fmt.Printf("%v: %v\n", irVar.name, irVar.fields)
 			case utils.Irsdk_float:
-				continue
-				extractFloatFromVarHeader(varHeader, data)
+				// irVar := extractFloatFromVarHeader(varHeader, data)
+				// fmt.Printf("%v: %v\n", irVar.name, irVar.value)
+			case utils.Irsdk_double:
+				// irVar := extractDoubleFromVarHeader(varHeader, data)
+				// fmt.Printf("%v: %v\n", irVar.name, irVar.value)
+			default:
+				log.Println("Unknown irsdk varType:", varHeader.Type)
 			}
 		}
 	}
@@ -112,34 +171,28 @@ func testData(data []byte) {
 
 func extractCharFromVarHeader(header *utils.Irsdk_varHeader, data []byte) irCharVar {
 	var hvar C.char // 1 byte
-	retVar := irCharVar{}
 
-	count := int(header.Count)
 	startByte := int(header.Offset)
 	varLen := int(unsafe.Sizeof(hvar))
 	endByte := startByte + varLen
-	fmt.Println("header.Name:", utils.CToGoString(header.Name[:]))
-	fmt.Println("count:", count)
-	fmt.Println("type:", "char")
+	varName := utils.CToGoString(header.Name[:])
 
 	buf := bytes.NewBuffer(data[startByte:endByte])
 	binary.Read(buf, binary.LittleEndian, &hvar)
-	fmt.Println("hvar: ", hvar)
 
-	return retVar
+	return irCharVar{
+		name:  varName,
+		value: byte(hvar),
+	}
 }
 
 func extractBoolFromVarHeader(header *utils.Irsdk_varHeader, data []byte) irBoolVar {
 	var hvar bool // 1 byte
-	retVar := irBoolVar{}
 
-	count := int(header.Count)
 	startByte := int(header.Offset)
 	varLen := int(unsafe.Sizeof(hvar))
 	endByte := startByte + varLen
-	fmt.Println("header.Name:", utils.CToGoString(header.Name[:]))
-	fmt.Println("count:", count)
-	fmt.Println("type:", "bool")
+	varName := utils.CToGoString(header.Name[:])
 
 	if data[startByte:endByte][0] == 0 {
 		hvar = false
@@ -147,28 +200,27 @@ func extractBoolFromVarHeader(header *utils.Irsdk_varHeader, data []byte) irBool
 		hvar = true
 	}
 
-	fmt.Println("hvar: ", hvar)
-
-	return retVar
+	return irBoolVar{
+		name:  varName,
+		value: hvar,
+	}
 }
 
 func extractIntFromVarHeader(header *utils.Irsdk_varHeader, data []byte) irIntVar {
 	var hvar C.int // 4 bytes
-	retVar := irIntVar{}
 
-	count := int(header.Count)
 	startByte := int(header.Offset)
 	varLen := int(unsafe.Sizeof(hvar))
 	endByte := startByte + varLen
-	fmt.Println("header.Name:", utils.CToGoString(header.Name[:]))
-	fmt.Println("count:", count)
-	fmt.Println("type:", "int")
+	varName := utils.CToGoString(header.Name[:])
 
 	buf := bytes.NewBuffer(data[startByte:endByte])
 	binary.Read(buf, binary.LittleEndian, &hvar)
-	fmt.Println("hvar: ", hvar)
 
-	return retVar
+	return irIntVar{
+		name:  varName,
+		value: int(hvar),
+	}
 }
 
 func extractBitfieldFromVarHeader(header *utils.Irsdk_varHeader, data []byte) irBitfieldVar {
@@ -176,51 +228,35 @@ func extractBitfieldFromVarHeader(header *utils.Irsdk_varHeader, data []byte) ir
 	// - CamCameraState
 	// - EngineWarnings
 	var hvar uint32 // 4 bytes
-	retVar := irBitfieldVar{}
 
-	count := int(header.Count)
 	startByte := int(header.Offset)
 	varLen := int(unsafe.Sizeof(hvar))
 	endByte := startByte + varLen
 	varName := utils.CToGoString(header.Name[:])
-	fmt.Println("header.Name:", varName)
-	fmt.Println("count:", count)
-	fmt.Println("type:", "bitField")
 
 	buf := bytes.NewBuffer(data[startByte:endByte])
 	binary.Read(buf, binary.LittleEndian, &hvar)
-	fmt.Println("hvar: ", hvar)
-	fmt.Println("data[startByte:endByte]:", data[startByte:endByte])
 
-	if varName == "SessionFlags" {
-		flags := uint32(hvar)
-		fmt.Println("checkered:", bool(flags&uint32(utils.Irsdk_checkered) != 0))
-		fmt.Println("white:", bool(flags&uint32(utils.Irsdk_white) != 0))
-		fmt.Println("green:", bool(flags&uint32(utils.Irsdk_green) != 0))
-		fmt.Println("yellow:", bool(flags&uint32(utils.Irsdk_yellow) != 0))
-		fmt.Println("red:", bool(flags&uint32(utils.Irsdk_red) != 0))
-		fmt.Println("blue:", bool(flags&uint32(utils.Irsdk_blue) != 0))
-		fmt.Println("debris:", bool(flags&uint32(utils.Irsdk_debris) != 0))
-		fmt.Println("crossed:", bool(flags&uint32(utils.Irsdk_crossed) != 0))
-		fmt.Println("yellowWaving:", bool(flags&uint32(utils.Irsdk_yellowWaving) != 0))
-		fmt.Println("oneLapToGreen:", bool(flags&uint32(utils.Irsdk_oneLapToGreen) != 0))
-		fmt.Println("greenHeld:", bool(flags&uint32(utils.Irsdk_greenHeld) != 0))
-		fmt.Println("tenToGo:", bool(flags&uint32(utils.Irsdk_tenToGo) != 0))
-		fmt.Println("fiveToGo:", bool(flags&uint32(utils.Irsdk_fiveToGo) != 0))
-		fmt.Println("randomWaving:", bool(flags&uint32(utils.Irsdk_randomWaving) != 0))
-		fmt.Println("caution:", bool(flags&uint32(utils.Irsdk_caution) != 0))
-		fmt.Println("cautionWaving:", bool(flags&uint32(utils.Irsdk_cautionWaving) != 0))
+	retVar := irBitfieldVar{
+		name:   varName,
+		fields: make(map[string]bool),
+	}
 
-		fmt.Println("black:", bool(flags&uint32(utils.Irsdk_black) != 0))
-		fmt.Println("disqualify:", bool(flags&uint32(utils.Irsdk_disqualify) != 0))
-		fmt.Println("servicible:", bool(flags&uint32(utils.Irsdk_servicible) != 0))
-		fmt.Println("furled:", bool(flags&uint32(utils.Irsdk_furled) != 0))
-		fmt.Println("repair:", bool(flags&uint32(utils.Irsdk_repair) != 0))
-
-		fmt.Println("startHidden:", bool(flags&uint32(utils.Irsdk_startHidden) != 0))
-		fmt.Println("startReady:", bool(flags&uint32(utils.Irsdk_startReady) != 0))
-		fmt.Println("startSet:", bool(flags&uint32(utils.Irsdk_startSet) != 0))
-		fmt.Println("startGo:", bool(flags&uint32(utils.Irsdk_startGo) != 0))
+	switch varName {
+	case "SessionFlags":
+		for bitmask, name := range irsdkFlags {
+			retVar.fields[name] = bool(uint32(hvar)&uint32(bitmask) != 0)
+		}
+	case "CamCameraState":
+		for bitmask, name := range irsdkCameraStates {
+			retVar.fields[name] = bool(uint32(hvar)&uint32(bitmask) != 0)
+		}
+	case "EngineWarnings":
+		for bitmask, name := range irsdkEngineWarnings {
+			retVar.fields[name] = bool(uint32(hvar)&uint32(bitmask) != 0)
+		}
+	default:
+		log.Println("Unknown bitField var:", varName)
 	}
 
 	return retVar
@@ -228,21 +264,36 @@ func extractBitfieldFromVarHeader(header *utils.Irsdk_varHeader, data []byte) ir
 
 func extractFloatFromVarHeader(header *utils.Irsdk_varHeader, data []byte) irFloatVar {
 	var hvar C.float
-	retVar := irFloatVar{}
 
-	count := int(header.Count)
 	startByte := int(header.Offset)
 	varLen := int(unsafe.Sizeof(hvar))
 	endByte := startByte + varLen
-	fmt.Println("header.Name:", utils.CToGoString(header.Name[:]))
-	fmt.Println("count: ", count)
-	fmt.Println("type:", "float")
+	varName := utils.CToGoString(header.Name[:])
 
 	buf := bytes.NewBuffer(data[startByte:endByte])
 	binary.Read(buf, binary.LittleEndian, &hvar)
-	fmt.Println("hvar: ", hvar)
 
-	return retVar
+	return irFloatVar{
+		name:  varName,
+		value: float32(hvar),
+	}
+}
+
+func extractDoubleFromVarHeader(header *utils.Irsdk_varHeader, data []byte) irDoubleVar {
+	var hvar C.double
+
+	startByte := int(header.Offset)
+	varLen := int(unsafe.Sizeof(hvar))
+	endByte := startByte + varLen
+	varName := utils.CToGoString(header.Name[:])
+
+	buf := bytes.NewBuffer(data[startByte:endByte])
+	binary.Read(buf, binary.LittleEndian, &hvar)
+
+	return irDoubleVar{
+		name:  varName,
+		value: float64(hvar),
+	}
 }
 
 func testBroadcastMsg() {
