@@ -15,32 +15,44 @@ import (
 
 type irCharVar struct {
 	name  string
+	desc  string
 	value byte
+	unit  string
 }
 
 type irBoolVar struct {
 	name  string
+	desc  string
 	value bool
+	unit  string
 }
 
 type irIntVar struct {
 	name  string
+	desc  string
 	value int
+	unit  string
 }
 
 type irBitfieldVar struct {
 	name   string
+	desc   string
 	fields map[string]bool
+	unit   string
 }
 
 type irFloatVar struct {
 	name  string
+	desc  string
 	value float32
+	unit  string
 }
 
 type irDoubleVar struct {
 	name  string
+	desc  string
 	value float64
+	unit  string
 }
 
 var irsdkFlags = map[utils.Irsdk_Flags]string{
@@ -145,23 +157,29 @@ func testData(data []byte) {
 		if varHeader != nil {
 			switch varHeader.Type {
 			case utils.Irsdk_char:
-				// irVar := extractCharFromVarHeader(varHeader, data)
-				// fmt.Printf("%v: %v\n", irVar.name, irVar.value)
+				irVar := extractCharFromVarHeader(varHeader, data)
+				fmt.Printf("%v: %v\n", irVar.name, irVar.value)
+				fmt.Println(irVar.desc)
 			case utils.Irsdk_bool:
-				// irVar := extractBoolFromVarHeader(varHeader, data)
-				// fmt.Printf("%v: %v\n", irVar.name, irVar.value)
+				irVar := extractBoolFromVarHeader(varHeader, data)
+				fmt.Printf("%v: %v\n", irVar.name, irVar.value)
+				fmt.Println(irVar.desc)
 			case utils.Irsdk_int:
-				// irVar := extractIntFromVarHeader(varHeader, data)
-				// fmt.Printf("%v: %v\n", irVar.name, irVar.value)
+				irVar := extractIntFromVarHeader(varHeader, data)
+				fmt.Printf("%v: %v\n", irVar.name, irVar.value)
+				fmt.Println(irVar.desc)
 			case utils.Irsdk_bitField:
 				irVar := extractBitfieldFromVarHeader(varHeader, data)
 				fmt.Printf("%v: %v\n", irVar.name, irVar.fields)
+				fmt.Println(irVar.desc)
 			case utils.Irsdk_float:
-				// irVar := extractFloatFromVarHeader(varHeader, data)
-				// fmt.Printf("%v: %v\n", irVar.name, irVar.value)
+				irVar := extractFloatFromVarHeader(varHeader, data)
+				fmt.Printf("%v: %v\n", irVar.name, irVar.value)
+				fmt.Println(irVar.desc)
 			case utils.Irsdk_double:
-				// irVar := extractDoubleFromVarHeader(varHeader, data)
-				// fmt.Printf("%v: %v\n", irVar.name, irVar.value)
+				irVar := extractDoubleFromVarHeader(varHeader, data)
+				fmt.Printf("%v: %v\n", irVar.name, irVar.value)
+				fmt.Println(irVar.desc)
 			default:
 				log.Println("Unknown irsdk varType:", varHeader.Type)
 			}
@@ -176,13 +194,17 @@ func extractCharFromVarHeader(header *utils.Irsdk_varHeader, data []byte) irChar
 	varLen := int(unsafe.Sizeof(hvar))
 	endByte := startByte + varLen
 	varName := utils.CToGoString(header.Name[:])
+	varDesc := utils.CToGoString(header.Desc[:])
+	varUnit := utils.CToGoString(header.Unit[:])
 
 	buf := bytes.NewBuffer(data[startByte:endByte])
 	binary.Read(buf, binary.LittleEndian, &hvar)
 
 	return irCharVar{
 		name:  varName,
+		desc:  varDesc,
 		value: byte(hvar),
+		unit:  varUnit,
 	}
 }
 
@@ -193,6 +215,8 @@ func extractBoolFromVarHeader(header *utils.Irsdk_varHeader, data []byte) irBool
 	varLen := int(unsafe.Sizeof(hvar))
 	endByte := startByte + varLen
 	varName := utils.CToGoString(header.Name[:])
+	varDesc := utils.CToGoString(header.Desc[:])
+	varUnit := utils.CToGoString(header.Unit[:])
 
 	if data[startByte:endByte][0] == 0 {
 		hvar = false
@@ -202,7 +226,9 @@ func extractBoolFromVarHeader(header *utils.Irsdk_varHeader, data []byte) irBool
 
 	return irBoolVar{
 		name:  varName,
+		desc:  varDesc,
 		value: hvar,
+		unit:  varUnit,
 	}
 }
 
@@ -213,13 +239,17 @@ func extractIntFromVarHeader(header *utils.Irsdk_varHeader, data []byte) irIntVa
 	varLen := int(unsafe.Sizeof(hvar))
 	endByte := startByte + varLen
 	varName := utils.CToGoString(header.Name[:])
+	varDesc := utils.CToGoString(header.Desc[:])
+	varUnit := utils.CToGoString(header.Unit[:])
 
 	buf := bytes.NewBuffer(data[startByte:endByte])
 	binary.Read(buf, binary.LittleEndian, &hvar)
 
 	return irIntVar{
 		name:  varName,
+		desc:  varDesc,
 		value: int(hvar),
+		unit:  varUnit,
 	}
 }
 
@@ -233,13 +263,17 @@ func extractBitfieldFromVarHeader(header *utils.Irsdk_varHeader, data []byte) ir
 	varLen := int(unsafe.Sizeof(hvar))
 	endByte := startByte + varLen
 	varName := utils.CToGoString(header.Name[:])
+	varDesc := utils.CToGoString(header.Desc[:])
+	varUnit := utils.CToGoString(header.Unit[:])
 
 	buf := bytes.NewBuffer(data[startByte:endByte])
 	binary.Read(buf, binary.LittleEndian, &hvar)
 
 	retVar := irBitfieldVar{
 		name:   varName,
+		desc:   varDesc,
 		fields: make(map[string]bool),
+		unit:   varUnit,
 	}
 
 	switch varName {
@@ -269,13 +303,17 @@ func extractFloatFromVarHeader(header *utils.Irsdk_varHeader, data []byte) irFlo
 	varLen := int(unsafe.Sizeof(hvar))
 	endByte := startByte + varLen
 	varName := utils.CToGoString(header.Name[:])
+	varDesc := utils.CToGoString(header.Desc[:])
+	varUnit := utils.CToGoString(header.Unit[:])
 
 	buf := bytes.NewBuffer(data[startByte:endByte])
 	binary.Read(buf, binary.LittleEndian, &hvar)
 
 	return irFloatVar{
 		name:  varName,
+		desc:  varDesc,
 		value: float32(hvar),
+		unit:  varUnit,
 	}
 }
 
@@ -286,13 +324,17 @@ func extractDoubleFromVarHeader(header *utils.Irsdk_varHeader, data []byte) irDo
 	varLen := int(unsafe.Sizeof(hvar))
 	endByte := startByte + varLen
 	varName := utils.CToGoString(header.Name[:])
+	varDesc := utils.CToGoString(header.Desc[:])
+	varUnit := utils.CToGoString(header.Unit[:])
 
 	buf := bytes.NewBuffer(data[startByte:endByte])
 	binary.Read(buf, binary.LittleEndian, &hvar)
 
 	return irDoubleVar{
 		name:  varName,
+		desc:  varDesc,
 		value: float64(hvar),
+		unit:  varUnit,
 	}
 }
 
