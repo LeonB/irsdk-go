@@ -252,6 +252,25 @@ func Irsdk_getVarHeaderPtr() *Irsdk_varHeader {
 	return nil
 }
 
+func Irsdk_getVarHeaderEntryFast(index int) *Irsdk_varHeader {
+	if isInitialized {
+		if index >= 0 && index < (int)(pHeader.NumVars) {
+			varHeader := &Irsdk_varHeader{}
+			pSharedMemPtr := uintptr(unsafe.Pointer(&pSharedMem[0]))
+			varHeaderOffset := uintptr(pHeader.VarHeaderOffset)
+			varHeaderSize := uintptr(unsafe.Sizeof(*varHeader))
+			i := uintptr(index)
+			totalOffset := varHeaderOffset + (varHeaderSize * i)
+			varHeaderPtr := pSharedMemPtr + totalOffset
+
+			varHeader = (*Irsdk_varHeader)(unsafe.Pointer(varHeaderPtr))
+
+			return varHeader
+		}
+	}
+	return nil
+}
+
 func Irsdk_getVarHeaderEntry(index int) *Irsdk_varHeader {
 	if isInitialized {
 		if index >= 0 && index < (int)(pHeader.NumVars) {

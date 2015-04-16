@@ -373,25 +373,26 @@ func testTelemetryData() {
 		// 	fmt.Println("number of changes:", changes)
 		// }
 
-		data, err = utils.Irsdk_waitForDataReady(72)
+		data, err = utils.Irsdk_waitForDataReady(3000)
 		if err != nil {
 			fmt.Println(err)
 		}
 
 		if data != nil {
-			fmt.Println("Data changed")
+			// fmt.Println("Data changed")
 			changes++
 			telemetryData := toTelemetryData(data)
-			b, err := json.Marshal(telemetryData)
+			_, err := json.Marshal(telemetryData)
 			if err != nil {
 				fmt.Printf("Error: %s", err)
 				return
 			}
-			fmt.Println(string(b))
+			// fmt.Println(string(b))
+			fmt.Println(changes)
 		}
 
-		utils.Irsdk_shutdown()
-		break
+		// utils.Irsdk_shutdown()
+		// break
 	}
 
 	return
@@ -402,7 +403,7 @@ func toTelemetryData(data []byte) *TelemetryData {
 	numVars := utils.Irsdk_getNumVars()
 
 	for i := 0; i <= numVars; i++ {
-		varHeader := utils.Irsdk_getVarHeaderEntry(i)
+		varHeader := utils.Irsdk_getVarHeaderEntryFast(i)
 
 		if varHeader == nil {
 			continue
