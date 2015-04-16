@@ -145,16 +145,16 @@ const (
 	irsdk_OnTrac         irsdk_TrkLoc = iota - 1
 )
 
-type irsdk_SessionState int
+type Irsdk_SessionState int
 
 const (
-	irsdk_StateInvalid    irsdk_SessionState = iota
-	irsdk_StateGetInCar   irsdk_SessionState = iota
-	irsdk_StateWarmup     irsdk_SessionState = iota
-	irsdk_StateParadeLaps irsdk_SessionState = iota
-	irsdk_StateRacing     irsdk_SessionState = iota
-	irsdk_StateCheckered  irsdk_SessionState = iota
-	irsdk_StateCoolDown   irsdk_SessionState = iota
+	Irsdk_StateInvalid    Irsdk_SessionState = iota
+	Irsdk_StateGetInCar   Irsdk_SessionState = iota
+	Irsdk_StateWarmup     Irsdk_SessionState = iota
+	Irsdk_StateParadeLaps Irsdk_SessionState = iota
+	Irsdk_StateRacing     Irsdk_SessionState = iota
+	Irsdk_StateCheckered  Irsdk_SessionState = iota
+	Irsdk_StateCoolDown   Irsdk_SessionState = iota
 )
 
 type Irsdk_CameraState int
