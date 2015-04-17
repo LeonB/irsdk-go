@@ -210,6 +210,51 @@ type TelemetryData struct {
 	ReplaySessionTime float64
 }
 
+func (d *TelemetryData) addVarHeaderData(varHeader *utils.Irsdk_varHeader, data []byte) error {
+	switch varHeader.Type {
+	case utils.Irsdk_char:
+		irVar := extractCharFromVarHeader(varHeader, data)
+		err := d.AddIrCharVar(irVar)
+		if err != nil {
+			fmt.Println(err)
+		}
+	case utils.Irsdk_bool:
+		irVar := extractBoolFromVarHeader(varHeader, data)
+		err := d.AddIrBoolVar(irVar)
+		if err != nil {
+			fmt.Println(err)
+		}
+	case utils.Irsdk_int:
+		irVar := extractIntFromVarHeader(varHeader, data)
+		err := d.AddIrIntVar(irVar)
+		if err != nil {
+			fmt.Println(err)
+		}
+	case utils.Irsdk_bitField:
+		irVar := extractBitfieldFromVarHeader(varHeader, data)
+		err := d.AddIrBitfieldVar(irVar)
+		if err != nil {
+			fmt.Println(err)
+		}
+	case utils.Irsdk_float:
+		irVar := extractFloatFromVarHeader(varHeader, data)
+		err := d.AddIrFloatVar(irVar)
+		if err != nil {
+			fmt.Println(err)
+		}
+	case utils.Irsdk_double:
+		irVar := extractDoubleFromVarHeader(varHeader, data)
+		err := d.AddIrDoubleVar(irVar)
+		if err != nil {
+			fmt.Println(err)
+		}
+	default:
+		log.Println("Unknown irsdk varType:", varHeader.Type)
+	}
+
+	return nil
+}
+
 func (d *TelemetryData) AddIrCharVar(irVar *irCharVar) error {
 	return nil
 }
@@ -399,7 +444,8 @@ func testTelemetryData() {
 		if data != nil {
 			// fmt.Println("Data changed")
 			changes++
-			telemetryData := toTelemetryData(data)
+			fields := []string{}
+			telemetryData := toTelemetryDataFiltered(data, fields)
 			_, err := json.Marshal(telemetryData)
 			if err != nil {
 				fmt.Printf("Error: %s", err)
@@ -421,52 +467,40 @@ func toTelemetryData(data []byte) *TelemetryData {
 	numVars := utils.Irsdk_getNumVars()
 
 	for i := 0; i <= numVars; i++ {
-		varHeader := utils.Irsdk_getVarHeaderEntryFast(i)
+		varHeader := utils.Irsdk_getVarHeaderEntry(i)
 
 		if varHeader == nil {
 			continue
 		}
 
-		switch varHeader.Type {
-		case utils.Irsdk_char:
-			irVar := extractCharFromVarHeader(varHeader, data)
-			err := telemetryData.AddIrCharVar(irVar)
-			if err != nil {
-				fmt.Println(err)
-			}
-		case utils.Irsdk_bool:
-			irVar := extractBoolFromVarHeader(varHeader, data)
-			err := telemetryData.AddIrBoolVar(irVar)
-			if err != nil {
-				fmt.Println(err)
-			}
-		case utils.Irsdk_int:
-			irVar := extractIntFromVarHeader(varHeader, data)
-			err := telemetryData.AddIrIntVar(irVar)
-			if err != nil {
-				fmt.Println(err)
-			}
-		case utils.Irsdk_bitField:
-			irVar := extractBitfieldFromVarHeader(varHeader, data)
-			err := telemetryData.AddIrBitfieldVar(irVar)
-			if err != nil {
-				fmt.Println(err)
-			}
-		case utils.Irsdk_float:
-			irVar := extractFloatFromVarHeader(varHeader, data)
-			err := telemetryData.AddIrFloatVar(irVar)
-			if err != nil {
-				fmt.Println(err)
-			}
-		case utils.Irsdk_double:
-			irVar := extractDoubleFromVarHeader(varHeader, data)
-			err := telemetryData.AddIrDoubleVar(irVar)
-			if err != nil {
-				fmt.Println(err)
-			}
-		default:
-			log.Println("Unknown irsdk varType:", varHeader.Type)
+		telemetryData.addVarHeaderData(varHeader, data)
+	}
+
+	return telemetryData
+}
+
+func toTelemetryDataFiltered(data []byte, fields []string) *TelemetryData {
+	telemetryData := newTelemetryData()
+	numVars := utils.Irsdk_getNumVars()
+
+	for i := 0; i <= numVars; i++ {
+		varHeader := utils.Irsdk_getVarHeaderEntry(i)
+
+		if varHeader == nil {
+			continue
 		}
+
+		if fields != nil {
+			varName := string(varHeader.Name[:])
+			for _, v := range fields {
+				if v == varName {
+					break
+				}
+			}
+			return nil
+		}
+
+		telemetryData.addVarHeaderData(varHeader, data)
 	}
 
 	return telemetryData
