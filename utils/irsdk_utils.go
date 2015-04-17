@@ -228,7 +228,9 @@ func Irsdk_getData(index int) []byte {
 
 func Irsdk_getSessionInfoStr() []byte {
 	if isInitialized {
-		return pSharedMem[pHeader.SessionInfoOffset:pHeader.SessionInfoLen]
+		startByte := pHeader.SessionInfoOffset
+		length := pHeader.SessionInfoLen
+		return pSharedMem[startByte:length]
 	}
 	return nil
 }

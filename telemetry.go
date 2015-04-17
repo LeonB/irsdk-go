@@ -1,15 +1,14 @@
-package main
+package irsdk
 
 import "C"
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"reflect"
 	"unsafe"
 
-	utils "github.com/leonb/irsdk-go/irsdk_utils"
+	utils "github.com/leonb/irsdk-go/utils"
 )
 
 type irCharVar struct {
@@ -207,7 +206,7 @@ type TelemetryData struct {
 	// Doubles
 	SessionTime       float64
 	SessionTimeRemain float64
-	ReplaySessionTime float64
+		ReplaySessionTime float64
 }
 
 func (d *TelemetryData) addVarHeaderData(varHeader *utils.Irsdk_varHeader, data []byte) error {
@@ -415,54 +414,7 @@ var irsdkSessionStates = map[utils.Irsdk_SessionState]string{
 	utils.Irsdk_StateCoolDown:   "coolDown",
 }
 
-func main() {
-	// testBroadcastMsg()
-	testTelemetryData()
-}
-
-func testTelemetryData() {
-	var data []byte
-	var err error
-
-	// oldTime := time.Now().Unix()
-	changes := 0
-	for {
-		// newTime := time.Now().Unix()
-		// fmt.Println(newTime)
-
-		// if oldTime != newTime {
-		// 	oldTime = newTime
-		// 	changes = 0
-		// 	fmt.Println("number of changes:", changes)
-		// }
-
-		data, err = utils.Irsdk_waitForDataReady(3000)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		if data != nil {
-			// fmt.Println("Data changed")
-			changes++
-			fields := []string{}
-			telemetryData := toTelemetryDataFiltered(data, fields)
-			_, err := json.Marshal(telemetryData)
-			if err != nil {
-				fmt.Printf("Error: %s", err)
-				return
-			}
-			// fmt.Println(string(b))
-			fmt.Println(changes)
-		}
-
-		// utils.Irsdk_shutdown()
-		// break
-	}
-
-	return
-}
-
-func toTelemetryData(data []byte) *TelemetryData {
+func ToTelemetryData(data []byte) *TelemetryData {
 	telemetryData := newTelemetryData()
 	numVars := utils.Irsdk_getNumVars()
 
@@ -637,31 +589,6 @@ func extractDoubleFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irD
 		value: float64(hvar),
 		unit:  varUnit,
 	}
-}
-
-func testBroadcastMsg() {
-	err := utils.Irsdk_broadcastMsg(
-		utils.Irsdk_BroadcastChatComand,
-		uint16(utils.Irsdk_ChatCommand_BeginChat),
-		0,
-		0,
-	)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	chatMacro := 1
-	fmt.Printf("Sending chat macro %d\n", chatMacro)
-	err = utils.Irsdk_broadcastMsg(
-		utils.Irsdk_BroadcastChatComand,
-		uint16(utils.Irsdk_ChatCommand_Macro),
-		uint16(chatMacro),
-		0,
-	)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return
 }
 
 func newTelemetryData() *TelemetryData {
