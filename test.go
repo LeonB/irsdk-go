@@ -215,6 +215,10 @@ func (d *TelemetryData) AddIrCharVar(irVar *irCharVar) error {
 }
 
 func (d *TelemetryData) AddIrBoolVar(irVar *irBoolVar) error {
+	if irVar == nil {
+		return nil
+	}
+
 	e := reflect.ValueOf(d).Elem() // Get reference to struct
 	f := e.FieldByName(irVar.name) // Find struct field
 	if f.Kind() == reflect.Bool {
@@ -231,6 +235,10 @@ func (d *TelemetryData) AddIrBoolVar(irVar *irBoolVar) error {
 }
 
 func (d *TelemetryData) AddIrIntVar(irVar *irIntVar) error {
+	if irVar == nil {
+		return nil
+	}
+
 	e := reflect.ValueOf(d).Elem() // Get reference to struct
 	f := e.FieldByName(irVar.name) // Find struct field
 	if f.Kind() == reflect.Int {
@@ -244,6 +252,10 @@ func (d *TelemetryData) AddIrIntVar(irVar *irIntVar) error {
 }
 
 func (d *TelemetryData) AddIrBitfieldVar(irVar *irBitfieldVar) error {
+	if irVar == nil {
+		return nil
+	}
+
 	e := reflect.ValueOf(d).Elem() // Get reference to struct
 	f := e.FieldByName(irVar.name) // Find struct field
 	if f.Kind() == reflect.Map {
@@ -261,6 +273,10 @@ func (d *TelemetryData) AddIrBitfieldVar(irVar *irBitfieldVar) error {
 }
 
 func (d *TelemetryData) AddIrFloatVar(irVar *irFloatVar) error {
+	if irVar == nil {
+		return nil
+	}
+
 	e := reflect.ValueOf(d).Elem() // Get reference to struct
 	f := e.FieldByName(irVar.name) // Find struct field
 	if f.Kind() == reflect.Float32 {
@@ -274,6 +290,10 @@ func (d *TelemetryData) AddIrFloatVar(irVar *irFloatVar) error {
 }
 
 func (d *TelemetryData) AddIrDoubleVar(irVar *irDoubleVar) error {
+	if irVar == nil {
+		return nil
+	}
+
 	e := reflect.ValueOf(d).Elem() // Get reference to struct
 	f := e.FieldByName(irVar.name) // Find struct field
 	if f.Kind() == reflect.Float64 {
