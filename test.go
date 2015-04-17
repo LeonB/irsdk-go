@@ -2,8 +2,6 @@ package main
 
 import "C"
 import (
-	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -455,17 +453,15 @@ func toTelemetryData(data []byte) *TelemetryData {
 }
 
 func extractCharFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irCharVar {
-	var hvar C.char // 1 byte
-
-	startByte := int(header.Offset)
-	varLen := int(unsafe.Sizeof(hvar))
-	endByte := startByte + varLen
 	varName := utils.CToGoString(header.Name[:])
 	varDesc := utils.CToGoString(header.Desc[:])
 	varUnit := utils.CToGoString(header.Unit[:])
 
-	buf := bytes.NewBuffer(data[startByte:endByte])
-	binary.Read(buf, binary.LittleEndian, &hvar)
+	dataPtr := uintptr(unsafe.Pointer(&data[0]))
+	offset := uintptr(header.Offset)
+	varPtr := dataPtr + offset
+
+	hvar := *(*C.char)(unsafe.Pointer(varPtr))
 
 	return &irCharVar{
 		name:  varName,
@@ -476,20 +472,15 @@ func extractCharFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irCha
 }
 
 func extractBoolFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irBoolVar {
-	var hvar bool // 1 byte
-
-	startByte := int(header.Offset)
-	varLen := int(unsafe.Sizeof(hvar))
-	endByte := startByte + varLen
 	varName := utils.CToGoString(header.Name[:])
 	varDesc := utils.CToGoString(header.Desc[:])
 	varUnit := utils.CToGoString(header.Unit[:])
 
-	if data[startByte:endByte][0] == 0 {
-		hvar = false
-	} else {
-		hvar = true
-	}
+	dataPtr := uintptr(unsafe.Pointer(&data[0]))
+	offset := uintptr(header.Offset)
+	varPtr := dataPtr + offset
+
+	hvar := *(*bool)(unsafe.Pointer(varPtr))
 
 	return &irBoolVar{
 		name:  varName,
@@ -500,17 +491,15 @@ func extractBoolFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irBoo
 }
 
 func extractIntFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irIntVar {
-	var hvar C.int // 4 bytes
-
-	startByte := int(header.Offset)
-	varLen := int(unsafe.Sizeof(hvar))
-	endByte := startByte + varLen
 	varName := utils.CToGoString(header.Name[:])
 	varDesc := utils.CToGoString(header.Desc[:])
 	varUnit := utils.CToGoString(header.Unit[:])
 
-	buf := bytes.NewBuffer(data[startByte:endByte])
-	binary.Read(buf, binary.LittleEndian, &hvar)
+	dataPtr := uintptr(unsafe.Pointer(&data[0]))
+	offset := uintptr(header.Offset)
+	varPtr := dataPtr + offset
+
+	hvar := *(*C.int)(unsafe.Pointer(varPtr))
 
 	return &irIntVar{
 		name:  varName,
@@ -521,20 +510,15 @@ func extractIntFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irIntV
 }
 
 func extractBitfieldFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irBitfieldVar {
-	// - SessionFlags
-	// - CamCameraState
-	// - EngineWarnings
-	var hvar uint32 // 4 bytes
-
-	startByte := int(header.Offset)
-	varLen := int(unsafe.Sizeof(hvar))
-	endByte := startByte + varLen
 	varName := utils.CToGoString(header.Name[:])
 	varDesc := utils.CToGoString(header.Desc[:])
 	varUnit := utils.CToGoString(header.Unit[:])
 
-	buf := bytes.NewBuffer(data[startByte:endByte])
-	binary.Read(buf, binary.LittleEndian, &hvar)
+	dataPtr := uintptr(unsafe.Pointer(&data[0]))
+	offset := uintptr(header.Offset)
+	varPtr := dataPtr + offset
+
+	hvar := *(*uint32)(unsafe.Pointer(varPtr))
 
 	retVar := &irBitfieldVar{
 		name:   varName,
@@ -564,17 +548,15 @@ func extractBitfieldFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *i
 }
 
 func extractFloatFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irFloatVar {
-	var hvar C.float
-
-	startByte := int(header.Offset)
-	varLen := int(unsafe.Sizeof(hvar))
-	endByte := startByte + varLen
 	varName := utils.CToGoString(header.Name[:])
 	varDesc := utils.CToGoString(header.Desc[:])
 	varUnit := utils.CToGoString(header.Unit[:])
 
-	buf := bytes.NewBuffer(data[startByte:endByte])
-	binary.Read(buf, binary.LittleEndian, &hvar)
+	dataPtr := uintptr(unsafe.Pointer(&data[0]))
+	offset := uintptr(header.Offset)
+	varPtr := dataPtr + offset
+
+	hvar := *(*C.float)(unsafe.Pointer(varPtr))
 
 	return &irFloatVar{
 		name:  varName,
@@ -585,17 +567,15 @@ func extractFloatFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irFl
 }
 
 func extractDoubleFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irDoubleVar {
-	var hvar C.double
-
-	startByte := int(header.Offset)
-	varLen := int(unsafe.Sizeof(hvar))
-	endByte := startByte + varLen
 	varName := utils.CToGoString(header.Name[:])
 	varDesc := utils.CToGoString(header.Desc[:])
 	varUnit := utils.CToGoString(header.Unit[:])
 
-	buf := bytes.NewBuffer(data[startByte:endByte])
-	binary.Read(buf, binary.LittleEndian, &hvar)
+	dataPtr := uintptr(unsafe.Pointer(&data[0]))
+	offset := uintptr(header.Offset)
+	varPtr := dataPtr + offset
+
+	hvar := *(*C.double)(unsafe.Pointer(varPtr))
 
 	return &irDoubleVar{
 		name:  varName,

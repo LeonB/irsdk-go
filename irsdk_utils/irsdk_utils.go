@@ -252,7 +252,7 @@ func Irsdk_getVarHeaderPtr() *Irsdk_varHeader {
 	return nil
 }
 
-func Irsdk_getVarHeaderEntryFast(index int) *Irsdk_varHeader {
+func Irsdk_getVarHeaderEntry(index int) *Irsdk_varHeader {
 	if isInitialized {
 		if index >= 0 && index < (int)(pHeader.NumVars) {
 			varHeader := &Irsdk_varHeader{}
@@ -264,27 +264,6 @@ func Irsdk_getVarHeaderEntryFast(index int) *Irsdk_varHeader {
 			varHeaderPtr := pSharedMemPtr + totalOffset
 
 			varHeader = (*Irsdk_varHeader)(unsafe.Pointer(varHeaderPtr))
-
-			return varHeader
-		}
-	}
-	return nil
-}
-
-func Irsdk_getVarHeaderEntry(index int) *Irsdk_varHeader {
-	if isInitialized {
-		if index >= 0 && index < (int)(pHeader.NumVars) {
-			varHeaderOffset := int(pHeader.VarHeaderOffset)
-			varHeader := &Irsdk_varHeader{}
-			varHeaderSize := int(unsafe.Sizeof(*varHeader))
-
-			startByte := varHeaderOffset + (index * varHeaderSize)
-			endByte := startByte + varHeaderSize
-
-			// create a io.Reader
-			b := bytes.NewBuffer(pSharedMem[startByte:endByte])
-			// read []byte and convert it into Irsdk_varHeader
-			binary.Read(b, binary.LittleEndian, varHeader)
 
 			return varHeader
 		}
