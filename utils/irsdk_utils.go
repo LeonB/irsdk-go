@@ -1,6 +1,6 @@
 // +build windows
 
-package irsdk_utils
+package utils
 
 import "C"
 import (
@@ -54,7 +54,6 @@ func Irsdk_startup() error {
 	if hMemMapFile == 0 {
 		hMemMapFile, err = openFileMapping(IRSDK_MEMMAPFILENAME)
 		if err != nil {
-			fmt.Println(err)
 			return err
 		}
 		lastTickCount = INT_MAX

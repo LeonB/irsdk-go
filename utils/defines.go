@@ -1,6 +1,6 @@
 // +build windows
 
-package irsdk_utils
+package utils
 
 import "C"
 

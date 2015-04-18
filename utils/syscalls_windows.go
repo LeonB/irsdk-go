@@ -1,6 +1,6 @@
 // +build windows
 
-package irsdk_utils
+package utils
 
 /*
 // for timeBeginPeriod()
@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"syscall"
 	"unsafe"
+	"log"
 )
 
 const (
@@ -54,6 +55,10 @@ func sleep(timeout int) error {
 func openFileMapping(lpName string) (uintptr, error) {
 	dwDesiredAccess := syscall.FILE_MAP_READ
 
+	// Work around go bug
+	// Without Println() wOpenFileMappingW.Call) fails
+	log.Print("")
+
 	hMemMapFile, _, err := wOpenFileMappingW.Call(
 		uintptr(dwDesiredAccess), // DWORD
 		0, // BOOL
@@ -61,7 +66,7 @@ func openFileMapping(lpName string) (uintptr, error) {
 	)
 
 	if hMemMapFile == 0 {
-		errMsg := fmt.Sprintf("OpenFileMapping failed (%s)", err)
+		errMsg := fmt.Sprintf("OpenFileMappingW failed (%s)", err)
 		return hMemMapFile, errors.New(errMsg)
 	}
 

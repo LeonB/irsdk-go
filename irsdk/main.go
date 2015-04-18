@@ -6,14 +6,35 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 
-	utils "github.com/leonb/irsdk-go/utils"
 	"github.com/leonb/irsdk-go"
+	utils "github.com/leonb/irsdk-go/utils"
 )
 
 func main() {
 	// testBroadcastMsg()
-	testTelemetryData()
+	testSessionData()
+	// testTelemetryData()
+}
+
+func testSessionData() {
+	conn, err := irsdk.NewConnection()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	sessionData, err := conn.GetSessionDataStruct()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("%+v\n", sessionData.WeekendInfo)
+	// fmt.Printf("%+v\n", sessionData.SessionInfo)
+	// fmt.Printf("%+v\n", sessionData.DriverInfo)
+	// fmt.Printf("%+v\n", sessionData.SplitTimeInfo)
+	// fmt.Printf("%+v\n", sessionData.WeekendInfo)
+	// fmt.Printf("%+v\n", string(sessionData[:]))
 }
 
 func testTelemetryData() {
@@ -61,6 +82,3 @@ func testTelemetryData() {
 
 	return
 }
-
-
-
