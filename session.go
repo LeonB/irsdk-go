@@ -1,7 +1,5 @@
 package irsdk
 
-import "fmt"
-
 type SessionData struct {
 	WeekendInfo   WeekendInfo   `yaml:"WeekendInfo"`
 	SessionInfo   SessionInfo   `yaml:"SessionInfo"`
@@ -101,7 +99,7 @@ type Session struct {
 	SessionType            string             `yaml:"SessionType"`
 	ResultsPositions       []ResultPosition   `yaml:"ResultsPositions"`
 	ResultsFastestLap      []ResultFastestLap `yaml:"ResultsFastestLap"`
-	ResultsAverageLapTime  float32M           `yaml:"ResultsAverageLapTime"`
+	ResultsAverageLapTime  float32            `yaml:"ResultsAverageLapTime"`
 	ResultsNumCautionFlags int                `yaml:"ResultsNumCautionFlags"`
 	ResultsNumCautionLaps  int                `yaml:"ResultsNumCautionLaps"`
 	ResultsNumLeadChanges  int                `yaml:"ResultsNumLeadChanges"`
@@ -110,21 +108,21 @@ type Session struct {
 }
 
 type ResultPosition struct {
-	CarIdx        int      `yaml:"CarIdx"`
-	Position      int      `yaml:"Position"`
-	ClassPosition int      `yaml:"ClassPosition"`
-	FastestTime   float32M `yaml:"FastestTime"`
-	Lap           int      `yaml:"Lap"`
-	LastTime      float32M `yaml:"LastTime"`
-	LapsComplete  int      `yaml:"LapsComplete"`
-	LapsDriven    int      `yaml:"LapsDriven"`
-	ReasonOutId   int      `yaml:"ReasonOutId"`
+	CarIdx        int     `yaml:"CarIdx"`
+	Position      int     `yaml:"Position"`
+	ClassPosition int     `yaml:"ClassPosition"`
+	FastestTime   float32 `yaml:"FastestTime"`
+	Lap           int     `yaml:"Lap"`
+	LastTime      float32 `yaml:"LastTime"`
+	LapsComplete  int     `yaml:"LapsComplete"`
+	LapsDriven    int     `yaml:"LapsDriven"`
+	ReasonOutId   int     `yaml:"ReasonOutId"`
 }
 
 type ResultFastestLap struct {
-	CarIdx      int      `yaml:"CarIdx"`
-	FastestLap  int      `yaml:"FastestLap"`
-	FastestTime float32M `yaml:"FastestTime"`
+	CarIdx      int     `yaml:"CarIdx"`
+	FastestLap  int     `yaml:"FastestLap"`
+	FastestTime float32 `yaml:"FastestTime"`
 }
 
 type CameraInfo struct {
@@ -173,17 +171,17 @@ type Frequency struct {
 
 type DriverInfo struct {
 	DriverCarIdx          int      `yaml:"DriverCarIdx"`
-	DriverHeadPosX        float32M `yaml:"DriverHeadPosX"`
-	DriverHeadPosY        float32M `yaml:"DriverHeadPosY"`
-	DriverHeadPosZ        float32M `yaml:"DriverHeadPosZ"`
-	DriverCarIdleRPM      float32M `yaml:"DriverCarIdleRPM"`
-	DriverCarRedLine      float32M `yaml:"DriverCarRedLine"`
-	DriverCarFuelKgPerLtr float32M `yaml:"DriverCarFuelKgPerLtr"`
-	DriverCarSLFirstRPM   float32M `yaml:"DriverCarSLFirstRPM"`
-	DriverCarSLShiftRPM   float32M `yaml:"DriverCarSLShiftRPM"`
-	DriverCarSLLastRPM    float32M `yaml:"DriverCarSLLastRPM"`
-	DriverCarSLBlinkRPM   float32M `yaml:"DriverCarSLBlinkRPM"`
-	DriverPitTrkPct       float32M `yaml:"DriverPitTrkPct"`
+	DriverHeadPosX        float32  `yaml:"DriverHeadPosX"`
+	DriverHeadPosY        float32  `yaml:"DriverHeadPosY"`
+	DriverHeadPosZ        float32  `yaml:"DriverHeadPosZ"`
+	DriverCarIdleRPM      float32  `yaml:"DriverCarIdleRPM"`
+	DriverCarRedLine      float32  `yaml:"DriverCarRedLine"`
+	DriverCarFuelKgPerLtr float32  `yaml:"DriverCarFuelKgPerLtr"`
+	DriverCarSLFirstRPM   float32  `yaml:"DriverCarSLFirstRPM"`
+	DriverCarSLShiftRPM   float32  `yaml:"DriverCarSLShiftRPM"`
+	DriverCarSLLastRPM    float32  `yaml:"DriverCarSLLastRPM"`
+	DriverCarSLBlinkRPM   float32  `yaml:"DriverCarSLBlinkRPM"`
+	DriverPitTrkPct       float32  `yaml:"DriverPitTrkPct"`
 	Drivers               []Driver `yaml:"Drivers"`
 }
 

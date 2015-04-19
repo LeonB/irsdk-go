@@ -206,7 +206,7 @@ type TelemetryData struct {
 	// Doubles
 	SessionTime       float64
 	SessionTimeRemain float64
-		ReplaySessionTime float64
+	ReplaySessionTime float64
 }
 
 func (d *TelemetryData) addVarHeaderData(varHeader *utils.Irsdk_varHeader, data []byte) error {
@@ -414,7 +414,7 @@ var irsdkSessionStates = map[utils.Irsdk_SessionState]string{
 	utils.Irsdk_StateCoolDown:   "coolDown",
 }
 
-func ToTelemetryData(data []byte) *TelemetryData {
+func BytesToTelemetryData(data []byte) *TelemetryData {
 	telemetryData := newTelemetryData()
 	numVars := utils.Irsdk_getNumVars()
 
@@ -431,7 +431,7 @@ func ToTelemetryData(data []byte) *TelemetryData {
 	return telemetryData
 }
 
-func toTelemetryDataFiltered(data []byte, fields []string) *TelemetryData {
+func BytesToTelemetryDataFiltered(data []byte, fields []string) *TelemetryData {
 	telemetryData := newTelemetryData()
 	numVars := utils.Irsdk_getNumVars()
 
@@ -442,14 +442,26 @@ func toTelemetryDataFiltered(data []byte, fields []string) *TelemetryData {
 			continue
 		}
 
-		if fields != nil {
-			varName := string(varHeader.Name[:])
-			for _, v := range fields {
-				if v == varName {
-					break
-				}
+		if fields == nil || len(fields) == 0 {
+			// fields is empty: add everything
+			telemetryData.addVarHeaderData(varHeader, data)
+			continue
+		}
+
+		varName := utils.CToGoString(varHeader.Name[:])
+		found := false
+
+		for _, v := range fields {
+			if v == varName {
+				// Found varName in fields, skip looping through fields
+				found = true
+				break
 			}
-			return nil
+		}
+
+		if found == false {
+			// var not in fieds: skip varHeader
+			continue
 		}
 
 		telemetryData.addVarHeaderData(varHeader, data)
