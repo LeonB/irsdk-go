@@ -9,7 +9,7 @@ import (
 
 func NewConnection() (*IrConnection, error) {
 	conn := &IrConnection{
-		timeout: 17, // 1000ms/60f
+		timeout: 18, // (1000ms/60f/s)+1ms(to be sure)
 	}
 
 	return conn, conn.Connect()
