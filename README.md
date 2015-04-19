@@ -25,6 +25,37 @@ go get github.com/LeonB/irsdk-go
 GOARCH=386 GOOS=windows go get github.com/LeonB/irsdk-go
 ```
 
+## Example
+
+``` go
+package main
+
+import (
+	"fmt"
+	"log"
+
+	irsdk "github.com/leonb/irsdk-go"
+)
+
+func main() {
+	conn, err := irsdk.NewConnection()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fields := []string{}
+
+	for {
+		telemetryData, err := conn.GetTelemetryDataFiltered(fields)
+		if err != nil {
+			log.Println(err)
+		}
+
+		fmt.Printf("%+v\n", telemetryData)
+	}
+}
+```
+
 ## Known bugs / pitfalls
 
 - When running it under wine, Go time functions do not work:
