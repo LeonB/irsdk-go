@@ -154,7 +154,7 @@ func Irsdk_getNewData() ([]byte, error) {
 
 			if curTickCount == int(pHeader.VarBuf[latest].TickCount) {
 				lastTickCount = curTickCount
-				lastValidTime = time.Now()
+				lastValidTime = now()
 				return data, nil
 			}
 		}
@@ -203,7 +203,7 @@ func Irsdk_waitForDataReady(timeOut int) ([]byte, error) {
 
 func Irsdk_isConnected() bool {
 	if isInitialized {
-		elapsed := time.Now().Sub(lastValidTime)
+		elapsed := now().Sub(lastValidTime)
 		if (pHeader.Status&irsdk_stConnected) > 0 && (elapsed < TIMEOUT) {
 			return true
 		}

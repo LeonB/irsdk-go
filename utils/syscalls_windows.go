@@ -12,9 +12,10 @@ import "C"
 import (
 	"errors"
 	"fmt"
-	"syscall"
-	"unsafe"
 	"log"
+	"syscall"
+	"time"
+	"unsafe"
 )
 
 const (
@@ -184,4 +185,13 @@ func sendNotifyMessage(msgID uint, wParam uint32, lParam uint32) error {
 
 func MAKELONG(lo, hi uint16) uint32 {
 	return uint32(uint32(lo) | ((uint32(hi)) << 16))
+}
+
+func now() time.Time {
+	t := &syscall.Timeval{}
+	syscall.Gettimeofday(t)
+	sec, _ := t.Unix()
+	nSec := t.Nano()
+
+	return time.Unix(sec, nSec)
 }
