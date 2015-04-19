@@ -1,5 +1,7 @@
 package irsdk
 
+import "fmt"
+
 type SessionData struct {
 	WeekendInfo   WeekendInfo   `yaml:"WeekendInfo"`
 	SessionInfo   SessionInfo   `yaml:"SessionInfo"`
@@ -16,42 +18,75 @@ type unit string
 type WeekendInfo struct {
 	// TrackName string -> TrackName string `yaml:"TrackName"`
 	// vim: s/\(\t\(.\{-}\) \).*/\0 `yaml:"\2"`
-	TrackName             string `yaml:"TrackName"`
-	TrackID               int    `yaml:"TrackID"`
-	TrackLength           string `yaml:"TrackLength"`
-	TrackDisplayName      string `yaml:"TrackDisplayName"`
-	TrackDisplayShortName string `yaml:"TrackDisplayShortName"`
-	TrackConfigName       string `yaml:"TrackConfigName"`
-	TrackCity             string `yaml:"TrackCity"`
-	TrackCountry          string `yaml:"TrackCountry"`
-	TrackAltitude         unit   `yaml:"TrackAltitude"`
-	TrackLatitude         unit   `yaml:"TrackLatitude"`
-	TrackLongitude        unit   `yaml:"TrackLongitude"`
-	TrackNumTurns         int    `yaml:"TrackNumTurns"`
-	TrackPitSpeedLimit    unit   `yaml:"TrackPitSpeedLimit"`
-	TrackType             string `yaml:"TrackType"`
-	TrackWeatherType      string `yaml:"TrackWeatherType"`
-	TrackSkies            string `yaml:"TrackSkies"`
-	TrackSurfaceTemp      unit   `yaml:"TrackSurfaceTemp"`
-	TrackAirTemp          unit   `yaml:"TrackAirTemp"`
-	TrackAirPressure      unit   `yaml:"TrackAirPressure"`
-	TrackWindVel          unit   `yaml:"TrackWindVel"`
-	TrackWindDir          unit   `yaml:"TrackWindDir"`
-	TrackRelativeHumidity unit   `yaml:"TrackRelativeHumidity"`
-	TrackFogLevel         unit   `yaml:"TrackFogLevel"`
-	SeriesID              int    `yaml:"SeriesID"`
-	SeasonID              int    `yaml:"SeasonID"`
-	SessionID             int    `yaml:"SessionID"`
-	SubSessionID          int    `yaml:"SubSessionID"`
-	LeagueID              int    `yaml:"LeagueID"`
-	Official              int    `yaml:"Official"`
-	RaceWeek              int    `yaml:"RaceWeek"`
-	EventType             string `yaml:"EventType"`
-	Category              string `yaml:"Category"`
-	SimMode               string `yaml:"SimMode"`
-	TeamRacing            int    `yaml:"TeamRacing"`
-	MinDrivers            int    `yaml:"MinDrivers"`
-	MaxDrivers            int    `yaml:"MaxDrivers"`
+	TrackName              string           `yaml:"TrackName"`
+	TrackID                int              `yaml:"TrackID"`
+	TrackLength            string           `yaml:"TrackLength"`
+	TrackDisplayName       string           `yaml:"TrackDisplayName"`
+	TrackDisplayShortName  string           `yaml:"TrackDisplayShortName"`
+	TrackConfigName        string           `yaml:"TrackConfigName"`
+	TrackCity              string           `yaml:"TrackCity"`
+	TrackCountry           string           `yaml:"TrackCountry"`
+	TrackAltitude          unit             `yaml:"TrackAltitude"`
+	TrackLatitude          unit             `yaml:"TrackLatitude"`
+	TrackLongitude         unit             `yaml:"TrackLongitude"`
+	TrackNumTurns          int              `yaml:"TrackNumTurns"`
+	TrackPitSpeedLimit     unit             `yaml:"TrackPitSpeedLimit"`
+	TrackType              string           `yaml:"TrackType"`
+	TrackWeatherType       string           `yaml:"TrackWeatherType"`
+	TrackSkies             string           `yaml:"TrackSkies"`
+	TrackSurfaceTemp       unit             `yaml:"TrackSurfaceTemp"`
+	TrackAirTemp           unit             `yaml:"TrackAirTemp"`
+	TrackAirPressure       unit             `yaml:"TrackAirPressure"`
+	TrackWindVel           unit             `yaml:"TrackWindVel"`
+	TrackWindDir           unit             `yaml:"TrackWindDir"`
+	TrackRelativeHumidity  unit             `yaml:"TrackRelativeHumidity"`
+	TrackFogLevel          unit             `yaml:"TrackFogLevel"`
+	SeriesID               int              `yaml:"SeriesID"`
+	SeasonID               int              `yaml:"SeasonID"`
+	SessionID              int              `yaml:"SessionID"`
+	SubSessionID           int              `yaml:"SubSessionID"`
+	LeagueID               int              `yaml:"LeagueID"`
+	Official               int              `yaml:"Official"`
+	RaceWeek               int              `yaml:"RaceWeek"`
+	EventType              string           `yaml:"EventType"`
+	Category               string           `yaml:"Category"`
+	SimMode                string           `yaml:"SimMode"`
+	TeamRacing             int              `yaml:"TeamRacing"`
+	MinDrivers             int              `yaml:"MinDrivers"`
+	MaxDrivers             int              `yaml:"MaxDrivers"`
+	DCRuleSet              string           `yaml:"DCRuleSet"`
+	QualifierMustStartRace intToBool        `yaml:"QualifierMustStartRace"`
+	NumCarClasses          int              `yaml:"NumCarClasses"`
+	NumCarTypes            int              `yaml:"NumCarTypes"`
+	WeekendOptions         WeekendOptions   `yaml:"WeekendOptions"`
+	TelemetryOptions       TelemetryOptions `yaml:"TelemetryOptions"`
+}
+
+type WeekendOptions struct {
+	NumStarters         int       `yaml:"NumStarters"`
+	StartingGrid        string    `yaml:"StartingGrid"`
+	QualifyScoring      string    `yaml:"QualifyScoring"`
+	CourseCautions      bool      `yaml:"CourseCautions"`
+	StandingStart       intToBool `yaml:"StandingStart"`
+	Restarts            string    `yaml:"Restarts"`
+	WeatherType         string    `yaml:"WeatherType"`
+	Skies               string    `yaml:"Skies"`
+	WindDirection       unit      `yaml:"WindDirection"`
+	WindSpeed           unit      `yaml:"WindSpeed"`
+	WeatherTemp         unit      `yaml:"WeatherTemp"`
+	RelativeHumidity    unit      `yaml:"RelativeHumidity"`
+	FogLevel            unit      `yaml:"FogLevel"`
+	Unofficial          intToBool `yaml:"Unofficial"`
+	CommercialMode      string    `yaml:"CommercialMode"`
+	NightMode           intToBool `yaml:"NightMode"`
+	IsFixedSetup        intToBool `yaml:"IsFixedSetup"`
+	StrictLapsChecking  string    `yaml:"StrictLapsChecking"`
+	HasOpenRegistration intToBool `yaml:"HasOpenRegistration"`
+	HardcoreLevel       int       `yaml:"HardcoreLevel"`
+}
+
+type TelemetryOptions struct {
+	TelemetryDiskFile string `yaml:"TelemetryDiskFile"`
 }
 
 type SessionInfo struct {
@@ -59,37 +94,37 @@ type SessionInfo struct {
 }
 
 type Session struct {
-	SessionNum             int `yaml:"SessionNum"`
-	SessionLaps            string `yaml:"SessionLaps"`
-	SessionTime            string `yaml:"SessionTime"`
-	SessionNumLapsToAvg    int `yaml:"SessionNumLapsToAvg"`
-	SessionType            string `yaml:"SessionType"`
-	ResultsPositions       []ResultPosition `yaml:"ResultsPositions"`
+	SessionNum             int                `yaml:"SessionNum"`
+	SessionLaps            string             `yaml:"SessionLaps"`
+	SessionTime            string             `yaml:"SessionTime"`
+	SessionNumLapsToAvg    int                `yaml:"SessionNumLapsToAvg"`
+	SessionType            string             `yaml:"SessionType"`
+	ResultsPositions       []ResultPosition   `yaml:"ResultsPositions"`
 	ResultsFastestLap      []ResultFastestLap `yaml:"ResultsFastestLap"`
-	ResultsAverageLapTime  float32 `yaml:"ResultsAverageLapTime"`
-	ResultsNumCautionFlags int `yaml:"ResultsNumCautionFlags"`
-	ResultsNumCautionLaps  int `yaml:"ResultsNumCautionLaps"`
-	ResultsNumLeadChanges  int `yaml:"ResultsNumLeadChanges"`
-	ResultsLapsComplete    int `yaml:"ResultsLapsComplete"`
-	ResultsOfficial        int `yaml:"ResultsOfficial"`
+	ResultsAverageLapTime  float32M           `yaml:"ResultsAverageLapTime"`
+	ResultsNumCautionFlags int                `yaml:"ResultsNumCautionFlags"`
+	ResultsNumCautionLaps  int                `yaml:"ResultsNumCautionLaps"`
+	ResultsNumLeadChanges  int                `yaml:"ResultsNumLeadChanges"`
+	ResultsLapsComplete    int                `yaml:"ResultsLapsComplete"`
+	ResultsOfficial        int                `yaml:"ResultsOfficial"`
 }
 
 type ResultPosition struct {
-	CarIdx        int `yaml:"CarIdx"`
-	Position      int `yaml:"Position"`
-	ClassPosition int `yaml:"ClassPosition"`
-	FastestTime   float32 `yaml:"FastestTime"`
-	Lap           int `yaml:"Lap"`
-	LastTime      float32 `yaml:"LastTime"`
-	LapsComplete  int `yaml:"LapsComplete"`
-	LapsDriven    int `yaml:"LapsDriven"`
-	ReasonOutId   int `yaml:"ReasonOutId"`
+	CarIdx        int      `yaml:"CarIdx"`
+	Position      int      `yaml:"Position"`
+	ClassPosition int      `yaml:"ClassPosition"`
+	FastestTime   float32M `yaml:"FastestTime"`
+	Lap           int      `yaml:"Lap"`
+	LastTime      float32M `yaml:"LastTime"`
+	LapsComplete  int      `yaml:"LapsComplete"`
+	LapsDriven    int      `yaml:"LapsDriven"`
+	ReasonOutId   int      `yaml:"ReasonOutId"`
 }
 
 type ResultFastestLap struct {
-	CarIdx      int `yaml:"CarIdx"`
-	FastestLap  int `yaml:"FastestLap"`
-	FastestTime float32 `yaml:"FastestTime"`
+	CarIdx      int      `yaml:"CarIdx"`
+	FastestLap  int      `yaml:"FastestLap"`
+	FastestTime float32M `yaml:"FastestTime"`
 }
 
 type CameraInfo struct {
@@ -97,13 +132,14 @@ type CameraInfo struct {
 }
 
 type CameraGroup struct {
-	Groupnum  int      `yaml:"Groupnum"`
+	GroupNum  int      `yaml:"GroupNum"`
 	GroupName string   `yaml:"GroupName"`
+	IsScenic  bool     `yaml:"IsSenic"`
 	Cameras   []Camera `yaml:"Cameras"`
 }
 
 type Camera struct {
-	CameraNum  int    `yaml:"CameraNum:"`
+	CameraNum  int    `yaml:"CameraNum"`
 	CameraName string `yaml:"CameraName"`
 }
 
@@ -137,17 +173,17 @@ type Frequency struct {
 
 type DriverInfo struct {
 	DriverCarIdx          int      `yaml:"DriverCarIdx"`
-	DriverHeadPosX        float32  `yaml:"DriverHeadPosX"`
-	DriverHeadPosY        float32  `yaml:"DriverHeadPosY"`
-	DriverHeadPosZ        float32  `yaml:"DriverHeadPosZ"`
-	DriverCarIdleRPM      float32  `yaml:"DriverCarIdleRPM"`
-	DriverCarRedLine      float32  `yaml:"DriverCarRedLine"`
-	DriverCarFuelKgPerLtr float32  `yaml:"DriverCarFuelKgPerLtr"`
-	DriverCarSLFirstRPM   float32  `yaml:"DriverCarSLFirstRPM"`
-	DriverCarSLShiftRPM   float32  `yaml:"DriverCarSLShiftRPM"`
-	DriverCarSLLastRPM    float32  `yaml:"DriverCarSLLastRPM"`
-	DriverCarSLBlinkRPM   float32  `yaml:"DriverCarSLBlinkRPM"`
-	DriverPitTrkPct       float32  `yaml:"DriverPitTrkPct"`
+	DriverHeadPosX        float32M `yaml:"DriverHeadPosX"`
+	DriverHeadPosY        float32M `yaml:"DriverHeadPosY"`
+	DriverHeadPosZ        float32M `yaml:"DriverHeadPosZ"`
+	DriverCarIdleRPM      float32M `yaml:"DriverCarIdleRPM"`
+	DriverCarRedLine      float32M `yaml:"DriverCarRedLine"`
+	DriverCarFuelKgPerLtr float32M `yaml:"DriverCarFuelKgPerLtr"`
+	DriverCarSLFirstRPM   float32M `yaml:"DriverCarSLFirstRPM"`
+	DriverCarSLShiftRPM   float32M `yaml:"DriverCarSLShiftRPM"`
+	DriverCarSLLastRPM    float32M `yaml:"DriverCarSLLastRPM"`
+	DriverCarSLBlinkRPM   float32M `yaml:"DriverCarSLBlinkRPM"`
+	DriverPitTrkPct       float32M `yaml:"DriverPitTrkPct"`
 	Drivers               []Driver `yaml:"Drivers"`
 }
 
@@ -195,8 +231,6 @@ type Sector struct {
 	SectorNum      int     `yaml:"SectorNum"`
 	SectorStartPct float32 `yaml:"SectorStartPct"`
 }
-
-// type intToBool bool
 
 type intToBool bool
 
