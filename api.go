@@ -1,10 +1,9 @@
 package irsdk
 
 import (
-	"strings"
+	"bytes"
 
 	"github.com/leonb/irsdk-go/utils"
-	yaml "gopkg.in/yaml.v2"
 )
 
 func NewConnection() (*IrConnection, error) {
@@ -24,14 +23,18 @@ func (c *IrConnection) Connect() error {
 	return err
 }
 
+func (c *IrConnection) GetRawTelemetryData() ([]byte, error) {
+	return utils.Irsdk_waitForDataReady(c.timeout)
+}
+
 func (c *IrConnection) GetTelemetryData() (*TelemetryData, error) {
-	data, err := utils.Irsdk_waitForDataReady(c.timeout)
+	data, err := c.GetRawTelemetryData()
 	if err != nil {
 		return nil, err
 	}
 
 	if data != nil {
-		return BytesToTelemetryData(data), nil
+		return BytesToTelemetryStruct(data), nil
 	}
 
 	return nil, nil
@@ -44,40 +47,37 @@ func (c *IrConnection) GetTelemetryDataFiltered(fields []string) (*TelemetryData
 	}
 
 	if data != nil {
-		return BytesToTelemetryDataFiltered(data, fields), nil
+		return BytesToTelemetryStructFiltered(data, fields), nil
 	}
 
 	return nil, nil
 }
 
-func (c *IrConnection) GetSessionData() (string, error) {
+func (c *IrConnection) GetRawSessionData() ([]byte, error) {
 	b := utils.Irsdk_getSessionInfoStr()
 	if b == nil {
-		return "", nil
+		return nil, nil
 	}
 
-	s := string(b[:])
-	pieces := strings.Split(s, "\n...")
+	sep := []byte("\n...")
+	pieces := bytes.Split(b, sep)
 	if len(pieces) > 0 {
-		s = pieces[0]
+		return pieces[0], nil
 	}
-	return s, nil
+	return b, nil
 }
 
-func (c *IrConnection) GetSessionDataStruct() (*SessionData, error) {
-	session := SessionData{}
-	yamlData, err := c.GetSessionData()
+func (c *IrConnection) GetSessionData() (*SessionData, error) {
+	yamlData, err := c.GetRawSessionData()
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert yaml to struct
-	err = yaml.Unmarshal([]byte(yamlData), &session)
-	if err != nil {
-		return nil, err
+	if yamlData != nil {
+		return BytesToSessionStruct(yamlData)
 	}
 
-	return &session, nil
+	return nil, nil
 }
 
 func (c *IrConnection) SendCommand() error {

@@ -12,7 +12,6 @@ import "C"
 import (
 	"errors"
 	"fmt"
-	"log"
 	"syscall"
 	"time"
 	"unsafe"
@@ -58,7 +57,7 @@ func openFileMapping(lpName string) (uintptr, error) {
 
 	// Work around go bug
 	// Without Println() wOpenFileMappingW.Call) fails
-	log.Print("")
+	fmt.Print("")
 
 	hMemMapFile, _, err := wOpenFileMappingW.Call(
 		uintptr(dwDesiredAccess), // DWORD

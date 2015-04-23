@@ -1,5 +1,9 @@
 package irsdk
 
+import (
+	yaml "gopkg.in/yaml.v2"
+)
+
 type SessionData struct {
 	WeekendInfo   WeekendInfo   `yaml:"WeekendInfo"`
 	SessionInfo   SessionInfo   `yaml:"SessionInfo"`
@@ -246,4 +250,21 @@ func (i *intToBool) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	return nil
+}
+
+// @TODO: should this accept an io.Reader?
+func BytesToSessionStruct(yamlData []byte) (*SessionData, error) {
+	sessionData := newSessionData()
+
+	// Convert yaml to struct
+	err := yaml.Unmarshal(yamlData, &sessionData)
+	if err != nil {
+		return nil, err
+	}
+
+	return sessionData, nil
+}
+
+func newSessionData() *SessionData {
+	return &SessionData{}
 }

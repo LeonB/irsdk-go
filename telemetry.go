@@ -414,7 +414,8 @@ var irsdkSessionStates = map[utils.Irsdk_SessionState]string{
 	utils.Irsdk_StateCoolDown:   "coolDown",
 }
 
-func BytesToTelemetryData(data []byte) *TelemetryData {
+// @TODO: should this accept an io.Reader?
+func BytesToTelemetryStruct(data []byte) *TelemetryData {
 	telemetryData := newTelemetryData()
 	numVars := utils.Irsdk_getNumVars()
 
@@ -431,7 +432,8 @@ func BytesToTelemetryData(data []byte) *TelemetryData {
 	return telemetryData
 }
 
-func BytesToTelemetryDataFiltered(data []byte, fields []string) *TelemetryData {
+// @TODO: should this accept an io.Reader?
+func BytesToTelemetryStructFiltered(data []byte, fields []string) *TelemetryData {
 	telemetryData := newTelemetryData()
 	numVars := utils.Irsdk_getNumVars()
 

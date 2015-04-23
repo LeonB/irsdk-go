@@ -2,83 +2,94 @@ package main
 
 // - irsdk dump session
 // - irsdk dump telemetry
+// - irsdk dump sessionStuct
+// - irsdk dump telemetryStruct
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
+	"os"
 
-	"github.com/leonb/irsdk-go"
-	utils "github.com/leonb/irsdk-go/utils"
+	"github.com/codegangsta/cli"
+	irsdk "github.com/leonb/irsdk-go"
 )
 
+// dictionaryFlag only accepts a list of predefined flag values
+type dictionaryFlag struct {
+	cli.StringFlag
+	Values []string
+}
+
 func main() {
-	// testBroadcastMsg()
-	testSessionData()
-	// testTelemetryData()
-}
+	app := cli.NewApp()
+	app.Name = "irsdk"
+	app.Usage = "some simple commands to check if the iRacing go sdk is working"
+	app.Version = "0.0.1"
+	dumpFlags := []cli.Flag{
+		dictionaryFlag{
+			cli.StringFlag{
+				Name:  "format",
+				Value: "raw",
+				Usage: "format to dump the data in",
+			},
+			[]string{},
+		},
+	}
+	app.Commands = []cli.Command{
+		{
+			Name:    "dump",
+			Aliases: []string{"d"},
+			Usage:   "data dump commands",
+			Subcommands: []cli.Command{
+				{
+					Name:  "session",
+					Usage: "dump session data",
+					Flags: dumpFlags,
+					Action: func(c *cli.Context) {
+						conn, err := irsdk.NewConnection()
+						if err != nil {
+							fmt.Fprintln(app.Writer, err)
+						}
 
-func testSessionData() {
-	conn, err := irsdk.NewConnection()
-	if err != nil {
-		log.Fatal(err)
+						b, err := conn.GetRawSessionData()
+						if err != nil {
+							fmt.Fprintln(app.Writer, err)
+							return
+						}
+						fmt.Println(string(b[:]))
+					},
+				},
+				{
+					Name:  "telemetry",
+					Usage: "dump telemetry data",
+					Flags: dumpFlags,
+					Action: func(c *cli.Context) {
+						conn, err := irsdk.NewConnection()
+						if err != nil {
+							fmt.Println(os.Stderr, err)
+							return
+						}
+
+						b, err := conn.GetRawTelemetryData()
+						if err != nil {
+							fmt.Println(os.Stderr, err)
+							return
+						}
+						// fmt.Printf("%+v", b)
+						fmt.Println(string(b[:]))
+					},
+				},
+				{
+					Name:  "memorymap",
+					Usage: "dump memorymap",
+					Flags: dumpFlags,
+					Action: func(c *cli.Context) {
+						err := "Not yet implemented"
+						fmt.Fprintln(os.Stderr, err)
+					},
+				},
+			},
+		},
 	}
 
-	sessionData, err := conn.GetSessionDataStruct()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf("%+v\n", sessionData.WeekendInfo)
-	// fmt.Printf("%+v\n", sessionData.SessionInfo)
-	// fmt.Printf("%+v\n", sessionData.DriverInfo)
-	// fmt.Printf("%+v\n", sessionData.SplitTimeInfo)
-	// fmt.Printf("%+v\n", sessionData.WeekendInfo)
-	// fmt.Printf("%+v\n", string(sessionData[:]))
-}
-
-func testTelemetryData() {
-	var data []byte
-	var err error
-
-	// oldTime := time.Now().Unix()
-	changes := 0
-	for {
-		// newTime := time.Now().Unix()
-		// fmt.Println(newTime)
-
-		// if oldTime != newTime {
-		// 	oldTime = newTime
-		// 	changes = 0
-		// 	fmt.Println("number of changes:", changes)
-		// }
-
-		// 1% cpu usage
-		data, err = utils.Irsdk_waitForDataReady(3000)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		// fmt.Println(string(utils.Irsdk_getSessionInfoStr()[:]))
-		// return
-
-		if data != nil {
-			changes++
-			// fields := []string{}
-			// telemetryData := toTelemetryDataFiltered(data, fields)
-			telemetryData := irsdk.ToTelemetryData(data)
-			b, err := json.Marshal(telemetryData)
-			if err != nil {
-				fmt.Printf("Error: %s", err)
-				return
-			}
-			fmt.Println(string(b))
-			fmt.Println(changes)
-		}
-
-		// utils.Irsdk_shutdown()
-		// break
-	}
-
-	return
+	app.Run(os.Args)
 }
