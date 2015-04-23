@@ -25,13 +25,10 @@ func main() {
 	app.Usage = "some simple commands to check if the iRacing go sdk is working"
 	app.Version = "0.0.1"
 	dumpFlags := []cli.Flag{
-		dictionaryFlag{
-			cli.StringFlag{
-				Name:  "format",
-				Value: "raw",
-				Usage: "format to dump the data in",
-			},
-			[]string{},
+		cli.StringFlag{
+			Name:  "format",
+			Value: "raw",
+			Usage: "format to dump the data in",
 		},
 	}
 	app.Commands = []cli.Command{
@@ -47,15 +44,29 @@ func main() {
 					Action: func(c *cli.Context) {
 						conn, err := irsdk.NewConnection()
 						if err != nil {
-							fmt.Fprintln(app.Writer, err)
+							fmt.Fprintln(os.Stdout, err)
 						}
 
-						b, err := conn.GetRawSessionData()
-						if err != nil {
-							fmt.Fprintln(app.Writer, err)
-							return
+						format := c.String("format")
+						switch format {
+						case "raw":
+							b, err := conn.GetRawSessionData()
+							if err != nil {
+								fmt.Fprintln(app.Writer, err)
+								return
+							}
+							fmt.Println(string(b[:]))
+						case "struct":
+							session, err := conn.GetSessionData()
+							if err != nil {
+								fmt.Fprintln(app.Writer, err)
+								return
+							}
+							fmt.Printf("%+v\n", session)
+						default:
+							err := fmt.Sprintf("Unknow format: %v", format)
+							fmt.Fprintln(os.Stdout, err)
 						}
-						fmt.Println(string(b[:]))
 					},
 				},
 				{
@@ -69,13 +80,26 @@ func main() {
 							return
 						}
 
-						b, err := conn.GetRawTelemetryData()
-						if err != nil {
-							fmt.Println(os.Stderr, err)
-							return
+						format := c.String("format")
+						switch format {
+						case "raw":
+							b, err := conn.GetRawTelemetryData()
+							if err != nil {
+								fmt.Fprintln(os.Stderr, err)
+								return
+							}
+							fmt.Println(string(b[:]))
+						case "struct":
+							telemetryData, err := conn.GetTelemetryData()
+							if err != nil {
+								fmt.Fprintln(os.Stderr, err)
+								return
+							}
+							fmt.Printf("%+v\n", telemetryData)
+						default:
+							err := fmt.Sprintf("Unknow format: %v", format)
+							fmt.Fprintln(os.Stdout, err)
 						}
-						// fmt.Printf("%+v", b)
-						fmt.Println(string(b[:]))
 					},
 				},
 				{
