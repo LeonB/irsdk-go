@@ -2,7 +2,6 @@
 
 package utils
 
-import "C"
 import (
 	"bytes"
 	"errors"
@@ -290,7 +289,7 @@ func Irsdk_varNameToIndex(name string) int {
 	return -1
 }
 
-func Irsdk_varNameToOffset(name string) C.int {
+func Irsdk_varNameToOffset(name string) int {
 	var pVar *Irsdk_varHeader
 
 	if name != "" {
@@ -299,7 +298,7 @@ func Irsdk_varNameToOffset(name string) C.int {
 			pVar = Irsdk_getVarHeaderEntry(index)
 			pVarName := CToGoString(pVar.Name[:])
 			if pVar != nil && pVarName == name {
-				return pVar.Offset
+				return int(pVar.Offset)
 			}
 		}
 	}
