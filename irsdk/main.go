@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"runtime/pprof"
 
 	"github.com/codegangsta/cli"
 	irsdk "github.com/leonb/irsdk-go"
@@ -108,6 +109,44 @@ func main() {
 						err := "Not yet implemented"
 						fmt.Fprintln(os.Stderr, err)
 						return
+					},
+				},
+			},
+		},
+
+		{
+			// https://blog.golang.org/profiling-go-programs
+			Name:    "profile",
+			Aliases: []string{"p"},
+			Usage:   "dump profiling data",
+			Subcommands: []cli.Command{
+				{
+					Name:  "cpu",
+					Usage: "dump cpu profiling data",
+					Flags: dumpFlags,
+					Action: func(c *cli.Context) {
+						// Start profiling
+						f, err := os.Create("cpu.prof")
+						if err != nil {
+							fmt.Fprintln(os.Stdout, err)
+							return
+						}
+						pprof.StartCPUProfile(f)
+						defer pprof.StopCPUProfile()
+
+						conn, err := irsdk.NewConnection()
+						if err != nil {
+							fmt.Println(os.Stderr, err)
+							return
+						}
+
+						for i := 0; i < 1000; i++ {
+							_, err := conn.GetTelemetryData()
+							if err != nil {
+								fmt.Println(os.Stderr, err)
+								// Don't quit, just keep on going
+							}
+						}
 					},
 				},
 			},
