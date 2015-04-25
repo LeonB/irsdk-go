@@ -1,10 +1,5 @@
 package main
 
-// - irsdk dump session
-// - irsdk dump telemetry
-// - irsdk dump sessionStuct
-// - irsdk dump telemetryStruct
-
 import (
 	"fmt"
 	"os"
@@ -28,7 +23,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "format",
 			Value: "raw",
-			Usage: "format to dump the data in",
+			Usage: "format to dump the data in (raw, struct)",
 		},
 	}
 	app.Commands = []cli.Command{
@@ -45,6 +40,7 @@ func main() {
 						conn, err := irsdk.NewConnection()
 						if err != nil {
 							fmt.Fprintln(os.Stdout, err)
+							return
 						}
 
 						format := c.String("format")
@@ -66,6 +62,7 @@ func main() {
 						default:
 							err := fmt.Sprintf("Unknow format: %v", format)
 							fmt.Fprintln(os.Stdout, err)
+							return
 						}
 					},
 				},
@@ -99,6 +96,7 @@ func main() {
 						default:
 							err := fmt.Sprintf("Unknow format: %v", format)
 							fmt.Fprintln(os.Stdout, err)
+							return
 						}
 					},
 				},
@@ -109,6 +107,7 @@ func main() {
 					Action: func(c *cli.Context) {
 						err := "Not yet implemented"
 						fmt.Fprintln(os.Stderr, err)
+						return
 					},
 				},
 			},
