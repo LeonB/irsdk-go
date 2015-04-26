@@ -9,16 +9,16 @@ import (
 )
 
 const (
-	IRSDK_MEMMAPFILENAME     = "Local\\IRSDKMemMapFileName"
-	IRSDK_BROADCASTMSGNAME   = "IRSDK_BROADCASTMSG"
-	IRSDK_DATAVALIDEVENTNAME = "Local\\IRSDKDataValidEvent"
-	INT_MAX                  = 2147483647
-	MEMMAPFILESIZE           = 780 * 1024
+	MEMMAPFILENAME     = "Local\\IRSDKMemMapFileName"
+	BROADCASTMSGNAME   = "IRSDK_BROADCASTMSG"
+	DATAVALIDEVENTNAME = "Local\\IRSDKDataValidEvent"
+	INT_MAX            = 2147483647
+	MEMMAPFILESIZE     = 780 * 1024
 
-	IRSDK_MAX_BUFS   = 4
-	IRSDK_MAX_STRING = 32
+	MAX_BUFS   = 4
+	MAX_STRING = 32
 	// descriptions can be longer than max_string!
-	IRSDK_MAX_DESC = 64
+	MAX_DESC = 64
 
 	TIMEOUT = time.Duration(30) // timeout after 30 seconds with no communication
 )
@@ -36,7 +36,7 @@ type Irsdk struct {
 	sharedMemPtr    uintptr
 	sharedMem       []byte
 
-	header        *Irsdk_header
+	header        *Header
 	isInitialized bool
 	lastValidTime time.Time
 	lastTickCount int
@@ -48,7 +48,7 @@ func (ir *Irsdk) Startup() error {
 	var err error
 
 	if ir.hMemMapFile == 0 {
-		ir.hMemMapFile, err = openFileMapping(IRSDK_MEMMAPFILENAME)
+		ir.hMemMapFile, err = openFileMapping(MEMMAPFILENAME)
 		if err != nil {
 			return err
 		}
@@ -57,28 +57,28 @@ func (ir *Irsdk) Startup() error {
 
 	if ir.hMemMapFile != 0 {
 		if len(ir.sharedMem) == 0 {
-		 ir.sharedMemPtr, err = mapViewOfFile(ir.hMemMapFile, MEMMAPFILESIZE)
+			ir.sharedMemPtr, err = mapViewOfFile(ir.hMemMapFile, MEMMAPFILESIZE)
 			if err != nil {
 				return err
 			}
 
-		 ir.header = (*Irsdk_header)(unsafe.Pointer(ir.sharedMemPtr))
-		 ir.sharedMem = (*[MEMMAPFILESIZE]byte)(unsafe.Pointer(ir.sharedMemPtr))[:]
-		 ir.lastTickCount = INT_MAX
+			ir.header = (*Header)(unsafe.Pointer(ir.sharedMemPtr))
+			ir.sharedMem = (*[MEMMAPFILESIZE]byte)(unsafe.Pointer(ir.sharedMemPtr))[:]
+			ir.lastTickCount = INT_MAX
 		}
 
 		if len(ir.sharedMem) != 0 {
 			if ir.hDataValidEvent == 0 {
-			 ir.hDataValidEvent, err = openEvent(IRSDK_DATAVALIDEVENTNAME)
+				ir.hDataValidEvent, err = openEvent(DATAVALIDEVENTNAME)
 				if err != nil {
 					return err
 				}
 
-			 ir.lastTickCount = INT_MAX
+				ir.lastTickCount = INT_MAX
 			}
 
 			if ir.hDataValidEvent != 0 {
-			 ir.isInitialized = true
+				ir.isInitialized = true
 				return nil
 			}
 			//else printf("Error opening event: %d\n", GetLastError());
@@ -87,7 +87,7 @@ func (ir *Irsdk) Startup() error {
 	}
 	//else printf("Error opening file: %d\n", GetLastError()); `
 
- ir.isInitialized = false
+	ir.isInitialized = false
 	return ErrInitialize
 }
 
@@ -102,13 +102,13 @@ func (ir *Irsdk) Shutdown() {
 			if ir.hMemMapFile != 0 {
 				closeHandle(ir.hMemMapFile)
 
-			 ir.hDataValidEvent = 0
-			 ir.sharedMem = nil
-			 ir.header = nil
-			 ir.hMemMapFile = 0
+				ir.hDataValidEvent = 0
+				ir.sharedMem = nil
+				ir.header = nil
+				ir.hMemMapFile = 0
 
-			 ir.isInitialized = false
-			 ir.lastTickCount = INT_MAX
+				ir.isInitialized = false
+				ir.lastTickCount = INT_MAX
 			}
 		}
 	}
@@ -123,8 +123,8 @@ func (ir *Irsdk) GetNewData() ([]byte, error) {
 	}
 
 	// if sim is not active, then no new data
-	if (int(ir.header.Status) & int(irsdk_stConnected)) == 0 {
-	 ir.lastTickCount = INT_MAX
+	if (ir.header.Status & StatusConnected) == 0 {
+		ir.lastTickCount = INT_MAX
 		return nil, nil
 	}
 
@@ -200,7 +200,7 @@ func (ir *Irsdk) WaitForDataReady(timeOut time.Duration) ([]byte, error) {
 func (ir *Irsdk) IsConnected() bool {
 	if ir.isInitialized {
 		elapsed := now().Sub(ir.lastValidTime)
-		if (ir.header.Status&irsdk_stConnected) > 0 && (elapsed < TIMEOUT) {
+		if (ir.header.Status & StatusConnected) > 0 && (elapsed < TIMEOUT) {
 			return true
 		}
 	}
@@ -217,18 +217,18 @@ func (ir *Irsdk) GetSessionInfoStr() []byte {
 	return nil
 }
 
-func (ir *Irsdk) GetHeader() (*Irsdk_header, error) {
+func (ir *Irsdk) GetHeader() (*Header, error) {
 	return nil, nil
 }
 
-func (ir *Irsdk) GetVarHeader() (*Irsdk_varHeader, error) {
+func (ir *Irsdk) GetVarHeader() (*VarHeader, error) {
 	return nil, nil
 }
 
-func (ir *Irsdk) GetVarHeaderEntry(index int) *Irsdk_varHeader {
+func (ir *Irsdk) GetVarHeaderEntry(index int) *VarHeader {
 	if ir.isInitialized {
 		if index >= 0 && index < (int)(ir.header.NumVars) {
-			varHeader := &Irsdk_varHeader{}
+			varHeader := &VarHeader{}
 			pSharedMemPtr := uintptr(unsafe.Pointer(&ir.sharedMem[0]))
 			varHeaderOffset := uintptr(ir.header.VarHeaderOffset)
 			varHeaderSize := uintptr(unsafe.Sizeof(*varHeader))
@@ -236,7 +236,7 @@ func (ir *Irsdk) GetVarHeaderEntry(index int) *Irsdk_varHeader {
 			totalOffset := varHeaderOffset + (varHeaderSize * i)
 			varHeaderPtr := pSharedMemPtr + totalOffset
 
-			varHeader = (*Irsdk_varHeader)(unsafe.Pointer(varHeaderPtr))
+			varHeader = (*VarHeader)(unsafe.Pointer(varHeaderPtr))
 
 			return varHeader
 		}
@@ -246,7 +246,7 @@ func (ir *Irsdk) GetVarHeaderEntry(index int) *Irsdk_varHeader {
 
 // Note: this is a linear search, so cache the results
 func (ir *Irsdk) VarNameToIndex(name string) int {
-	var pVar *Irsdk_varHeader
+	var pVar *VarHeader
 
 	if name != "" {
 		numVars := int(ir.header.NumVars)
@@ -263,7 +263,7 @@ func (ir *Irsdk) VarNameToIndex(name string) int {
 }
 
 func (ir *Irsdk) VarNameToOffset(name string) int {
-	var pVar *Irsdk_varHeader
+	var pVar *VarHeader
 
 	if name != "" {
 		numVars := int(ir.header.NumVars)
@@ -279,7 +279,7 @@ func (ir *Irsdk) VarNameToOffset(name string) int {
 	return -1
 }
 
-func (ir *Irsdk) BroadcastMsg(msg irsdk_BroadcastMsg, var1 uint16, var2 uint16, var3 uint16) error {
+func (ir *Irsdk) BroadcastMsg(msg BroadcastMsg, var1 uint16, var2 uint16, var3 uint16) error {
 	msgID, _ := ir.GetBroadcastMsgID()
 
 	wParam := MAKELONG(uint16(msg), var1)
@@ -293,7 +293,7 @@ func (ir *Irsdk) BroadcastMsg(msg irsdk_BroadcastMsg, var1 uint16, var2 uint16, 
 	fmt.Println("wParam", wParam)
 	fmt.Println("lParam", lParam)
 
-	if msgID > 0 && msg >= 0 && msg < Irsdk_BroadcastLast {
+	if msgID > 0 && msg >= 0 && msg < BroadcastLast {
 		err := sendNotifyMessage(msgID, wParam, lParam)
 		if err != nil {
 			return err
@@ -325,12 +325,12 @@ func (ir *Irsdk) GetRpcCmd() (*exec.Cmd, error) {
 	return nil, nil
 }
 
-func (ir *Irsdk) GetNumVars() (int) {
+func (ir *Irsdk) GetNumVars() int {
 	return int(ir.header.NumVars)
 }
 
 func (ir *Irsdk) GetBroadcastMsgID() (uint, error) {
-	return registerWindowMessageA(IRSDK_BROADCASTMSGNAME)
+	return registerWindowMessageA(BROADCASTMSGNAME)
 }
 
 func (ir *Irsdk) GetSharedMem() []byte {

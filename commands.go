@@ -10,8 +10,8 @@ import (
 func testBroadcastMsg() {
 	sdk := utils.Irsdk{}
 	err := sdk.BroadcastMsg(
-		utils.Irsdk_BroadcastChatComand,
-		uint16(utils.Irsdk_ChatCommand_BeginChat),
+		utils.BroadcastChatComand,
+		uint16(utils.ChatCommand_BeginChat),
 		0,
 		0,
 	)
@@ -22,8 +22,8 @@ func testBroadcastMsg() {
 	chatMacro := 1
 	fmt.Printf("Sending chat macro %d\n", chatMacro)
 	err = sdk.BroadcastMsg(
-		utils.Irsdk_BroadcastChatComand,
-		uint16(utils.Irsdk_ChatCommand_Macro),
+		utils.BroadcastChatComand,
+		uint16(utils.ChatCommand_Macro),
 		uint16(chatMacro),
 		0,
 	)

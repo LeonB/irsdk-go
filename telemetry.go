@@ -209,39 +209,39 @@ type TelemetryData struct {
 	ReplaySessionTime float64
 }
 
-func (d *TelemetryData) addVarHeaderData(varHeader *utils.Irsdk_varHeader, data []byte) error {
+func (d *TelemetryData) addVarHeaderData(varHeader *utils.VarHeader, data []byte) error {
 	switch varHeader.Type {
-	case utils.Irsdk_char:
+	case utils.CharType:
 		irVar := extractCharFromVarHeader(varHeader, data)
 		err := d.AddIrCharVar(irVar)
 		if err != nil {
 			fmt.Println(err)
 		}
-	case utils.Irsdk_bool:
+	case utils.BoolType:
 		irVar := extractBoolFromVarHeader(varHeader, data)
 		err := d.AddIrBoolVar(irVar)
 		if err != nil {
 			fmt.Println(err)
 		}
-	case utils.Irsdk_int:
+	case utils.IntType:
 		irVar := extractIntFromVarHeader(varHeader, data)
 		err := d.AddIrIntVar(irVar)
 		if err != nil {
 			fmt.Println(err)
 		}
-	case utils.Irsdk_bitField:
+	case utils.BitfieldType:
 		irVar := extractBitfieldFromVarHeader(varHeader, data)
 		err := d.AddIrBitfieldVar(irVar)
 		if err != nil {
 			fmt.Println(err)
 		}
-	case utils.Irsdk_float:
+	case utils.FloatType:
 		irVar := extractFloatFromVarHeader(varHeader, data)
 		err := d.AddIrFloatVar(irVar)
 		if err != nil {
 			fmt.Println(err)
 		}
-	case utils.Irsdk_double:
+	case utils.DoubleType:
 		irVar := extractDoubleFromVarHeader(varHeader, data)
 		err := d.AddIrDoubleVar(irVar)
 		if err != nil {
@@ -350,68 +350,68 @@ func (d *TelemetryData) AddIrDoubleVar(irVar *irDoubleVar) error {
 	return errors.New(fmt.Sprintf("Unknown %T: %v", irVar, irVar.name))
 }
 
-var irsdkFlags = map[utils.Irsdk_Flags]string{
+var irsdkFlags = map[utils.Flags]string{
 	// global flags
-	utils.Irsdk_checkered:     "checkered",
-	utils.Irsdk_white:         "white",
-	utils.Irsdk_green:         "green",
-	utils.Irsdk_yellow:        "yellow",
-	utils.Irsdk_red:           "red",
-	utils.Irsdk_blue:          "blue",
-	utils.Irsdk_debris:        "debris",
-	utils.Irsdk_crossed:       "crossed",
-	utils.Irsdk_yellowWaving:  "yellowWaving",
-	utils.Irsdk_oneLapToGreen: "oneLapToGreen",
-	utils.Irsdk_greenHeld:     "greenHeld",
-	utils.Irsdk_tenToGo:       "tenToGo",
-	utils.Irsdk_fiveToGo:      "fiveToGo",
-	utils.Irsdk_randomWaving:  "randomWaving",
-	utils.Irsdk_caution:       "caution",
-	utils.Irsdk_cautionWaving: "cautionWaving",
+	utils.CheckeredFlag:     "checkered",
+	utils.WhiteFlag:         "white",
+	utils.GreenFlag:         "green",
+	utils.YellowFlag:        "yellow",
+	utils.RedFlag:           "red",
+	utils.BlueFlag:          "blue",
+	utils.DebrisFlag:        "debris",
+	utils.CrossedFlag:       "crossed",
+	utils.YellowWavingFlag:  "yellowWaving",
+	utils.OneLapToGreenFlag: "oneLapToGreen",
+	utils.GreenHeldFlag:     "greenHeld",
+	utils.TenToGoFlag:       "tenToGo",
+	utils.FiveToGoFlag:      "fiveToGo",
+	utils.RandomWavingFlag:  "randomWaving",
+	utils.CautionFlag:       "caution",
+	utils.CautionWavingFlag: "cautionWaving",
 
 	// drivers black flags
-	utils.Irsdk_black:      "black",
-	utils.Irsdk_disqualify: "disqualify",
-	utils.Irsdk_servicible: "servicible", // car is allowed service (not a flag)
-	utils.Irsdk_furled:     "furled",
-	utils.Irsdk_repair:     "repair",
+	utils.BlackFlag:      "black",
+	utils.DisqualifyFlag: "disqualify",
+	utils.ServicibleFlag: "servicible", // car is allowed service (not a flag)
+	utils.FurledFlag:     "furled",
+	utils.RepairFlag:     "repair",
 
 	// start lights
-	utils.Irsdk_startHidden: "startHidden",
-	utils.Irsdk_startReady:  "startReady",
-	utils.Irsdk_startSet:    "startSet",
-	utils.Irsdk_startGo:     "startGo",
+	utils.StartHidden: "startHidden",
+	utils.StartReady:  "startReady",
+	utils.StartSet:    "startSet",
+	utils.StartGo:     "startGo",
 }
 
-var irsdkEngineWarnings = map[utils.Irsdk_EngineWarnings]string{
-	utils.Irsdk_waterTempWarning:    "waterTempWarning",
-	utils.Irsdk_fuelPressureWarning: "fuelPressureWarning",
-	utils.Irsdk_oilPressureWarning:  "oilPressureWarning",
-	utils.Irsdk_engineStalled:       "engineStalled",
-	utils.Irsdk_pitSpeedLimiter:     "pitSpeedLimiter",
-	utils.Irsdk_revLimiterActive:    "revLimiterActive",
+var irsdkEngineWarnings = map[utils.EngineWarnings]string{
+	utils.WaterTempWarning:    "waterTempWarning",
+	utils.FuelPressureWarning: "fuelPressureWarning",
+	utils.OilPressureWarning:  "oilPressureWarning",
+	utils.EngineStalled:       "engineStalled",
+	utils.PitSpeedLimiter:     "pitSpeedLimiter",
+	utils.RevLimiterActive:    "revLimiterActive",
 }
 
-var irsdkCameraStates = map[utils.Irsdk_CameraState]string{
-	utils.Irsdk_IsSessionScreen:       "isSessionScreen",
-	utils.Irsdk_IsScenicActive:        "isScencActive",
-	utils.Irsdk_CamToolActive:         "camToolActive",
-	utils.Irsdk_UIHidden:              "uiHidden",
-	utils.Irsdk_UseAutoShotSelection:  "useAutoShotSelection",
-	utils.Irsdk_UseTemporaryEdits:     "useTemporaryEdits",
-	utils.Irsdk_UseKeyAcceleration:    "useKeyAcceleration",
-	utils.Irsdk_UseKey10xAcceleration: "useKey10xAcceleration",
-	utils.Irsdk_UseMouseAimMode:       "useMouseAimMode",
+var irsdkCameraStates = map[utils.CameraState]string{
+	utils.IsSessionScreen:       "isSessionScreen",
+	utils.IsScenicActive:        "isScencActive",
+	utils.CamToolActive:         "camToolActive",
+	utils.UIHidden:              "uiHidden",
+	utils.UseAutoShotSelection:  "useAutoShotSelection",
+	utils.UseTemporaryEdits:     "useTemporaryEdits",
+	utils.UseKeyAcceleration:    "useKeyAcceleration",
+	utils.UseKey10xAcceleration: "useKey10xAcceleration",
+	utils.UseMouseAimMode:       "useMouseAimMode",
 }
 
-var irsdkSessionStates = map[utils.Irsdk_SessionState]string{
-	utils.Irsdk_StateInvalid:    "invalid",
-	utils.Irsdk_StateGetInCar:   "getInCar",
-	utils.Irsdk_StateWarmup:     "warmup",
-	utils.Irsdk_StateParadeLaps: "paradeLaps",
-	utils.Irsdk_StateRacing:     "racing",
-	utils.Irsdk_StateCheckered:  "checkered",
-	utils.Irsdk_StateCoolDown:   "coolDown",
+var irsdkSessionStates = map[utils.SessionState]string{
+	utils.StateInvalid:    "invalid",
+	utils.StateGetInCar:   "getInCar",
+	utils.StateWarmup:     "warmup",
+	utils.StateParadeLaps: "paradeLaps",
+	utils.StateRacing:     "racing",
+	utils.StateCheckered:  "checkered",
+	utils.StateCoolDown:   "coolDown",
 }
 
 // @TODO: should this accept an io.Reader?
@@ -472,7 +472,7 @@ func (c *IrConnection) BytesToTelemetryStructFiltered(data []byte, fields []stri
 	return telemetryData
 }
 
-func extractCharFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irCharVar {
+func extractCharFromVarHeader(header *utils.VarHeader, data []byte) *irCharVar {
 	varName := utils.CToGoString(header.Name[:])
 	varDesc := utils.CToGoString(header.Desc[:])
 	varUnit := utils.CToGoString(header.Unit[:])
@@ -491,7 +491,7 @@ func extractCharFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irCha
 	}
 }
 
-func extractBoolFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irBoolVar {
+func extractBoolFromVarHeader(header *utils.VarHeader, data []byte) *irBoolVar {
 	varName := utils.CToGoString(header.Name[:])
 	varDesc := utils.CToGoString(header.Desc[:])
 	varUnit := utils.CToGoString(header.Unit[:])
@@ -510,7 +510,7 @@ func extractBoolFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irBoo
 	}
 }
 
-func extractIntFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irIntVar {
+func extractIntFromVarHeader(header *utils.VarHeader, data []byte) *irIntVar {
 	varName := utils.CToGoString(header.Name[:])
 	varDesc := utils.CToGoString(header.Desc[:])
 	varUnit := utils.CToGoString(header.Unit[:])
@@ -529,7 +529,7 @@ func extractIntFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irIntV
 	}
 }
 
-func extractBitfieldFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irBitfieldVar {
+func extractBitfieldFromVarHeader(header *utils.VarHeader, data []byte) *irBitfieldVar {
 	varName := utils.CToGoString(header.Name[:])
 	varDesc := utils.CToGoString(header.Desc[:])
 	varUnit := utils.CToGoString(header.Unit[:])
@@ -567,7 +567,7 @@ func extractBitfieldFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *i
 	return retVar
 }
 
-func extractFloatFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irFloatVar {
+func extractFloatFromVarHeader(header *utils.VarHeader, data []byte) *irFloatVar {
 	varName := utils.CToGoString(header.Name[:])
 	varDesc := utils.CToGoString(header.Desc[:])
 	varUnit := utils.CToGoString(header.Unit[:])
@@ -586,7 +586,7 @@ func extractFloatFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irFl
 	}
 }
 
-func extractDoubleFromVarHeader(header *utils.Irsdk_varHeader, data []byte) *irDoubleVar {
+func extractDoubleFromVarHeader(header *utils.VarHeader, data []byte) *irDoubleVar {
 	varName := utils.CToGoString(header.Name[:])
 	varDesc := utils.CToGoString(header.Desc[:])
 	varUnit := utils.CToGoString(header.Unit[:])
