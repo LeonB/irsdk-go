@@ -415,12 +415,12 @@ var irsdkSessionStates = map[utils.Irsdk_SessionState]string{
 }
 
 // @TODO: should this accept an io.Reader?
-func BytesToTelemetryStruct(data []byte) *TelemetryData {
+func (c *IrConnection) BytesToTelemetryStruct(data []byte) *TelemetryData {
 	telemetryData := newTelemetryData()
-	numVars := utils.Irsdk_getNumVars()
+	numVars := c.sdk.GetNumVars()
 
 	for i := 0; i <= numVars; i++ {
-		varHeader := utils.Irsdk_getVarHeaderEntry(i)
+		varHeader := c.sdk.GetVarHeaderEntry(i)
 
 		if varHeader == nil {
 			continue
@@ -433,12 +433,12 @@ func BytesToTelemetryStruct(data []byte) *TelemetryData {
 }
 
 // @TODO: should this accept an io.Reader?
-func BytesToTelemetryStructFiltered(data []byte, fields []string) *TelemetryData {
+func (c *IrConnection) BytesToTelemetryStructFiltered(data []byte, fields []string) *TelemetryData {
 	telemetryData := newTelemetryData()
-	numVars := utils.Irsdk_getNumVars()
+	numVars := c.sdk.GetNumVars()
 
 	for i := 0; i <= numVars; i++ {
-		varHeader := utils.Irsdk_getVarHeaderEntry(i)
+		varHeader := c.sdk.GetVarHeaderEntry(i)
 
 		if varHeader == nil {
 			continue

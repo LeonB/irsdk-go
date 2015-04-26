@@ -10,8 +10,8 @@ import (
 
 func NewConnection() (*IrConnection, error) {
 	conn := &IrConnection{
-		// timeout: time.Millisecond * ((1000 / 60) + 2),
 		timeout: time.Millisecond * time.Duration(math.Ceil(1000.0/60.0)+1.0),
+		sdk: &utils.Irsdk{},
 	}
 
 	return conn, conn.Connect()
@@ -19,15 +19,16 @@ func NewConnection() (*IrConnection, error) {
 
 type IrConnection struct {
 	timeout time.Duration
+	sdk *utils.Irsdk
 }
 
 func (c *IrConnection) Connect() error {
-	err := utils.Irsdk_startup()
+	err := c.sdk.Startup()
 	return err
 }
 
 func (c *IrConnection) GetRawTelemetryData() ([]byte, error) {
-	return utils.Irsdk_waitForDataReady(c.timeout)
+	return c.sdk.WaitForDataReady(c.timeout)
 }
 
 func (c *IrConnection) GetTelemetryData() (*TelemetryData, error) {
@@ -37,27 +38,27 @@ func (c *IrConnection) GetTelemetryData() (*TelemetryData, error) {
 	}
 
 	if data != nil {
-		return BytesToTelemetryStruct(data), nil
+		return c.BytesToTelemetryStruct(data), nil
 	}
 
 	return nil, nil
 }
 
 func (c *IrConnection) GetTelemetryDataFiltered(fields []string) (*TelemetryData, error) {
-	data, err := utils.Irsdk_waitForDataReady(c.timeout)
+	data, err := c.sdk.WaitForDataReady(c.timeout)
 	if err != nil {
 		return nil, err
 	}
 
 	if data != nil {
-		return BytesToTelemetryStructFiltered(data, fields), nil
+		return c.BytesToTelemetryStructFiltered(data, fields), nil
 	}
 
 	return nil, nil
 }
 
 func (c *IrConnection) GetRawSessionData() ([]byte, error) {
-	b := utils.Irsdk_getSessionInfoStr()
+	b := c.sdk.GetSessionInfoStr()
 	if b == nil {
 		return nil, nil
 	}
@@ -77,7 +78,7 @@ func (c *IrConnection) GetSessionData() (*SessionData, error) {
 	}
 
 	if yamlData != nil {
-		return BytesToSessionStruct(yamlData)
+		return c.BytesToSessionStruct(yamlData)
 	}
 
 	return nil, nil
@@ -88,6 +89,6 @@ func (c *IrConnection) SendCommand() error {
 }
 
 func (c *IrConnection) Shutdown() error {
-	utils.Irsdk_startup()
+	c.sdk.Shutdown()
 	return nil
 }
