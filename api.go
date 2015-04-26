@@ -2,20 +2,23 @@ package irsdk
 
 import (
 	"bytes"
+	"math"
+	"time"
 
 	"github.com/leonb/irsdk-go/utils"
 )
 
 func NewConnection() (*IrConnection, error) {
 	conn := &IrConnection{
-		timeout: 18, // (1000ms/60f/s)+1ms(to be sure)
+		// timeout: time.Millisecond * ((1000 / 60) + 2),
+		timeout: time.Millisecond * time.Duration(math.Ceil(1000.0/60.0)+1.0),
 	}
 
 	return conn, conn.Connect()
 }
 
 type IrConnection struct {
-	timeout int
+	timeout time.Duration
 }
 
 func (c *IrConnection) Connect() error {

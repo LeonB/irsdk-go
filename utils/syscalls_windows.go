@@ -41,8 +41,8 @@ var (
 	wSendNotifyMessageA     = user32.NewProc("SendNotifyMessageA")
 )
 
-func sleep(timeout int) error {
-	_, _, err := wSleep.Call(uintptr(timeout))
+func sleep(timeout time.Duration) error {
+	_, _, err := wSleep.Call(uintptr(timeout/time.Millisecond))
 
 	if err != nil {
 		errMsg := fmt.Sprintf("Timeout failed (%s)", err)

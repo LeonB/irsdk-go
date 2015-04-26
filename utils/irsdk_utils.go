@@ -169,7 +169,7 @@ func Irsdk_getNewData() ([]byte, error) {
 	return nil, ErrNothingChanged
 }
 
-func Irsdk_waitForDataReady(timeOut int) ([]byte, error) {
+func Irsdk_waitForDataReady(timeOut time.Duration) ([]byte, error) {
 	var data []byte
 	var err error
 
@@ -193,7 +193,8 @@ func Irsdk_waitForDataReady(timeOut int) ([]byte, error) {
 	}
 
 	// sleep till signaled
-	waitForSingleObject(hDataValidEvent, timeOut)
+	sleep(timeOut)
+	// waitForSingleObject(hDataValidEvent, int(timeOut/time.Millisecond))
 
 	// we woke up, so check for data
 	data, err = Irsdk_getNewData()
