@@ -11,7 +11,7 @@ import (
 func NewConnection() (*IrConnection, error) {
 	conn := &IrConnection{
 		timeout: time.Millisecond * time.Duration(math.Ceil(1000.0/60.0)+1.0),
-		sdk: &utils.Irsdk{},
+		sdk:     &utils.Irsdk{},
 	}
 
 	return conn, conn.Connect()
@@ -19,7 +19,7 @@ func NewConnection() (*IrConnection, error) {
 
 type IrConnection struct {
 	timeout time.Duration
-	sdk *utils.Irsdk
+	sdk     *utils.Irsdk
 }
 
 func (c *IrConnection) Connect() error {
@@ -38,7 +38,7 @@ func (c *IrConnection) GetTelemetryData() (*TelemetryData, error) {
 	}
 
 	if data != nil {
-		return c.BytesToTelemetryStruct(data), nil
+		return c.BytesToTelemetryStruct(data)
 	}
 
 	return nil, nil

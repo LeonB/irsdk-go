@@ -3,7 +3,6 @@ package utils
 import (
 	"errors"
 	"fmt"
-	"os/exec"
 	"time"
 	"unsafe"
 )
@@ -41,14 +40,19 @@ type Irsdk struct {
 	lastValidTime time.Time
 	lastTickCount int
 
-	rpcCmd *exec.Cmd
+	c *CWrapper
 }
 
 func (ir *Irsdk) Startup() error {
 	var err error
 
+	ir.c, err = NewCWrapper()
+	if err != nil {
+		return err
+	}
+
 	if ir.hMemMapFile == 0 {
-		ir.hMemMapFile, err = openFileMapping(MEMMAPFILENAME)
+		ir.hMemMapFile, err = ir.c.OpenFileMapping(MEMMAPFILENAME)
 		if err != nil {
 			return err
 		}
@@ -57,19 +61,25 @@ func (ir *Irsdk) Startup() error {
 
 	if ir.hMemMapFile != 0 {
 		if len(ir.sharedMem) == 0 {
-			ir.sharedMemPtr, err = mapViewOfFile(ir.hMemMapFile, MEMMAPFILESIZE)
+			ir.sharedMemPtr, err = ir.c.MapViewOfFile(ir.hMemMapFile, MEMMAPFILESIZE)
 			if err != nil {
 				return err
 			}
 
-			ir.header = (*Header)(unsafe.Pointer(ir.sharedMemPtr))
-			ir.sharedMem = (*[MEMMAPFILESIZE]byte)(unsafe.Pointer(ir.sharedMemPtr))[:]
+			ir.header, err = ir.GetHeader()
+			if err != nil {
+				return err
+			}
+			ir.sharedMem, err = ir.GetSharedMem()
+			if err != nil {
+				return err
+			}
 			ir.lastTickCount = INT_MAX
 		}
 
 		if len(ir.sharedMem) != 0 {
 			if ir.hDataValidEvent == 0 {
-				ir.hDataValidEvent, err = openEvent(DATAVALIDEVENTNAME)
+				ir.hDataValidEvent, err = ir.c.OpenEvent(DATAVALIDEVENTNAME)
 				if err != nil {
 					return err
 				}
@@ -93,14 +103,13 @@ func (ir *Irsdk) Startup() error {
 
 func (ir *Irsdk) Shutdown() {
 	if ir.hDataValidEvent != 0 {
-		closeHandle(ir.hDataValidEvent)
+		ir.c.CloseHandle(ir.hDataValidEvent)
 
 		if len(ir.sharedMem) != 0 {
-			ir.sharedMemPtr = uintptr(unsafe.Pointer(&ir.sharedMem))
-			unmapViewOfFile(ir.sharedMemPtr)
+			ir.c.UnmapViewOfFile(ir.sharedMemPtr)
 
 			if ir.hMemMapFile != 0 {
-				closeHandle(ir.hMemMapFile)
+				ir.c.CloseHandle(ir.hMemMapFile)
 
 				ir.hDataValidEvent = 0
 				ir.sharedMem = nil
@@ -115,11 +124,18 @@ func (ir *Irsdk) Shutdown() {
 }
 
 func (ir *Irsdk) GetNewData() ([]byte, error) {
+	var err error
+
 	if !ir.isInitialized {
-		err := ir.Startup()
+		err = ir.Startup()
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	ir.header, err = ir.GetHeader()
+	if err != nil {
+		return nil, err
 	}
 
 	// if sim is not active, then no new data
@@ -127,6 +143,11 @@ func (ir *Irsdk) GetNewData() ([]byte, error) {
 		ir.lastTickCount = INT_MAX
 		return nil, nil
 	}
+
+	// ir.sharedMem, err = ir.GetSharedMem()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	latest := 0
 	for i := 0; i < int(ir.header.NumBuf); i++ {
@@ -136,21 +157,21 @@ func (ir *Irsdk) GetNewData() ([]byte, error) {
 	}
 
 	// if newer than last recieved, than report new data
+	curTickCount := int(ir.header.VarBuf[latest].TickCount)
+	// fmt.Println("curTickCount", curTickCount)
 	if ir.lastTickCount < int(ir.header.VarBuf[latest].TickCount) {
 
 		for count := 0; count < 2; count++ {
-			curTickCount := int(ir.header.VarBuf[latest].TickCount)
-			bufLen := int(ir.header.BufLen)
-			startByte := int(ir.header.VarBuf[latest].BufOffset)
-			endByte := startByte + bufLen
-
-			// Copy data
-			data := make([]byte, bufLen)
-			copy(data, ir.sharedMem[startByte:endByte])
+			// data, err := ir.copyTelemetryData(latest)
+			data := make([]byte, 400)
+			// if err != nil {
+			// 	return data, err
+			// }
+			return data, nil
 
 			if curTickCount == int(ir.header.VarBuf[latest].TickCount) {
 				ir.lastTickCount = curTickCount
-				ir.lastValidTime = now()
+				ir.lastValidTime = time.Now()
 				return data, nil
 			}
 		}
@@ -176,7 +197,7 @@ func (ir *Irsdk) WaitForDataReady(timeOut time.Duration) ([]byte, error) {
 		if err != nil {
 			// sleep if error
 			if timeOut > 0 {
-				sleep(timeOut)
+				time.Sleep(timeOut)
 			}
 
 			return nil, nil
@@ -190,7 +211,7 @@ func (ir *Irsdk) WaitForDataReady(timeOut time.Duration) ([]byte, error) {
 	}
 
 	// sleep till signaled
-	waitForSingleObject(ir.hDataValidEvent, int(timeOut/time.Millisecond))
+	ir.c.WaitForSingleObject(ir.hDataValidEvent, int(timeOut/time.Millisecond))
 
 	// we woke up, so check for data
 	data, err = ir.GetNewData()
@@ -199,8 +220,8 @@ func (ir *Irsdk) WaitForDataReady(timeOut time.Duration) ([]byte, error) {
 
 func (ir *Irsdk) IsConnected() bool {
 	if ir.isInitialized {
-		elapsed := now().Sub(ir.lastValidTime)
-		if (ir.header.Status & StatusConnected) > 0 && (elapsed < TIMEOUT) {
+		elapsed := time.Now().Sub(ir.lastValidTime)
+		if (ir.header.Status&StatusConnected) > 0 && (elapsed < TIMEOUT) {
 			return true
 		}
 	}
@@ -210,6 +231,7 @@ func (ir *Irsdk) IsConnected() bool {
 
 func (ir *Irsdk) GetSessionInfoStr() []byte {
 	if ir.isInitialized {
+		// Hier gaat het fout
 		startByte := ir.header.SessionInfoOffset
 		length := ir.header.SessionInfoLen
 		return ir.sharedMem[startByte:length]
@@ -217,66 +239,57 @@ func (ir *Irsdk) GetSessionInfoStr() []byte {
 	return nil
 }
 
-func (ir *Irsdk) GetHeader() (*Header, error) {
-	return nil, nil
-}
-
-func (ir *Irsdk) GetVarHeader() (*VarHeader, error) {
-	return nil, nil
-}
-
-func (ir *Irsdk) GetVarHeaderEntry(index int) *VarHeader {
+func (ir *Irsdk) GetVarHeaderEntry(index int) (*VarHeader, error) {
 	if ir.isInitialized {
 		if index >= 0 && index < (int)(ir.header.NumVars) {
 			varHeader := &VarHeader{}
-			pSharedMemPtr := uintptr(unsafe.Pointer(&ir.sharedMem[0]))
 			varHeaderOffset := uintptr(ir.header.VarHeaderOffset)
 			varHeaderSize := uintptr(unsafe.Sizeof(*varHeader))
 			i := uintptr(index)
 			totalOffset := varHeaderOffset + (varHeaderSize * i)
-			varHeaderPtr := pSharedMemPtr + totalOffset
+			varHeaderPtr := ir.sharedMemPtr + totalOffset
 
-			varHeader = (*VarHeader)(unsafe.Pointer(varHeaderPtr))
-
-			return varHeader
+			return ir.c.ptrToVarHeader(varHeaderPtr)
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 // Note: this is a linear search, so cache the results
-func (ir *Irsdk) VarNameToIndex(name string) int {
-	var pVar *VarHeader
-
+func (ir *Irsdk) VarNameToIndex(name string) (int, error) {
 	if name != "" {
 		numVars := int(ir.header.NumVars)
 		for index := 0; index <= numVars; index++ {
-			pVar = ir.GetVarHeaderEntry(index)
+			pVar, err := ir.GetVarHeaderEntry(index)
+			if err != nil {
+				return -1, err
+			}
 			pVarName := CToGoString(pVar.Name[:])
 			if pVar != nil && pVarName == name {
-				return index
+				return index, nil
 			}
 		}
 	}
 
-	return -1
+	return -1, nil
 }
 
-func (ir *Irsdk) VarNameToOffset(name string) int {
-	var pVar *VarHeader
-
+func (ir *Irsdk) VarNameToOffset(name string) (int, error) {
 	if name != "" {
 		numVars := int(ir.header.NumVars)
 		for index := 0; index <= numVars; index++ {
-			pVar = ir.GetVarHeaderEntry(index)
+			pVar, err := ir.GetVarHeaderEntry(index)
+			if err != nil {
+				return -1, err
+			}
 			pVarName := CToGoString(pVar.Name[:])
 			if pVar != nil && pVarName == name {
-				return int(pVar.Offset)
+				return int(pVar.Offset), nil
 			}
 		}
 	}
 
-	return -1
+	return -1, nil
 }
 
 func (ir *Irsdk) BroadcastMsg(msg BroadcastMsg, var1 uint16, var2 uint16, var3 uint16) error {
@@ -294,7 +307,7 @@ func (ir *Irsdk) BroadcastMsg(msg BroadcastMsg, var1 uint16, var2 uint16, var3 u
 	fmt.Println("lParam", lParam)
 
 	if msgID > 0 && msg >= 0 && msg < BroadcastLast {
-		err := sendNotifyMessage(msgID, wParam, lParam)
+		err := ir.c.SendNotifyMessage(msgID, wParam, lParam)
 		if err != nil {
 			return err
 		}
@@ -321,20 +334,58 @@ func (ir *Irsdk) PadCarNum(num int, zero int) int {
 
 // Custom functions
 
-func (ir *Irsdk) GetRpcCmd() (*exec.Cmd, error) {
-	return nil, nil
-}
+// func (ir *Irsdk) GetRpcCmd() (*exec.Cmd, error) {
+// 	return nil, nil
+// }
 
 func (ir *Irsdk) GetNumVars() int {
 	return int(ir.header.NumVars)
 }
 
 func (ir *Irsdk) GetBroadcastMsgID() (uint, error) {
-	return registerWindowMessageA(BROADCASTMSGNAME)
+	return ir.c.RegisterWindowMessageA(BROADCASTMSGNAME)
 }
 
-func (ir *Irsdk) GetSharedMem() []byte {
-	return ir.sharedMem
+func (ir *Irsdk) GetHeader() (*Header, error) {
+	return ir.c.ptrToHeader(ir.sharedMemPtr)
+}
+
+func (ir *Irsdk) GetSharedMem() ([]byte, error) {
+	return ir.c.ptrToSharedMem(ir.sharedMemPtr)
+}
+
+func (ir *Irsdk) copyTelemetryData(varBufN int) ([]byte, error) {
+	header, err := ir.GetHeader()
+	if err != nil {
+		return nil, err
+	}
+
+	// sharedMem, err := ir.GetSharedMem()
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	bufLen := int(header.BufLen)
+	startByte := int(header.VarBuf[varBufN].BufOffset)
+	endByte := startByte + bufLen
+
+	data := make([]byte, bufLen)
+	copy(data, ir.sharedMem[startByte:endByte])
+
+	// fmt.Println(string(data[:]))
+
+	return data, nil
+
+	fmt.Println("bufLen:", bufLen)
+	fmt.Println("startByte:", startByte)
+	fmt.Println("endByte:", endByte)
+	fmt.Println("endByte - startByte:", endByte-startByte)
+
+	return ir.c.getMemory(ir.sharedMemPtr, startByte, endByte)
+}
+
+func MAKELONG(lo, hi uint16) uint32 {
+	return uint32(uint32(lo) | ((uint32(hi)) << 16))
 }
 
 func CToGoString(c []byte) string {

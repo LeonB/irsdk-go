@@ -140,8 +140,9 @@ func main() {
 							return
 						}
 
-						for i := 0; i < 1000; i++ {
+						for i := 0; i < 60; i++ {
 							_, err := conn.GetTelemetryData()
+							fmt.Println(".")
 							if err != nil {
 								fmt.Println(os.Stderr, err)
 								// Don't quit, just keep on going

@@ -1,6 +1,6 @@
 // +build windows
 
-package utils
+package syscalls
 
 /*
 // for timeBeginPeriod()
@@ -41,8 +41,8 @@ var (
 	wSendNotifyMessageA     = user32.NewProc("SendNotifyMessageA")
 )
 
-func sleep(timeout time.Duration) error {
-	_, _, err := wSleep.Call(uintptr(timeout/time.Millisecond))
+func Sleep(timeout time.Duration) error {
+	_, _, err := wSleep.Call(uintptr(timeout / time.Millisecond))
 
 	if err != nil {
 		errMsg := fmt.Sprintf("Timeout failed (%s)", err)
@@ -52,7 +52,7 @@ func sleep(timeout time.Duration) error {
 	return nil
 }
 
-func openFileMapping(lpName string) (uintptr, error) {
+func OpenFileMapping(lpName string) (uintptr, error) {
 	dwDesiredAccess := syscall.FILE_MAP_READ
 
 	// Work around go bug
@@ -73,7 +73,7 @@ func openFileMapping(lpName string) (uintptr, error) {
 	return hMemMapFile, nil
 }
 
-func mapViewOfFile(hMemMapFile uintptr, dwNumberOfBytesToMap int) (uintptr, error) {
+func MapViewOfFile(hMemMapFile uintptr, dwNumberOfBytesToMap int) (uintptr, error) {
 	dwDesiredAccess := syscall.FILE_MAP_READ
 	dwFileOffsetHigh := 0
 	dwFileOffsetLow := 0
@@ -94,7 +94,7 @@ func mapViewOfFile(hMemMapFile uintptr, dwNumberOfBytesToMap int) (uintptr, erro
 	return sharedMemPtr, nil
 }
 
-func closeHandle(handle uintptr) error {
+func CloseHandle(handle uintptr) error {
 	result, _, err := wCloseHandle.Call(handle)
 
 	if result == 0 {
@@ -105,7 +105,7 @@ func closeHandle(handle uintptr) error {
 	return nil
 }
 
-func unmapViewOfFile(lpBaseAddress uintptr) error {
+func UnmapViewOfFile(lpBaseAddress uintptr) error {
 	result, _, err := wUnmapViewOfFile.Call(lpBaseAddress)
 
 	if result == 0 {
@@ -116,7 +116,7 @@ func unmapViewOfFile(lpBaseAddress uintptr) error {
 	return nil
 }
 
-func openEvent(lpName string) (uintptr, error) {
+func OpenEvent(lpName string) (uintptr, error) {
 	dwDesiredAccess := syscall.SYNCHRONIZE
 	bInheritHandle := 0
 
@@ -134,7 +134,7 @@ func openEvent(lpName string) (uintptr, error) {
 	return hDataValidEvent, nil
 }
 
-func waitForSingleObject(hDataValidEvent uintptr, timeOut int) error {
+func WaitForSingleObject(hDataValidEvent uintptr, timeOut int) error {
 	dwMilliseconds := timeOut
 
 	result, _, err := wWaitForSingleObject.Call(
@@ -150,7 +150,7 @@ func waitForSingleObject(hDataValidEvent uintptr, timeOut int) error {
 	return nil
 }
 
-func registerWindowMessageA(lpString string) (uint, error) {
+func RegisterWindowMessageA(lpString string) (uint, error) {
 	msgID, _, err := wRegisterWindowMessageA.Call(
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(lpString))), // LPCTSTR
 	)
@@ -163,7 +163,7 @@ func registerWindowMessageA(lpString string) (uint, error) {
 	return uint(msgID), nil
 }
 
-func sendNotifyMessage(msgID uint, wParam uint32, lParam uint32) error {
+func SendNotifyMessage(msgID uint, wParam uint32, lParam uint32) error {
 	hWnd := HWND_BROADCAST
 
 	result, _, err := wSendNotifyMessageA.Call(
@@ -182,11 +182,7 @@ func sendNotifyMessage(msgID uint, wParam uint32, lParam uint32) error {
 	return nil
 }
 
-func MAKELONG(lo, hi uint16) uint32 {
-	return uint32(uint32(lo) | ((uint32(hi)) << 16))
-}
-
-func now() time.Time {
+func Now() time.Time {
 	t := &syscall.Timeval{}
 	syscall.Gettimeofday(t)
 	sec, _ := t.Unix()
