@@ -34,6 +34,33 @@ func main() {
 			Usage:   "data dump commands",
 			Subcommands: []cli.Command{
 				{
+					Name:  "header",
+					Usage: "dump data header",
+					Flags: dumpFlags,
+					Action: func(c *cli.Context) {
+						conn, err := irsdk.NewConnection()
+						if err != nil {
+							fmt.Fprintln(os.Stdout, err)
+							return
+						}
+
+						format := c.String("format")
+						switch format {
+						case "raw", "struct":
+							header, err := conn.GetHeader()
+							if err != nil {
+								fmt.Fprintln(app.Writer, err)
+								return
+							}
+							fmt.Printf("%+v\n", header)
+						default:
+							err := fmt.Sprintf("Unknow format: %v", format)
+							fmt.Fprintln(os.Stdout, err)
+							return
+						}
+					},
+				},
+				{
 					Name:  "session",
 					Usage: "dump session data",
 					Flags: dumpFlags,
@@ -140,9 +167,8 @@ func main() {
 							return
 						}
 
-						for i := 0; i < 60; i++ {
+						for i := 0; i < 1000; i++ {
 							_, err := conn.GetTelemetryData()
-							fmt.Println(".")
 							if err != nil {
 								fmt.Println(os.Stderr, err)
 								// Don't quit, just keep on going

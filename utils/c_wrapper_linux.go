@@ -1,108 +1,212 @@
 // -build windows
+
 package utils
 
 import (
 	"errors"
 	"fmt"
 	"net/rpc"
+	"os"
 	"os/exec"
+	"time"
+	"unsafe"
 
+	mmap "github.com/edsrzf/mmap-go"
 	"github.com/kevinwallace/coprocess"
+	wineshm "github.com/leonb/wineshm-go"
+)
+
+var (
+	WineCmd = []string{"/opt/iracing/bin/wine", "--bottle", "default"}
+)
+
+const (
+	RPC_COMMAND      = "ir-syscalls-rpc.exe"
+	DATA_CHANGE_TICK = time.Duration(time.Millisecond * 9)
 )
 
 type CWrapper struct {
+	sharedMem       []byte
+	sharedMemPtr    unsafe.Pointer
+	header          *Header
+	mmapFile        *os.File
+	hDataValidEvent uintptr
+
 	client *rpc.Client
+}
+
+func (cw *CWrapper) startup() error {
+	var err error
+
+	if cw.mmapFile == nil {
+		cw.mmapFile, err = cw.getMmapFile()
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(cw.sharedMem) == 0 {
+		cw.sharedMem, err = cw.getSharedMem()
+		if err != nil {
+			return err
+		}
+	}
+
+	if cw.sharedMemPtr == nil {
+		cw.sharedMemPtr, err = cw.getSharedMemPtr()
+		if err != nil {
+			return err
+		}
+	}
+
+	if cw.header == nil {
+		cw.header, err = cw.getHeader()
+		if err != nil {
+			return err
+		}
+	}
+
+	if cw.hDataValidEvent == 0 {
+		cw.hDataValidEvent, err = cw.OpenEvent(DATAVALIDEVENTNAME)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+
+}
+
+func (cw *CWrapper) shutdown() error {
+	cw.sharedMem = nil
+	cw.sharedMemPtr = nil
+	cw.header = nil
+	cw.client.Close()
+	cw.client = nil
+	cw.mmapFile.Close()
+	return nil
+}
+
+func (cw *CWrapper) getMmapFile() (*os.File, error) {
+	var err error
+
+	wineshm.WineCmd = WineCmd
+	shmFd, err := wineshm.GetWineShm(MEMMAPFILENAME, wineshm.FILE_MAP_READ)
+	if err != nil {
+		return nil, err
+	}
+
+	file := os.NewFile(shmFd, MEMMAPFILENAME)
+	return file, err
+}
+
+func (cw *CWrapper) getSharedMem() ([]byte, error) {
+	sharedMem, err := mmap.Map(cw.mmapFile, mmap.RDONLY, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	return sharedMem, nil
+}
+
+func (cw *CWrapper) getSharedMemPtr() (unsafe.Pointer, error) {
+	sharedMem, err := cw.getSharedMem()
+	if err != nil {
+		return nil, err
+	}
+
+	return unsafe.Pointer(&sharedMem[0]), nil
+}
+
+// use this instead of WaitForSingleObject() because that's slow
+func (cw *CWrapper) WaitForDataChange(timeout time.Duration) error {
+	latest := cw.header.getLatestVarBufN()
+	prevTickCount := cw.header.VarBuf[latest].TickCount
+
+	// Create a ticker and a stop channel
+	ticker := time.NewTicker(DATA_CHANGE_TICK)
+	defer ticker.Stop()
+	stop := make(chan bool)
+
+	// Check every tick if iRacing's tick has changed: when iRacing's tick has
+	// changed send a message on the stop channel to make the for loop stop
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				// Check iRacing tick count
+				curTickCount := cw.header.VarBuf[latest].TickCount
+				if prevTickCount != curTickCount {
+					// tickcount changed: stop it
+					stop <- true
+				}
+			case <-stop:
+				ticker.Stop()
+			}
+		}
+	}()
+
+	// After timeout send a message on stop channel
+	time.AfterFunc(timeout, func() {
+		stop <- true
+	})
+
+	// Wait for stopchannel to receive a message
+	<-stop
+	return nil
 }
 
 // Syscalls
 
-func (sw *CWrapper) OpenFileMapping(lpName string) (uintptr, error) {
+func (cw *CWrapper) OpenFileMapping(lpName string) (uintptr, error) {
 	var handle uintptr
 	args := &OpenFileMappingArgs{lpName}
 
-	err := sw.client.Call("Commands.OpenFileMapping", args, &handle)
+	err := cw.client.Call("Commands.OpenFileMapping", args, &handle)
 	return handle, err
 }
 
-func (sw *CWrapper) MapViewOfFile(hMemMapFile uintptr, dwNumberOfBytesToMap int) (uintptr, error) {
+func (cw *CWrapper) MapViewOfFile(hMemMapFile uintptr, dwNumberOfBytesToMap int) (uintptr, error) {
 	var startAddress uintptr
 	args := &MapViewOfFileArgs{hMemMapFile, dwNumberOfBytesToMap}
 
-	err := sw.client.Call("Commands.MapViewOfFile", args, &startAddress)
+	err := cw.client.Call("Commands.MapViewOfFile", args, &startAddress)
 	return startAddress, err
 }
 
-func (sw *CWrapper) CloseHandle(handle uintptr) error {
+func (cw *CWrapper) CloseHandle(handle uintptr) error {
 	return nil
 }
 
-func (sw *CWrapper) UnmapViewOfFile(lpBaseAddress uintptr) error {
+func (cw *CWrapper) UnmapViewOfFile(lpBaseAddress uintptr) error {
 	return nil
 }
 
-func (sw *CWrapper) OpenEvent(lpName string) (uintptr, error) {
+func (cw *CWrapper) OpenEvent(lpName string) (uintptr, error) {
 	var handle uintptr
 	args := &OpenEventArgs{lpName}
 
-	err := sw.client.Call("Commands.OpenEvent", args, &handle)
+	err := cw.client.Call("Commands.OpenEvent", args, &handle)
 	return handle, err
 }
 
-func (sw *CWrapper) WaitForSingleObject(hDataValidEvent uintptr, timeOut int) error {
+func (cw *CWrapper) WaitForSingleObject(hDataValidEvent uintptr, timeOut int) error {
 	retVal := new(int)
 	args := &WaitForSingleObjectArgs{hDataValidEvent, timeOut}
 
-	return sw.client.Call("Commands.WaitForSingleObject", args, &retVal)
+	return cw.client.Call("Commands.WaitForSingleObject", args, &retVal)
 }
 
-func (sw *CWrapper) RegisterWindowMessageA(lpString string) (uint, error) {
+func (cw *CWrapper) RegisterWindowMessageA(lpString string) (uint, error) {
 	return 0, nil
 }
 
-func (sw *CWrapper) SendNotifyMessage(msgID uint, wParam uint32, lParam uint32) error {
+func (cw *CWrapper) SendNotifyMessage(msgID uint, wParam uint32, lParam uint32) error {
 	return nil
 }
 
-// Pointer arithmetic
-
-func (sw *CWrapper) ptrToHeader(sharedMemPtr uintptr) (*Header, error) {
-	header := &Header{}
-	args := &PtrToHeaderArgs{sharedMemPtr}
-
-	err := sw.client.Call("Commands.PtrToHeader", args, header)
-	return header, err
-}
-
-func (sw *CWrapper) ptrToSharedMem(sharedMemPtr uintptr) ([]byte, error) {
-	sharedMem := new([]byte)
-	args := &PtrToSharedMemArgs{sharedMemPtr}
-
-	err := sw.client.Call("Commands.PtrToSharedMem", args, sharedMem)
-	return *sharedMem, err
-}
-
-func (sw *CWrapper) ptrToVarHeader(varHeaderPtr uintptr) (*VarHeader, error) {
-	varHeader := &VarHeader{}
-	args := &PtrToVarHeaderArgs{varHeaderPtr}
-
-	fmt.Println("1")
-	err := sw.client.Call("Commands.PtrToVarHeader", args, varHeader)
-	return varHeader, err
-}
-
-func (sw *CWrapper) getMemory(sharedMemPtr uintptr, startByte int, endByte int) ([]byte, error) {
-	// bufLen := endByte - startByte
-	data := new([]byte)
-
-	// bytes := new([]byte)
-	args := &GetMemoryArgs{sharedMemPtr, startByte, endByte}
-
-	err := sw.client.Call("Commands.GetMemory", args, data)
-	return *data, err
-}
-
 func NewCWrapper() (*CWrapper, error) {
-	cmd := exec.Command("/opt/iracing/bin/wine", "--bottle", "default", "ir-syscalls-rpc.exe")
+	cmd := exec.Command(WineCmd[0], append(WineCmd[1:], RPC_COMMAND)...)
 	client, err := coprocess.NewClient(cmd)
 	if err != nil {
 		return nil, err
@@ -118,6 +222,5 @@ func NewCWrapper() (*CWrapper, error) {
 		return nil, err
 	}
 
-	sw := &CWrapper{client}
-	return sw, nil
+	return &CWrapper{client: client}, nil
 }

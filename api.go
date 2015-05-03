@@ -27,6 +27,10 @@ func (c *IrConnection) Connect() error {
 	return err
 }
 
+func (c *IrConnection) GetHeader() (*utils.Header, error) {
+	return c.sdk.GetHeader()
+}
+
 func (c *IrConnection) GetRawTelemetryData() ([]byte, error) {
 	return c.sdk.WaitForDataReady(c.timeout)
 }

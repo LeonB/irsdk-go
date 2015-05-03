@@ -1,7 +1,5 @@
 package utils
 
-import "C"
-
 /*
  The IRSDK is a simple api that lets clients access telemetry data from the
  iRacing simulator. It is broken down into several parts:
@@ -48,13 +46,13 @@ import "C"
 
 // Constant Definitions
 
-type StatusField int
+type StatusField int32
 
 const (
 	StatusConnected StatusField = 1
 )
 
-type VarType C.int
+type VarType int32
 
 const (
 	// 1 byte
@@ -86,7 +84,7 @@ var VarTypeBytes = [ETCount]int{
 }
 
 // bit fields
-type EngineWarnings int
+type EngineWarnings int32
 
 const (
 	WaterTempWarning    EngineWarnings = 0x01
@@ -132,7 +130,7 @@ const (
 	StartGo     Flags = 0x80000000
 )
 
-type TrkLoc int
+type TrkLoc int32
 
 // status
 const (
@@ -143,7 +141,7 @@ const (
 	OnTrac         TrkLoc = iota - 1
 )
 
-type SessionState int
+type SessionState int32
 
 const (
 	StateInvalid    SessionState = iota
@@ -155,7 +153,7 @@ const (
 	StateCoolDown   SessionState = iota
 )
 
-type CameraState int
+type CameraState int32
 
 const (
 	IsSessionScreen CameraState = 0x0001 // the camera tool can only be activated if viewing the session screen (out of car)
@@ -176,11 +174,11 @@ const (
 
 type VarHeader struct {
 	Type   VarType // VarType
-	Offset C.int   // offset fron start of buffer row
-	Count  C.int   // number of entrys (array)
+	Offset int32   // offset fron start of buffer row
+	Count  int32   // number of entrys (array)
 	// so length in bytes would be VarTypeBytes[type] * count
 
-	Pad [1]C.int // (16 byte align)
+	Pad [1]int32 // (16 byte align)
 
 	Name [MAX_STRING]byte
 	Desc [MAX_DESC]byte
@@ -188,38 +186,49 @@ type VarHeader struct {
 }
 
 type VarBuf struct {
-	TickCount C.int    // used to detect changes in data
-	BufOffset C.int    // offset from header
-	Pad       [2]C.int // (16 byte align)
+	TickCount int32    // used to detect changes in data
+	BufOffset int32    // offset from header
+	Pad       [2]int32 // (16 byte align)
 }
 
 type Header struct {
-	Ver      C.int       // api version 1 for now
+	Ver      int32       // api version 1 for now
 	Status   StatusField // bitfield using StatusField
-	TickRate C.int       // ticks per second (60 or 360 etc)
+	TickRate int32       // ticks per second (60 or 360 etc)
 
 	// session information, updated periodicaly
-	SessionInfoUpdate C.int // Incremented when session info changes
-	SessionInfoLen    C.int // Length in bytes of session info string
-	SessionInfoOffset C.int // Session info, encoded in YAML format
+	SessionInfoUpdate int32 // Incremented when session info changes
+	SessionInfoLen    int32 // Length in bytes of session info string
+	SessionInfoOffset int32 // Session info, encoded in YAML format
 
 	// State data, output at tickRate
-	NumVars         C.int // length of array pointed to by varHeaderOffset
-	VarHeaderOffset C.int // offset to VarHeader[numVars] array, Describes the variables recieved in varBuf
+	NumVars         int32 // length of array pointed to by varHeaderOffset
+	VarHeaderOffset int32 // offset to VarHeader[numVars] array, Describes the variables recieved in varBuf
 
-	NumBuf C.int    // <= MAX_BUFS (3 for now)
-	BufLen C.int    // length in bytes for one line
-	Pad1   [2]C.int // (16 byte align)
+	NumBuf int32    // <= MAX_BUFS (3 for now)
+	BufLen int32    // length in bytes for one line
+	Pad1   [2]int32 // (16 byte align)
 	VarBuf [MAX_BUFS]VarBuf
+}
+
+func (header *Header) getLatestVarBufN() int {
+	latest := 0
+	for i := 0; i < int(header.NumBuf); i++ {
+		if header.VarBuf[latest].TickCount < header.VarBuf[i].TickCount {
+			latest = i
+		}
+	}
+
+	return latest
 }
 
 // sub header used when writing telemetry to disk
 type DiskSubHeader struct {
-	sessionStartDate   C.int
-	sessionStartTime   C.double
-	sessionEndTime     C.double
-	sessionLapCount    C.int
-	sessionRecordCount C.int
+	sessionStartDate   int32
+	sessionStartTime   float64
+	sessionEndTime     float64
+	sessionLapCount    int32
+	sessionRecordCount int32
 }
 
 //----
@@ -244,7 +253,7 @@ const (
 	BroadcastLast                  BroadcastMsg = iota // unused placeholder
 )
 
-type ChatCommandMode int
+type ChatCommandMode int32
 
 const (
 	ChatCommand_Macro     ChatCommandMode = 0    // pass in a number from 1-15 representing the chat macro to launch
@@ -253,7 +262,7 @@ const (
 	ChatCommand_Cancel    ChatCommandMode = iota // Close chat window
 )
 
-type PitCommandMode int
+type PitCommandMode int32
 
 const (
 	PitCommand_Clear      PitCommandMode = 0    // Clear all pit checkboxes
@@ -266,7 +275,7 @@ const (
 	PitCommand_ClearTires PitCommandMode = iota // Clear tire pit checkboxes
 )
 
-type TelemCommandMode int
+type TelemCommandMode int32
 
 const (
 	TelemCommand_Stop    TelemCommandMode = 0    // Turn telemetry recording off
@@ -274,14 +283,14 @@ const (
 	TelemCommand_Restart TelemCommandMode = iota // Write current file to disk and start a new one
 )
 
-type RpyStateMode int
+type RpyStateMode int32
 
 const (
 	RpyState_EraseTape RpyStateMode = 0    // clear any data in the replay tape
 	RpyState_Last      RpyStateMode = iota // unused place holder
 )
 
-type ReloadTexturesMode int
+type ReloadTexturesMode int32
 
 const (
 	ReloadTextures_All    ReloadTexturesMode = 0    // reload all textuers
@@ -289,7 +298,7 @@ const (
 )
 
 // Search replay tape for events
-type RpySrchMode int
+type RpySrchMode int32
 
 const (
 	RpySrch_ToStart      RpySrchMode = 0
@@ -305,7 +314,7 @@ const (
 	RpySrch_Last         RpySrchMode = iota // unused placeholder
 )
 
-type RpyPosMode int
+type RpyPosMode int32
 
 const (
 	RpyPos_Begin   RpyPosMode = 0
@@ -316,7 +325,7 @@ const (
 
 // BroadcastCamSwitchPos or BroadcastCamSwitchNum camera focus defines
 // pass these in for the first parameter to select the 'focus at' types in the camera system.
-type CsMode int
+type CsMode int32
 
 const (
 	CsFocusAtIncident CsMode = -3
