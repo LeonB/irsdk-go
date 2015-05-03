@@ -3,133 +3,84 @@
 package utils
 
 import (
+	"time"
 	"unsafe"
 
 	syscalls "github.com/leonb/irsdk-go/utils/syscalls"
 )
 
 type CWrapper struct {
-	hDataValidEvent uintptr
-	hMemMapFile     uintptr
-	sharedMemPtr    uintptr
+	sharedMemPtr    unsafe.Pointer
 	sharedMem       []byte
+	header          *Header
+	hDataValidEvent uintptr
+
+	hMemMapFile uintptr
 }
 
 func (cw *CWrapper) startup() error {
-	if cw.hDataValidEvent == 0 {
-		cw.hDataValidEvent, err = cw.c.OpenEvent(DATAVALIDEVENTNAME)
+	var err error
+
+	if cw.hMemMapFile == 0 {
+		cw.hMemMapFile, err = cw.OpenFileMapping(MEMMAPFILENAME)
 		if err != nil {
 			return err
 		}
 	}
+
+	if len(cw.sharedMem) == 0 {
+		sharedMemPtr, err := cw.MapViewOfFile(cw.hMemMapFile, MEMMAPFILESIZE)
+		cw.sharedMemPtr = unsafe.Pointer(sharedMemPtr)
+		if err != nil {
+			return err
+		}
+	}
+
+	if cw.header == nil {
+		cw.header = (*Header)(cw.sharedMemPtr)
+	}
+
+	if cw.sharedMem == nil {
+		cw.sharedMem = (*[MEMMAPFILESIZE]byte)(cw.sharedMemPtr)[:]
+	}
+
+	if cw.hDataValidEvent == 0 {
+		cw.hDataValidEvent, err = cw.OpenEvent(DATAVALIDEVENTNAME)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (cw *CWrapper) shutdown() error {
+	if cw.hDataValidEvent != 0 {
+		cw.CloseHandle(cw.hDataValidEvent)
+	}
+
+	if cw.sharedMemPtr != nil {
+		cw.UnmapViewOfFile(uintptr(cw.sharedMemPtr))
+	}
+
+	if cw.hMemMapFile != 0 {
+		cw.CloseHandle(cw.hMemMapFile)
+	}
+
+	// Clean windows specific vars
+	cw.hDataValidEvent = 0
+	cw.hMemMapFile = 0
+
+	// Clean global vars
+	cw.sharedMemPtr = nil
+	cw.sharedMem = nil
+	cw.header = nil
+
+	return nil
 }
 
 func (cw *CWrapper) WaitForDataChange(timeOut time.Duration) error {
 	return cw.WaitForSingleObject(cw.hDataValidEvent, int(timeOut/time.Millisecond))
-}
-
-func (ir *Irsdk) IsConnected() bool {
-	if ir.isInitialized {
-		elapsed := time.Now().Sub(ir.lastValidTime)
-		if (ir.header.Status&StatusConnected) > 0 && (elapsed < TIMEOUT) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (ir *Irsdk) GetSessionInfoStr() []byte {
-	if ir.isInitialized {
-		startByte := ir.header.SessionInfoOffset
-		length := ir.header.SessionInfoLen
-		return ir.sharedMem[startByte:length]
-	}
-	return nil
-}
-
-func (ir *Irsdk) GetVarHeaderEntry(index int) (*VarHeader, error) {
-	if ir.isInitialized {
-		if index >= 0 && index < (int)(ir.header.NumVars) {
-			return ir.c.getVarHeaderEntry(index)
-		}
-	}
-	return nil, nil
-}
-
-// Note: this is a linear search, so cache the results
-func (ir *Irsdk) VarNameToIndex(name string) (int, error) {
-	if name != "" {
-		numVars := int(ir.header.NumVars)
-		for index := 0; index <= numVars; index++ {
-			pVar, err := ir.GetVarHeaderEntry(index)
-			if err != nil {
-				return -1, err
-			}
-			pVarName := CToGoString(pVar.Name[:])
-			if pVar != nil && pVarName == name {
-				return index, nil
-			}
-		}
-	}
-
-	return -1, nil
-}
-
-func (ir *Irsdk) VarNameToOffset(name string) (int, error) {
-	if name != "" {
-		numVars := int(ir.header.NumVars)
-		for index := 0; index <= numVars; index++ {
-			pVar, err := ir.GetVarHeaderEntry(index)
-			if err != nil {
-				return -1, err
-			}
-			pVarName := CToGoString(pVar.Name[:])
-			if pVar != nil && pVarName == name {
-				return int(pVar.Offset), nil
-			}
-		}
-	}
-
-	return -1, nil
-}
-
-func (ir *Irsdk) BroadcastMsg(msg BroadcastMsg, var1 uint16, var2 uint16, var3 uint16) error {
-	msgID, _ := ir.GetBroadcastMsgID()
-
-	wParam := MAKELONG(uint16(msg), var1)
-	lParam := MAKELONG(var2, var3)
-
-	fmt.Println("msgID:", msgID)
-	fmt.Println("msg:", msg)
-	fmt.Println("var1:", var1)
-	fmt.Println("var2:", var2)
-	fmt.Println("var3:", var3)
-	fmt.Println("wParam", wParam)
-	fmt.Println("lParam", lParam)
-
-	if msgID > 0 && msg >= 0 && msg < BroadcastLast {
-		err := ir.c.SendNotifyMessage(msgID, wParam, lParam)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// Custom functions
-
-// func (ir *Irsdk) GetRpcCmd() (*exec.Cmd, error) {
-// 	return nil, nil
-// }
-
-func (ir *Irsdk) GetNumVars() int {
-	return int(ir.header.NumVars)
-}
-
-func (ir *Irsdk) GetBroadcastMsgID() (uint, error) {
-	return ir.c.RegisterWindowMessageA(BROADCASTMSGNAME)
 }
 
 // Syscalls

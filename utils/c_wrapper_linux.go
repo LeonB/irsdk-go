@@ -29,10 +29,10 @@ type CWrapper struct {
 	sharedMem       []byte
 	sharedMemPtr    unsafe.Pointer
 	header          *Header
-	mmapFile        *os.File
 	hDataValidEvent uintptr
 
-	client *rpc.Client
+	mmapFile *os.File
+	client   *rpc.Client
 }
 
 func (cw *CWrapper) startup() error {
@@ -78,12 +78,23 @@ func (cw *CWrapper) startup() error {
 }
 
 func (cw *CWrapper) shutdown() error {
-	cw.sharedMem = nil
-	cw.sharedMemPtr = nil
-	cw.header = nil
-	cw.client.Close()
+	if cw.client != nil {
+		cw.client.Close()
+	}
+
+	if cw.mmapFile != nil {
+		cw.mmapFile.Close()
+	}
+
+	// Clean linux specific vars
 	cw.client = nil
-	cw.mmapFile.Close()
+	cw.mmapFile = nil
+
+	// Clean global vars
+	cw.sharedMemPtr = nil
+	cw.sharedMem = nil
+	cw.header = nil
+
 	return nil
 }
 
