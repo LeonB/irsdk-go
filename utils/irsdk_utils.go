@@ -29,9 +29,9 @@ var (
 )
 
 type Irsdk struct {
-	isInitialized   bool
-	lastValidTime   time.Time
-	lastTickCount   int32
+	isInitialized bool
+	lastValidTime time.Time
+	lastTickCount int32
 
 	// Syscalls & pointer arithmetic goes into cwrapper
 	c *CWrapper
