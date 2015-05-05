@@ -8,7 +8,7 @@ GOWINE=CGO_ENABLED=1 GOOS=windows GOARCH=386 $(GO)
 build: ir-syscalls-rpc.exe irsdk
 
 irsdk: ir-syscalls-rpc.exe
-	go build ./bin/irsdk
+	$(GO) build ./bin/irsdk
 	
 irsdk.exe: utils/c_wrapper_windows.go
 	CC=$(WINECC) $(GOWINE) build ./bin/irsdk

@@ -79,8 +79,8 @@ func (cw *CWrapper) shutdown() error {
 	return nil
 }
 
-func (cw *CWrapper) WaitForDataChange(timeOut time.Duration) error {
-	return cw.WaitForSingleObject(cw.hDataValidEvent, int(timeOut/time.Millisecond))
+func (cw *CWrapper) WaitForDataChange(timeout time.Duration) error {
+	return cw.WaitForSingleObject(cw.hDataValidEvent, int(timeout/time.Millisecond))
 }
 
 // Syscalls

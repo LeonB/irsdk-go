@@ -9,17 +9,24 @@ import (
 )
 
 func NewConnection() (*Connection, error) {
+	sdk, err := utils.NewIrsdk()
+	if err != nil {
+		return nil, err
+	}
+
 	conn := &Connection{
 		timeout: time.Millisecond * time.Duration(math.Ceil(1000.0/60.0)+1.0),
-		sdk:     &utils.Irsdk{},
+		sdk:     sdk,
 	}
 
 	return conn, nil
 }
 
 type Connection struct {
-	timeout time.Duration
-	sdk     *utils.Irsdk
+	timeout        time.Duration
+	sdk            *utils.Irsdk
+	maxFPS         int
+	lastUpdateTime time.Time
 }
 
 func (c *Connection) Connect() error {
@@ -29,8 +36,7 @@ func (c *Connection) Connect() error {
 		c.Disconnect()
 	}
 
-	err := c.sdk.Startup()
-	return err
+	return c.sdk.Startup()
 }
 
 func (c *Connection) IsConnected() bool {
@@ -42,7 +48,7 @@ func (c *Connection) GetHeader() (*utils.Header, error) {
 }
 
 func (c *Connection) GetRawTelemetryData() ([]byte, error) {
-	return c.sdk.WaitForDataReady(c.timeout)
+	return c.WaitForDataReady(c.timeout)
 }
 
 func (c *Connection) GetTelemetryData() (*TelemetryData, error) {
@@ -59,7 +65,7 @@ func (c *Connection) GetTelemetryData() (*TelemetryData, error) {
 }
 
 func (c *Connection) GetTelemetryDataFiltered(fields []string) (*TelemetryData, error) {
-	data, err := c.sdk.WaitForDataReady(c.timeout)
+	data, err := c.WaitForDataReady(c.timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -100,6 +106,63 @@ func (c *Connection) GetSessionData() (*SessionData, error) {
 
 func (c *Connection) SendCommand() error {
 	return nil
+}
+
+func (c *Connection) WaitForDataReady(timeOut time.Duration) ([]byte, error) {
+	// Check if maxfps specified
+	if c.maxFPS == 0 {
+		b, err := c.sdk.WaitForDataReady(c.timeout)
+		if err == nil {
+			c.lastUpdateTime = time.Now()
+		}
+		return b, err
+	}
+
+	// Check if first tick
+	nilTime := time.Time{}
+	if c.lastUpdateTime == nilTime {
+		b, err := c.sdk.WaitForDataReady(c.timeout)
+		if err == nil {
+			c.lastUpdateTime = time.Now()
+		}
+		return b, err
+	}
+
+	header, err := c.GetHeader()
+	if header == nil {
+		b, err := c.sdk.WaitForDataReady(c.timeout)
+		if err == nil {
+			c.lastUpdateTime = time.Now()
+		}
+		return b, err
+	}
+
+	// MaxFPS >= 60, go for max performance
+	if c.maxFPS >= int(header.TickRate) {
+		b, err := c.sdk.WaitForDataReady(c.timeout)
+		if err != nil {
+			c.lastUpdateTime = time.Now()
+		}
+		return b, err
+	}
+
+	tickDuration := time.Duration(1*time.Second) / time.Duration(c.maxFPS)
+	timeSinceLastUpdate := time.Now().Sub(c.lastUpdateTime)
+	timeToWait := tickDuration - timeSinceLastUpdate
+
+	// Sleep to throttle framerate
+	time.Sleep(timeToWait)
+
+	// Call non-throttled WaitForDataReady
+	b, err := c.sdk.WaitForDataReady(c.timeout)
+	if err == nil {
+		c.lastUpdateTime = time.Now()
+	}
+	return b, err
+}
+
+func (c *Connection) SetMaxFPS(maxFPS int) {
+	c.maxFPS = maxFPS
 }
 
 func (c *Connection) Disconnect() error {

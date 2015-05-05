@@ -38,6 +38,13 @@ type CWrapper struct {
 func (cw *CWrapper) startup() error {
 	var err error
 
+	if cw.client == nil {
+		cw.client, err = newRpcClient()
+		if err != nil {
+			return err
+		}
+	}
+
 	if cw.mmapFile == nil {
 		cw.mmapFile, err = cw.getMmapFile()
 		if err != nil {
@@ -131,6 +138,7 @@ func (cw *CWrapper) getSharedMemPtr() (unsafe.Pointer, error) {
 
 // use this instead of WaitForSingleObject() because that's slow
 func (cw *CWrapper) WaitForDataChange(timeout time.Duration) error {
+	// return cw.WaitForSingleObject(cw.hDataValidEvent, int(timeout/time.Millisecond))
 	latest := cw.header.getLatestVarBufN()
 	prevTickCount := cw.header.VarBuf[latest].TickCount
 
@@ -217,6 +225,14 @@ func (cw *CWrapper) SendNotifyMessage(msgID uint, wParam uint32, lParam uint32) 
 }
 
 func NewCWrapper() (*CWrapper, error) {
+	client, err := newRpcClient()
+	if err != nil {
+		return nil, err
+	}
+	return &CWrapper{client: client}, nil
+}
+
+func newRpcClient() (*rpc.Client, error) {
 	cmd := exec.Command(WineCmd[0], append(WineCmd[1:], RPC_COMMAND)...)
 	client, err := coprocess.NewClient(cmd)
 	if err != nil {
@@ -233,5 +249,5 @@ func NewCWrapper() (*CWrapper, error) {
 		return nil, err
 	}
 
-	return &CWrapper{client: client}, nil
+	return client, nil
 }

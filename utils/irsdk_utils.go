@@ -38,21 +38,31 @@ type Irsdk struct {
 	c *CWrapper
 }
 
+func NewIrsdk() (*Irsdk, error) {
+	cw, err := NewCWrapper()
+	if err != nil {
+		return nil, err
+	}
+
+	return &Irsdk{c: cw}, nil
+}
+
 func (ir *Irsdk) Startup() error {
 	var err error
 
+	// Create c wrapper if it doesn't exist
 	if ir.c == nil {
 		ir.c, err = NewCWrapper()
 		if err != nil {
 			return err
 		}
+	}
 
-		err = ir.c.startup()
-		if err != nil {
-			ir.c.shutdown()
-			ir.c = nil
-			return err
-		}
+	// Make sure c wrapper is initialized
+	err = ir.c.startup()
+	if err != nil {
+		ir.c.shutdown()
+		return err
 	}
 
 	ir.lastTickCount = INT_MAX
@@ -289,7 +299,7 @@ func (ir *Irsdk) GetHeader() (*Header, error) {
 	return ir.c.header, nil
 }
 
-func (ir *Irsdk) GetLastValidTime() (time.Time) {
+func (ir *Irsdk) GetLastValidTime() time.Time {
 	return ir.lastValidTime
 }
 

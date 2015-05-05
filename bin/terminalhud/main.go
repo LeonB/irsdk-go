@@ -83,22 +83,20 @@ func main() {
 
 	// Keep trying until connection is made
 	conn, _ = irsdk.NewConnection()
+	conn.SetMaxFPS(30)
 
 	for {
 		if conn.IsConnected() == false {
 			time.Sleep(time.Second * 1)
 			conn.Connect()
+
 			session, err = conn.GetSessionData()
 			if err != nil {
 				log.Fatal(err)
 			}
-			continue
 		}
 
-		telemetryData, err := conn.GetTelemetryData()
-		if err != nil {
-			continue
-		}
+		telemetryData, _ := conn.GetTelemetryData()
 
 		tSpeed := float32(0.0)
 		tRPM := float32(0.0)
@@ -122,24 +120,24 @@ func main() {
 			data:        fmt.Sprintf("%.0f km/h", (tSpeed * 3.6)),
 		}
 
-		var bgColor int
-		// DriverCarSLFirstRPM = 6000
-		// DriverCarSLShiftRPM = 6850
-		// DriverCarSLBlinkRPM = 7000
-		sl4 := session.DriverInfo.DriverCarSLBlinkRPM
-		sl3 := session.DriverInfo.DriverCarSLShiftRPM
-		sl1 := session.DriverInfo.DriverCarSLFirstRPM
-		sl2 := sl1 + ((sl4 - sl1) / 2)
-		if tRPM >= sl4 {
-			bgColor = 196 // red
-		} else if tRPM >= sl3 {
-			bgColor = 202 // orange
-		} else if tRPM >= sl2 {
-			bgColor = 226 // yellow
-		} else if tRPM >= sl1 {
-			bgColor = 41 // green
-		} else {
-			bgColor = 0
+		bgColor := 0
+		if session != nil {
+			// DriverCarSLFirstRPM = 6000
+			// DriverCarSLShiftRPM = 6850
+			// DriverCarSLBlinkRPM = 7000
+			sl4 := session.DriverInfo.DriverCarSLBlinkRPM
+			sl3 := session.DriverInfo.DriverCarSLShiftRPM
+			sl1 := session.DriverInfo.DriverCarSLFirstRPM
+			sl2 := sl1 + ((sl4 - sl1) / 2)
+			if tRPM >= sl4 {
+				bgColor = 196 // red
+			} else if tRPM >= sl3 {
+				bgColor = 202 // orange
+			} else if tRPM >= sl2 {
+				bgColor = 226 // yellow
+			} else if tRPM >= sl1 {
+				bgColor = 41 // green
+			}
 		}
 
 		rpm := textRenderer{
@@ -190,8 +188,5 @@ func main() {
 		fmt.Println(clutch)
 		fmt.Println(brake)
 		fmt.Println(throttle)
-
-		fmt.Println(conn.IsConnected())
-		fmt.Println(time.Now())
 	}
 }
