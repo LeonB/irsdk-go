@@ -44,6 +44,12 @@ func main() {
 							return
 						}
 
+						conn.Connect()
+						if err != nil {
+							fmt.Fprintln(os.Stdout, err)
+							return
+						}
+
 						format := c.String("format")
 						switch format {
 						case "raw", "struct":
@@ -66,6 +72,12 @@ func main() {
 					Flags: dumpFlags,
 					Action: func(c *cli.Context) {
 						conn, err := irsdk.NewConnection()
+						if err != nil {
+							fmt.Fprintln(os.Stdout, err)
+							return
+						}
+
+						conn.Connect()
 						if err != nil {
 							fmt.Fprintln(os.Stdout, err)
 							return
@@ -102,6 +114,12 @@ func main() {
 						conn, err := irsdk.NewConnection()
 						if err != nil {
 							fmt.Println(os.Stderr, err)
+							return
+						}
+
+						conn.Connect()
+						if err != nil {
+							fmt.Fprintln(os.Stdout, err)
 							return
 						}
 

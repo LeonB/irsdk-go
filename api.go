@@ -8,34 +8,44 @@ import (
 	"github.com/leonb/irsdk-go/utils"
 )
 
-func NewConnection() (*IrConnection, error) {
-	conn := &IrConnection{
+func NewConnection() (*Connection, error) {
+	conn := &Connection{
 		timeout: time.Millisecond * time.Duration(math.Ceil(1000.0/60.0)+1.0),
 		sdk:     &utils.Irsdk{},
 	}
 
-	return conn, conn.Connect()
+	return conn, nil
 }
 
-type IrConnection struct {
+type Connection struct {
 	timeout time.Duration
 	sdk     *utils.Irsdk
 }
 
-func (c *IrConnection) Connect() error {
+func (c *Connection) Connect() error {
+	// If connection was once established: clean it up
+	nilTime := time.Time{}
+	if c.sdk.GetLastValidTime() != nilTime {
+		c.Disconnect()
+	}
+
 	err := c.sdk.Startup()
 	return err
 }
 
-func (c *IrConnection) GetHeader() (*utils.Header, error) {
+func (c *Connection) IsConnected() bool {
+	return c.sdk.IsConnected()
+}
+
+func (c *Connection) GetHeader() (*utils.Header, error) {
 	return c.sdk.GetHeader()
 }
 
-func (c *IrConnection) GetRawTelemetryData() ([]byte, error) {
+func (c *Connection) GetRawTelemetryData() ([]byte, error) {
 	return c.sdk.WaitForDataReady(c.timeout)
 }
 
-func (c *IrConnection) GetTelemetryData() (*TelemetryData, error) {
+func (c *Connection) GetTelemetryData() (*TelemetryData, error) {
 	data, err := c.GetRawTelemetryData()
 	if err != nil {
 		return nil, err
@@ -48,7 +58,7 @@ func (c *IrConnection) GetTelemetryData() (*TelemetryData, error) {
 	return nil, nil
 }
 
-func (c *IrConnection) GetTelemetryDataFiltered(fields []string) (*TelemetryData, error) {
+func (c *Connection) GetTelemetryDataFiltered(fields []string) (*TelemetryData, error) {
 	data, err := c.sdk.WaitForDataReady(c.timeout)
 	if err != nil {
 		return nil, err
@@ -61,7 +71,7 @@ func (c *IrConnection) GetTelemetryDataFiltered(fields []string) (*TelemetryData
 	return nil, nil
 }
 
-func (c *IrConnection) GetRawSessionData() ([]byte, error) {
+func (c *Connection) GetRawSessionData() ([]byte, error) {
 	b := c.sdk.GetSessionInfoStr()
 	if b == nil {
 		return nil, nil
@@ -75,7 +85,7 @@ func (c *IrConnection) GetRawSessionData() ([]byte, error) {
 	return b, nil
 }
 
-func (c *IrConnection) GetSessionData() (*SessionData, error) {
+func (c *Connection) GetSessionData() (*SessionData, error) {
 	yamlData, err := c.GetRawSessionData()
 	if err != nil {
 		return nil, err
@@ -88,11 +98,11 @@ func (c *IrConnection) GetSessionData() (*SessionData, error) {
 	return nil, nil
 }
 
-func (c *IrConnection) SendCommand() error {
+func (c *Connection) SendCommand() error {
 	return nil
 }
 
-func (c *IrConnection) Shutdown() error {
+func (c *Connection) Disconnect() error {
 	c.sdk.Shutdown()
 	return nil
 }

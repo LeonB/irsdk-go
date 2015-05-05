@@ -19,7 +19,7 @@ const (
 	// descriptions can be longer than max_string!
 	MAX_DESC = 64
 
-	TIMEOUT = time.Duration(30) // timeout after 30 seconds with no communication
+	TIMEOUT = time.Duration(time.Second * 30) // timeout after 30 seconds with no communication
 )
 
 var (
@@ -41,35 +41,33 @@ type Irsdk struct {
 func (ir *Irsdk) Startup() error {
 	var err error
 
-	ir.c, err = NewCWrapper()
-	if err != nil {
-		return err
+	if ir.c == nil {
+		ir.c, err = NewCWrapper()
+		if err != nil {
+			return err
+		}
+
+		err = ir.c.startup()
+		if err != nil {
+			ir.c.shutdown()
+			ir.c = nil
+			return err
+		}
 	}
-
-	err = ir.c.startup()
-	if err != nil {
-		return err
-	}
-
-	// ir.sharedMem, err = ir.c.getSharedMem()
-	// if err != nil {
-	// 	return err
-	// }
-
-	// ir.header, err = ir.c.getHeader()
-	// if err != nil {
-	// 	return err
-	// }
 
 	ir.lastTickCount = INT_MAX
 	ir.isInitialized = true
+	ir.lastValidTime = time.Now()
 
 	return nil
 }
 
 func (ir *Irsdk) Shutdown() {
-	ir.c.shutdown()
-	ir.c = nil
+	if ir.c != nil {
+		ir.c.shutdown()
+		ir.c = nil
+	}
+
 	ir.isInitialized = false
 	ir.lastTickCount = INT_MAX
 }
@@ -289,6 +287,10 @@ func (ir *Irsdk) copyTelemetryData(varBufN int) ([]byte, error) {
 
 func (ir *Irsdk) GetHeader() (*Header, error) {
 	return ir.c.header, nil
+}
+
+func (ir *Irsdk) GetLastValidTime() (time.Time) {
+	return ir.lastValidTime
 }
 
 func MAKELONG(lo, hi uint16) uint32 {

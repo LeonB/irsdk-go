@@ -253,7 +253,7 @@ func (i *intToBool) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 // @TODO: should this accept an io.Reader?
-func (c *IrConnection) BytesToSessionStruct(yamlData []byte) (*SessionData, error) {
+func (c *Connection) BytesToSessionStruct(yamlData []byte) (*SessionData, error) {
 	sessionData := newSessionData()
 
 	// Convert yaml to struct

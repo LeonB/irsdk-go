@@ -415,7 +415,7 @@ var irsdkSessionStates = map[utils.SessionState]string{
 }
 
 // @TODO: should this accept an io.Reader?
-func (c *IrConnection) BytesToTelemetryStruct(data []byte) (*TelemetryData, error) {
+func (c *Connection) BytesToTelemetryStruct(data []byte) (*TelemetryData, error) {
 	telemetryData := newTelemetryData()
 	numVars := c.sdk.GetNumVars()
 
@@ -436,7 +436,7 @@ func (c *IrConnection) BytesToTelemetryStruct(data []byte) (*TelemetryData, erro
 }
 
 // @TODO: should this accept an io.Reader?
-func (c *IrConnection) BytesToTelemetryStructFiltered(data []byte, fields []string) *TelemetryData {
+func (c *Connection) BytesToTelemetryStructFiltered(data []byte, fields []string) *TelemetryData {
 	telemetryData := newTelemetryData()
 	numVars := c.sdk.GetNumVars()
 
