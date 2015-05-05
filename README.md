@@ -43,6 +43,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	err = conn.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fields := []string{}
 
 	for {
@@ -55,6 +60,12 @@ func main() {
 	}
 }
 ```
+
+## Terminalhud
+
+This repository contains a sample program `terminalhud`:
+
+![iRacing Terminalhud](/terminalhud.gif?raw=true)
 
 ## Known bugs / pitfalls
 
