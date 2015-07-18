@@ -31,6 +31,9 @@ wineprof: irsdk.exe
 	$(WINE) irsdk profile cpu
 	$(GO) tool pprof irsdk cpu.prof
 
+bindata: utils/assets/
+	go-bindata -pkg=utils -o=utils/bindata.go utils/assets/
+
 clean:
 	$(GOWINE) clean
 	$(GO) clean
@@ -38,3 +41,5 @@ clean:
 	rm -f irsdk
 	rm -f irsdk.exe
 	rm -f terminalhud
+
+# vim: syntax=make ts=4 sw=4 sts=4 sr noet

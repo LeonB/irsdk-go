@@ -5,6 +5,7 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/rpc"
 	"os"
 	"os/exec"
@@ -21,7 +22,7 @@ var (
 )
 
 const (
-	RPC_COMMAND      = "ir-syscalls-rpc.exe"
+	RPC_COMMAND      = "utils/assets/ir-syscalls-rpc.exe"
 	DATA_CHANGE_TICK = time.Duration(time.Millisecond * 9)
 )
 
@@ -233,7 +234,12 @@ func NewCWrapper() (*CWrapper, error) {
 }
 
 func newRpcClient() (*rpc.Client, error) {
-	cmd := exec.Command(WineCmd[0], append(WineCmd[1:], RPC_COMMAND)...)
+	rpcCommand, err := getRpcCommand()
+	if err != nil {
+		return nil, err
+	}
+
+	cmd := exec.Command(WineCmd[0], append(WineCmd[1:], rpcCommand.Name())...)
 	client, err := coprocess.NewClient(cmd)
 	if err != nil {
 		return nil, err
@@ -250,4 +256,24 @@ func newRpcClient() (*rpc.Client, error) {
 	}
 
 	return client, nil
+}
+
+func getRpcCommand() (*os.File, error) {
+	f, err := ioutil.TempFile("", "irsdk-go")
+	defer f.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := Asset(RPC_COMMAND)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = f.Write(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
 }
