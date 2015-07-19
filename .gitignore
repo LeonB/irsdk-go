@@ -1,0 +1,4 @@
+utils/bindata.go
+utils/assets/*
+!utils/assets/.gitkeep
+cpu.prof

@@ -5,19 +5,19 @@ WINECC=i686-w64-mingw32-gcc
 GO=go
 GOWINE=CGO_ENABLED=1 GOOS=windows GOARCH=386 $(GO)
 
-build: ir-syscalls-rpc.exe irsdk
+build: irsdk
 
-irsdk: ir-syscalls-rpc.exe
+irsdk: utils/bindata.go
 	$(GO) build ./bin/irsdk
 	
 irsdk.exe: utils/c_wrapper_windows.go
 	CC=$(WINECC) $(GOWINE) build ./bin/irsdk
 
-ir-syscalls-rpc.exe: bin/ir-syscalls-rpc/main.go
+utils/assets/ir-syscalls-rpc.exe: bin/ir-syscalls-rpc/main.go
 	$(GOWINE) get github.com/kevinwallace/coprocess
-	CC=$(WINECC) $(GOWINE) build ./bin/ir-syscalls-rpc
+	CC=$(WINECC) $(GOWINE) build -o $@ ./bin/ir-syscalls-rpc
 
-terminalhud: ir-syscalls-rpc.exe bin/terminalhud/main.go
+terminalhud: utils/assets/ir-syscalls-rpc.exe bin/terminalhud/main.go
 	$(GO) build ./bin/terminalhud
 
 run: build
@@ -31,15 +31,16 @@ wineprof: irsdk.exe
 	$(WINE) irsdk profile cpu
 	$(GO) tool pprof irsdk cpu.prof
 
-bindata: utils/assets/
+utils/bindata.go: utils/assets/ir-syscalls-rpc.exe
 	go-bindata -pkg=utils -o=utils/bindata.go utils/assets/
 
 clean:
 	$(GOWINE) clean
 	$(GO) clean
-	rm -f ir-syscalls-rpc.exe
+	rm -f utils/assets/ir-syscalls-rpc.exe
 	rm -f irsdk
 	rm -f irsdk.exe
 	rm -f terminalhud
+	rm -f utils/bindata.go
 
 # vim: syntax=make ts=4 sw=4 sts=4 sr noet
