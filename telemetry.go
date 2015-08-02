@@ -2,6 +2,7 @@ package irsdk
 
 import "C"
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"log"
@@ -10,6 +11,8 @@ import (
 
 	utils "github.com/leonb/irsdk-go/utils"
 )
+
+var telemetryData = newTelemetryData()
 
 type irCharVar struct {
 	name  string
@@ -54,6 +57,8 @@ type irDoubleVar struct {
 }
 
 type TelemetryData struct {
+	fieldCache map[string]*reflect.Value
+
 	// bools
 	DriverMarker                   bool
 	IsOnTrack                      bool
@@ -230,43 +235,63 @@ func (d *TelemetryData) addVarHeaderData(varHeader *utils.VarHeader, data []byte
 		irVar := extractCharFromVarHeader(varHeader, data)
 		err := d.AddIrCharVar(irVar)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 	case utils.BoolType:
 		irVar := extractBoolFromVarHeader(varHeader, data)
 		err := d.AddIrBoolVar(irVar)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 	case utils.IntType:
 		irVar := extractIntFromVarHeader(varHeader, data)
 		err := d.AddIrIntVar(irVar)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 	case utils.BitfieldType:
 		irVar := extractBitfieldFromVarHeader(varHeader, data)
 		err := d.AddIrBitfieldVar(irVar)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 	case utils.FloatType:
 		irVar := extractFloatFromVarHeader(varHeader, data)
 		err := d.AddIrFloatVar(irVar)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 	case utils.DoubleType:
 		irVar := extractDoubleFromVarHeader(varHeader, data)
 		err := d.AddIrDoubleVar(irVar)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 	default:
 		log.Println("Unknown irsdk varType:", varHeader.Type)
 	}
 
 	return nil
+}
+
+func (d *TelemetryData) fieldByName(varName string, kind reflect.Kind) (*reflect.Value, error) {
+	if f, ok := d.fieldCache[varName]; ok {
+		return f, nil
+	}
+
+	// Uppercase string because all are stored as public variables
+	varNameUp := ucFirst(varName)
+
+	e := reflect.ValueOf(d).Elem() // Get reference to struct
+	f := e.FieldByName(varNameUp)  // Find struct field
+	if f.Kind() == kind {
+		if f.CanSet() {
+			d.fieldCache[varName] = &f
+			return &f, nil
+		}
+	}
+
+	return nil, errors.New(fmt.Sprintf("Unknown %T: %v", kind, varName))
 }
 
 func (d *TelemetryData) AddIrCharVar(irVar *irCharVar) error {
@@ -278,19 +303,13 @@ func (d *TelemetryData) AddIrBoolVar(irVar *irBoolVar) error {
 		return nil
 	}
 
-	e := reflect.ValueOf(d).Elem() // Get reference to struct
-	f := e.FieldByName(irVar.name) // Find struct field
-	if f.Kind() == reflect.Bool {
-		// A Value can be changed only if it is
-		// addressable and was not obtained by
-		// the use of unexported struct fields.
-		if f.CanSet() {
-			f.SetBool(irVar.value)
-		}
-		return nil
+	f, err := d.fieldByName(irVar.name, reflect.Bool)
+	if err != nil {
+		return err
 	}
 
-	return errors.New(fmt.Sprintf("Unknown %T: %v", irVar, irVar.name))
+	f.SetBool(irVar.value)
+	return nil
 }
 
 func (d *TelemetryData) AddIrIntVar(irVar *irIntVar) error {
@@ -298,16 +317,13 @@ func (d *TelemetryData) AddIrIntVar(irVar *irIntVar) error {
 		return nil
 	}
 
-	e := reflect.ValueOf(d).Elem() // Get reference to struct
-	f := e.FieldByName(irVar.name) // Find struct field
-	if f.Kind() == reflect.Int {
-		if f.CanSet() {
-			f.SetInt(int64(irVar.value))
-		}
-		return nil
+	f, err := d.fieldByName(irVar.name, reflect.Int)
+	if err != nil {
+		return err
 	}
 
-	return errors.New(fmt.Sprintf("Unknown %T: %v", irVar, irVar.name))
+	f.SetInt(int64(irVar.value))
+	return nil
 }
 
 func (d *TelemetryData) AddIrBitfieldVar(irVar *irBitfieldVar) error {
@@ -315,20 +331,17 @@ func (d *TelemetryData) AddIrBitfieldVar(irVar *irBitfieldVar) error {
 		return nil
 	}
 
-	e := reflect.ValueOf(d).Elem() // Get reference to struct
-	f := e.FieldByName(irVar.name) // Find struct field
-	if f.Kind() == reflect.Map {
-		if f.CanSet() {
-			for key, val := range irVar.fields {
-				rKey := reflect.ValueOf(key)
-				rVal := reflect.ValueOf(val)
-				f.SetMapIndex(rKey, rVal)
-			}
-		}
-		return nil
+	f, err := d.fieldByName(irVar.name, reflect.Map)
+	if err != nil {
+		return err
 	}
 
-	return errors.New(fmt.Sprintf("Unknown %T: %v", irVar, irVar.name))
+	for key, val := range irVar.fields {
+		rKey := reflect.ValueOf(key)
+		rVal := reflect.ValueOf(val)
+		f.SetMapIndex(rKey, rVal)
+	}
+	return nil
 }
 
 func (d *TelemetryData) AddIrFloatVar(irVar *irFloatVar) error {
@@ -336,16 +349,13 @@ func (d *TelemetryData) AddIrFloatVar(irVar *irFloatVar) error {
 		return nil
 	}
 
-	e := reflect.ValueOf(d).Elem() // Get reference to struct
-	f := e.FieldByName(irVar.name) // Find struct field
-	if f.Kind() == reflect.Float32 {
-		if f.CanSet() {
-			f.SetFloat(float64(irVar.value))
-		}
-		return nil
+	f, err := d.fieldByName(irVar.name, reflect.Float32)
+	if err != nil {
+		return err
 	}
 
-	return errors.New(fmt.Sprintf("Unknown %T: %v", irVar, irVar.name))
+	f.SetFloat(float64(irVar.value))
+	return nil
 }
 
 func (d *TelemetryData) AddIrDoubleVar(irVar *irDoubleVar) error {
@@ -353,16 +363,13 @@ func (d *TelemetryData) AddIrDoubleVar(irVar *irDoubleVar) error {
 		return nil
 	}
 
-	e := reflect.ValueOf(d).Elem() // Get reference to struct
-	f := e.FieldByName(irVar.name) // Find struct field
-	if f.Kind() == reflect.Float64 {
-		if f.CanSet() {
-			f.SetFloat(irVar.value)
-		}
-		return nil
+	f, err := d.fieldByName(irVar.name, reflect.Float64)
+	if err != nil {
+		return err
 	}
 
-	return errors.New(fmt.Sprintf("Unknown %T: %v", irVar, irVar.name))
+	f.SetFloat(irVar.value)
+	return nil
 }
 
 var irsdkFlags = map[utils.Flags]string{
@@ -431,7 +438,10 @@ var irsdkSessionStates = map[utils.SessionState]string{
 
 // @TODO: should this accept an io.Reader?
 func (c *Connection) BytesToTelemetryStruct(data []byte) (*TelemetryData, error) {
-	telemetryData := newTelemetryData()
+	// Create an new struct in the same memory location so reflect values can be
+	// cached
+	td := newTelemetryData()
+	*telemetryData = *td
 	numVars := c.sdk.GetNumVars()
 
 	for i := 0; i <= numVars; i++ {
@@ -452,7 +462,10 @@ func (c *Connection) BytesToTelemetryStruct(data []byte) (*TelemetryData, error)
 
 // @TODO: should this accept an io.Reader?
 func (c *Connection) BytesToTelemetryStructFiltered(data []byte, fields []string) *TelemetryData {
-	telemetryData := newTelemetryData()
+	// Create an new struct in the same memory location so reflect values can be
+	// cached
+	td := newTelemetryData()
+	*telemetryData = *td
 	numVars := c.sdk.GetNumVars()
 
 	for i := 0; i <= numVars; i++ {
@@ -628,8 +641,17 @@ func extractDoubleFromVarHeader(header *utils.VarHeader, data []byte) *irDoubleV
 
 func newTelemetryData() *TelemetryData {
 	return &TelemetryData{
+		fieldCache:     make(map[string]*reflect.Value),
 		SessionFlags:   make(map[string]bool),
 		CamCameraState: make(map[string]bool),
 		EngineWarnings: make(map[string]bool),
 	}
+}
+
+func ucFirst(s string) string {
+	b := []byte(s)
+	b[0] = bytes.ToUpper(b[0:1])[0]
+	return string(b)
+	// r, n := utf8.DecodeRuneInString(s)
+	// return string(unicode.ToUpper(r)) + s[n:]
 }
