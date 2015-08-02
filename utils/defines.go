@@ -72,7 +72,7 @@ const (
 )
 
 // const doesn't work for some reason
-var VarTypeBytes = [ETCount]int{
+var VarTypeBytes = [ETCount]VarType{
 	1, // CharType
 	1, // BoolType
 
