@@ -93,6 +93,16 @@ type TelemetryData struct {
 	CamGroupNumber            int
 	ReplayPlaySpeed           int
 	ReplaySessionNum          int
+	DisplayUnits              int
+	PlayerCarPosition         int
+	PlayerCarClassPosition    int
+	CarIdxPosition            int
+	CarIdxClassPosition       int
+	LapLasNLapSeq             int
+	LapBestNLapLap            int
+	EnterExitReset            int
+	DCLapStatus               int
+	DCDriversSoFar            int
 
 	// bitfields
 	SessionFlags   map[string]bool
@@ -202,6 +212,11 @@ type TelemetryData struct {
 	RFshockVel                      float32
 	LFshockDefl                     float32
 	LFshockVel                      float32
+	CarIdxF2Time                    float32
+	CarIdxEstTime                   float32
+	LapLastNLapTime                 float32
+	LapBestNLapTime                 float32
+	DcBrakeBias                     float32
 
 	// Doubles
 	SessionTime       float64
