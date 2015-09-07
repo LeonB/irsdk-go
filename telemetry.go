@@ -441,6 +441,7 @@ func (c *Connection) BytesToTelemetryStruct(data []byte) (*TelemetryData, error)
 	// Create an new struct in the same memory location so reflect values can be
 	// cached
 	td := newTelemetryData()
+	td.fieldCache = telemetryData.fieldCache
 	*telemetryData = *td
 	numVars := c.sdk.GetNumVars()
 
@@ -465,6 +466,7 @@ func (c *Connection) BytesToTelemetryStructFiltered(data []byte, fields []string
 	// Create an new struct in the same memory location so reflect values can be
 	// cached
 	td := newTelemetryData()
+	td.fieldCache = telemetryData.fieldCache
 	*telemetryData = *td
 	numVars := c.sdk.GetNumVars()
 
