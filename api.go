@@ -2,10 +2,18 @@ package irsdk
 
 import (
 	"bytes"
+	"errors"
 	"math"
 	"time"
 
+	"golang.org/x/text/encoding/charmap"
+	"golang.org/x/text/transform"
+
 	"github.com/leonb/irsdk-go/utils"
+)
+
+var (
+	ErrEmptySessionData = errors.New("Empty session data")
 )
 
 func NewConnection() (*Connection, error) {
@@ -97,11 +105,12 @@ func (c *Connection) GetSessionData() (*SessionData, error) {
 		return nil, err
 	}
 
-	if yamlData != nil {
-		return c.BytesToSessionStruct(yamlData)
+	if yamlData == nil {
+		return nil, ErrEmptySessionData
 	}
 
-	return nil, nil
+	yamlData = bytesToUtf8(yamlData)
+	return c.BytesToSessionStruct(yamlData)
 }
 
 func (c *Connection) SendCommand() error {
@@ -168,4 +177,14 @@ func (c *Connection) SetMaxFPS(maxFPS int) {
 func (c *Connection) Disconnect() error {
 	c.sdk.Shutdown()
 	return nil
+}
+
+func bytesToUtf8(b []byte) []byte {
+	isoReader := bytes.NewReader(b)
+	// Windows-1252 is a superset of ISO-8859-1
+	utf8Reader := transform.NewReader(isoReader, charmap.Windows1252.NewDecoder())
+
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(utf8Reader)
+	return buf.Bytes()
 }
