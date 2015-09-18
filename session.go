@@ -68,7 +68,7 @@ type WeekendOptions struct {
 	NumStarters         int       `yaml:"NumStarters"`
 	StartingGrid        string    `yaml:"StartingGrid"`
 	QualifyScoring      string    `yaml:"QualifyScoring"`
-	CourseCautions      bool      `yaml:"CourseCautions"`
+	CourseCautions      string    `yaml:"CourseCautions"`
 	StandingStart       intToBool `yaml:"StandingStart"`
 	Restarts            string    `yaml:"Restarts"`
 	WeatherType         string    `yaml:"WeatherType"`
