@@ -100,7 +100,7 @@ func (ir *Irsdk) GetNewData() ([]byte, error) {
 		return nil, nil
 	}
 
-	latest := header.getLatestVarBufN()
+	latest := header.GetLatestVarBufN()
 
 	// if newer than last recieved, than report new data
 	curTickCount := header.VarBuf[latest].TickCount
@@ -243,8 +243,15 @@ func (ir *Irsdk) BroadcastMsg(msg BroadcastMsg, var1 uint16, var2 uint16, var3 u
 	fmt.Println("wParam", wParam)
 	fmt.Println("lParam", lParam)
 
+	wParam2 := uint16(msg) | var1 << 16
+	lParam2 := var2 | var3 << 16
+
+	fmt.Println("wParam2", wParam2)
+	fmt.Println("lParam2", lParam2)
+
 	if msgID > 0 && msg >= 0 && msg < BroadcastLast {
-		err := ir.c.SendNotifyMessage(msgID, wParam, lParam)
+		err := ir.c.SendNotifyMessageW(msgID, wParam, lParam)
+		err = ir.c.SendNotifyMessageW(msgID, uint32(wParam2), uint32(lParam2))
 		if err != nil {
 			return err
 		}
@@ -271,16 +278,12 @@ func (ir *Irsdk) PadCarNum(num int, zero int) int {
 
 // Custom functions
 
-// func (ir *Irsdk) GetRpcCmd() (*exec.Cmd, error) {
-// 	return nil, nil
-// }
-
 func (ir *Irsdk) GetNumVars() int {
 	return int(ir.c.header.NumVars)
 }
 
 func (ir *Irsdk) GetBroadcastMsgID() (uint, error) {
-	return ir.c.RegisterWindowMessageA(BROADCASTMSGNAME)
+	return ir.c.RegisterWindowMessageW(BROADCASTMSGNAME)
 }
 
 func (ir *Irsdk) copyTelemetryData(varBufN int) ([]byte, error) {

@@ -113,8 +113,12 @@ func (cw *CWrapper) RegisterWindowMessageA(lpString string) (uint, error) {
 	return syscalls.RegisterWindowMessageA(lpString)
 }
 
-func (cw *CWrapper) SendNotifyMessage(msgID uint, wParam uint32, lParam uint32) error {
-	return syscalls.SendNotifyMessage(msgID, wParam, lParam)
+func (cw *CWrapper) RegisterWindowMessageW(lpString string) (uint, error) {
+	return syscalls.RegisterWindowMessageW(lpString)
+}
+
+func (cw *CWrapper) SendNotifyMessageW(msgID uint, wParam uint32, lParam uint32) error {
+	return syscalls.SendNotifyMessageW(msgID, wParam, lParam)
 }
 
 func NewCWrapper() (*CWrapper, error) {

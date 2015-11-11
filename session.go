@@ -1,6 +1,9 @@
 package irsdk
 
 import (
+	"fmt"
+	"io/ioutil"
+
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -253,11 +256,16 @@ func (i *intToBool) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 // @TODO: should this accept an io.Reader?
-func (c *Connection) BytesToSessionStruct(yamlData []byte) (*SessionData, error) {
+func NewSessionDataFromBytes(yamlData []byte) (*SessionData, error) {
 	sessionData := newSessionData()
 
 	// Convert yaml to struct
 	err := yaml.Unmarshal(yamlData, &sessionData)
+	if err != nil || sessionData == nil {
+		fmt.Println(string(yamlData[:]))
+		ioutil.WriteFile("fucked.yml", yamlData, 0644)
+	}
+
 	if err != nil {
 		return nil, err
 	}

@@ -169,6 +169,19 @@ const (
 	UseMouseAimMode       CameraState = 0x0100
 )
 
+type PitSvFlag int32
+
+const (
+	LFTireChange PitSvFlag = 0x0001
+	RFTireChange PitSvFlag = 0x0002
+	LRTireChange PitSvFlag = 0x0004
+	RRTireChange PitSvFlag = 0x0008
+
+	FuelFill          PitSvFlag = 0x0010
+	WindshieldTearoff PitSvFlag = 0x0020
+	FastRepair        PitSvFlag = 0x0040
+)
+
 //----
 //
 
@@ -211,7 +224,16 @@ type Header struct {
 	VarBuf [MAX_BUFS]VarBuf
 }
 
-func (header *Header) getLatestVarBufN() int {
+// sub header used when writing telemetry to disk
+type DiskSubHeader struct {
+	sessionStartDate   int32
+	sessionStartTime   float64
+	sessionEndTime     float64
+	sessionLapCount    int32
+	sessionRecordCount int32
+}
+
+func (header *Header) GetLatestVarBufN() int {
 	latest := 0
 	for i := 0; i < int(header.NumBuf); i++ {
 		if header.VarBuf[latest].TickCount < header.VarBuf[i].TickCount {
@@ -220,15 +242,6 @@ func (header *Header) getLatestVarBufN() int {
 	}
 
 	return latest
-}
-
-// sub header used when writing telemetry to disk
-type DiskSubHeader struct {
-	sessionStartDate   int32
-	sessionStartTime   float64
-	sessionEndTime     float64
-	sessionLapCount    int32
-	sessionRecordCount int32
 }
 
 //----

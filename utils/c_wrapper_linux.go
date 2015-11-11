@@ -137,10 +137,13 @@ func (cw *CWrapper) getSharedMemPtr() (unsafe.Pointer, error) {
 	return unsafe.Pointer(&sharedMem[0]), nil
 }
 
-// use this instead of WaitForSingleObject() because that's slow
 func (cw *CWrapper) WaitForDataChange(timeout time.Duration) error {
-	// return cw.WaitForSingleObject(cw.hDataValidEvent, int(timeout/time.Millisecond))
-	latest := cw.header.getLatestVarBufN()
+	return cw.WaitForSingleObject(cw.hDataValidEvent, int(timeout/time.Millisecond))
+	// or use cw.WaitForDataChangeChannel()?
+}
+
+func (cw *CWrapper) WaitForDataChangeChannel(timeout time.Duration) error {
+	latest := cw.header.GetLatestVarBufN()
 	prevTickCount := cw.header.VarBuf[latest].TickCount
 
 	// Create a ticker and a stop channel
@@ -150,6 +153,7 @@ func (cw *CWrapper) WaitForDataChange(timeout time.Duration) error {
 
 	// Check every tick if iRacing's tick has changed: when iRacing's tick has
 	// changed send a message on the stop channel to make the for loop stop
+	// @TODO: this is probably leaking goroutines
 	go func() {
 		for {
 			select {
@@ -178,22 +182,6 @@ func (cw *CWrapper) WaitForDataChange(timeout time.Duration) error {
 
 // Syscalls
 
-func (cw *CWrapper) OpenFileMapping(lpName string) (uintptr, error) {
-	var handle uintptr
-	args := &OpenFileMappingArgs{lpName}
-
-	err := cw.client.Call("Commands.OpenFileMapping", args, &handle)
-	return handle, err
-}
-
-func (cw *CWrapper) MapViewOfFile(hMemMapFile uintptr, dwNumberOfBytesToMap int) (uintptr, error) {
-	var startAddress uintptr
-	args := &MapViewOfFileArgs{hMemMapFile, dwNumberOfBytesToMap}
-
-	err := cw.client.Call("Commands.MapViewOfFile", args, &startAddress)
-	return startAddress, err
-}
-
 func (cw *CWrapper) CloseHandle(handle uintptr) error {
 	return nil
 }
@@ -221,7 +209,15 @@ func (cw *CWrapper) RegisterWindowMessageA(lpString string) (uint, error) {
 	return 0, nil
 }
 
+func (cw *CWrapper) RegisterWindowMessageW(lpString string) (uint, error) {
+	return 0, nil
+}
+
 func (cw *CWrapper) SendNotifyMessage(msgID uint, wParam uint32, lParam uint32) error {
+	return nil
+}
+
+func (cw *CWrapper) SendNotifyMessageW(msgID uint, wParam uint32, lParam uint32) error {
 	return nil
 }
 
@@ -235,6 +231,9 @@ func NewCWrapper() (*CWrapper, error) {
 
 func newRpcClient() (*rpc.Client, error) {
 	rpcCommand, err := getRpcCommand()
+	// Remove the tmp file: if wine is running the rpc wrapper it's in memory
+	// and not needed anymore on disk
+	defer os.Remove(rpcCommand.Name())
 	if err != nil {
 		return nil, err
 	}

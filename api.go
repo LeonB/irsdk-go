@@ -96,21 +96,22 @@ func (c *Connection) GetRawSessionData() ([]byte, error) {
 	if len(pieces) > 0 {
 		return pieces[0], nil
 	}
+
 	return b, nil
 }
 
 func (c *Connection) GetSessionData() (*SessionData, error) {
-	yamlData, err := c.GetRawSessionData()
+	b, err := c.GetRawSessionData()
 	if err != nil {
 		return nil, err
 	}
 
-	if yamlData == nil {
+	if b == nil {
 		return nil, ErrEmptySessionData
 	}
 
-	yamlData = bytesToUtf8(yamlData)
-	return c.BytesToSessionStruct(yamlData)
+	b = bytesToUtf8(b)
+	return NewSessionDataFromBytes(b)
 }
 
 func (c *Connection) SendCommand() error {
@@ -179,6 +180,8 @@ func (c *Connection) Disconnect() error {
 	return nil
 }
 
+// bytesToUtf8 is used to convert stringdata from iRacing to UTF-8 so it can
+// safely be used by different encoder methods (json)
 func bytesToUtf8(b []byte) []byte {
 	isoReader := bytes.NewReader(b)
 	// Windows-1252 is a superset of ISO-8859-1

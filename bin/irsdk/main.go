@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"runtime/pprof"
+	"time"
 
 	"github.com/codegangsta/cli"
 	irsdk "github.com/leonb/irsdk-go"
@@ -44,7 +45,7 @@ func main() {
 							return
 						}
 
-						conn.Connect()
+						err = conn.Connect()
 						if err != nil {
 							fmt.Fprintln(os.Stdout, err)
 							return
@@ -77,7 +78,7 @@ func main() {
 							return
 						}
 
-						conn.Connect()
+						err = conn.Connect()
 						if err != nil {
 							fmt.Fprintln(os.Stdout, err)
 							return
@@ -111,39 +112,29 @@ func main() {
 					Usage: "dump telemetry data",
 					Flags: dumpFlags,
 					Action: func(c *cli.Context) {
-						conn, err := irsdk.NewConnection()
-						if err != nil {
-							fmt.Println(os.Stderr, err)
-							return
-						}
-
-						conn.Connect()
+						filename := "telemetry-test.ibt"
+						f, err := os.Open(filename)
 						if err != nil {
 							fmt.Fprintln(os.Stdout, err)
 							return
 						}
 
-						format := c.String("format")
-						switch format {
-						case "raw":
-							b, err := conn.GetRawTelemetryData()
-							if err != nil {
-								fmt.Fprintln(os.Stderr, err)
-								return
-							}
-							fmt.Println(string(b[:]))
-						case "struct":
-							telemetryData, err := conn.GetTelemetryData()
-							if err != nil {
-								fmt.Fprintln(os.Stderr, err)
-								return
-							}
-							fmt.Printf("%+v\n", telemetryData)
-						default:
-							err := fmt.Sprintf("Unknow format: %v", format)
-							fmt.Fprintln(os.Stdout, err)
-							return
+						tr := irsdk.NewTelemetryReader(f)
+
+						// @TODO: profile GetAllDataPoints()
+						datapoints, err := tr.GetAllDataPoints()
+						if err != nil {
+							fmt.Fprintln(os.Stderr, err)
 						}
+
+						for _, dp := range datapoints {
+							fmt.Println(dp.OnPitRoad)
+						}
+
+						last := len(datapoints) - 1
+						fmt.Printf("%+v\n", datapoints[last])
+
+						return
 					},
 				},
 				{
@@ -185,13 +176,24 @@ func main() {
 							return
 						}
 
-						for i := 0; i < 1000; i++ {
+						fps := 60
+						duration := 60
+						loops := fps * duration
+						// conn.SetMaxFPS(fps)
+
+						start := time.Now()
+						for i := 0; i < loops; i++ {
 							_, err := conn.GetTelemetryData()
 							if err != nil {
 								fmt.Println(os.Stderr, err)
 								// Don't quit, just keep on going
 							}
 						}
+						end := time.Now()
+
+						realDuration := (end.Sub(start))
+						realFPS := float32(loops) / float32(realDuration.Seconds())
+						fmt.Println(realFPS)
 					},
 				},
 			},

@@ -12,7 +12,7 @@ import (
 	utils "github.com/leonb/irsdk-go/utils"
 )
 
-var telemetryData = newTelemetryData()
+var telemetryData = NewTelemetryData()
 
 type irCharVar struct {
 	name  string
@@ -109,10 +109,17 @@ type TelemetryData struct {
 	DCLapStatus               int
 	DCDriversSoFar            int
 
+	// Only used in disk based telemetry
+	WeatherType int
+	Skies       int
+
 	// bitfields
 	SessionFlags   map[string]bool
 	CamCameraState map[string]bool
 	EngineWarnings map[string]bool
+
+	// Only used in disk based telemetry data
+	PitSvFlags map[string]bool
 
 	// floats
 	FrameRate                       float32
@@ -220,13 +227,63 @@ type TelemetryData struct {
 	CarIdxF2Time                    float32
 	CarIdxEstTime                   float32
 	LapLastNLapTime                 float32
-	LapBestNLapTime                 float32
+	brakeLinePresse                 float32
 	DcBrakeBias                     float32
+	LapBestNLapTime                 float32
+
+	// Only used in disk based telemetry
+	Alt               float32
+	TrackTemp         float32
+	AirTemp           float32
+	AirDensity        float32
+	AirPressure       float32
+	WindVel           float32
+	WindDir           float32
+	RelativeHumidity  float32
+	LRtempL           float32
+	LRtempM           float32
+	LRtempR           float32
+	RFspeed           float32
+	RFpressure        float32
+	DcABS             float32
+	DcThrottleShape   float32
+	DcFuelMixture     float32
+	RRspeed           float32
+	RRpressure        float32
+	RRtempL           float32
+	RRtempM           float32
+	RRtempR           float32
+	LRspeed           float32
+	LRpressure        float32
+	RFtempL           float32
+	RFtempM           float32
+	RFtempR           float32
+	LFspeed           float32
+	LFpressure        float32
+	LFtempL           float32
+	LFtempM           float32
+	LFtempR           float32
+	LFrideHeight      float32
+	RFrideHeight      float32
+	LRrideHeight      float32
+	RRrideHeight      float32
+	CFSRrideHeight    float32
+	PitSvLRP          float32
+	PitSvRRP          float32
+	FogLevel          float32
+	DcTractionControl float32
+	PitSvLFP          float32
+	PitSvRFP          float32
+	PitSvFuel         float32
 
 	// Doubles
 	SessionTime       float64
 	SessionTimeRemain float64
 	ReplaySessionTime float64
+
+	// Only used in disk based telemetry
+	Lat float64
+	Lon float64
 }
 
 func (d *TelemetryData) addVarHeaderData(varHeader *utils.VarHeader, data []byte) error {
@@ -291,7 +348,7 @@ func (d *TelemetryData) fieldByName(varName string, kind reflect.Kind) (*reflect
 		}
 	}
 
-	return nil, errors.New(fmt.Sprintf("Unknown %T: %v", kind, varName))
+	return nil, errors.New(fmt.Sprintf("Unknown %v/%v: %v", kind, f.Kind(), varNameUp))
 }
 
 func (d *TelemetryData) AddIrCharVar(irVar *irCharVar) error {
@@ -374,73 +431,84 @@ func (d *TelemetryData) AddIrDoubleVar(irVar *irDoubleVar) error {
 
 var irsdkFlags = map[utils.Flags]string{
 	// global flags
-	utils.CheckeredFlag:     "checkered",
-	utils.WhiteFlag:         "white",
-	utils.GreenFlag:         "green",
-	utils.YellowFlag:        "yellow",
-	utils.RedFlag:           "red",
-	utils.BlueFlag:          "blue",
-	utils.DebrisFlag:        "debris",
-	utils.CrossedFlag:       "crossed",
-	utils.YellowWavingFlag:  "yellowWaving",
-	utils.OneLapToGreenFlag: "oneLapToGreen",
-	utils.GreenHeldFlag:     "greenHeld",
-	utils.TenToGoFlag:       "tenToGo",
-	utils.FiveToGoFlag:      "fiveToGo",
-	utils.RandomWavingFlag:  "randomWaving",
-	utils.CautionFlag:       "caution",
-	utils.CautionWavingFlag: "cautionWaving",
+	utils.CheckeredFlag:     "Checkered",
+	utils.WhiteFlag:         "White",
+	utils.GreenFlag:         "Green",
+	utils.YellowFlag:        "Yellow",
+	utils.RedFlag:           "Red",
+	utils.BlueFlag:          "Blue",
+	utils.DebrisFlag:        "Debris",
+	utils.CrossedFlag:       "Crossed",
+	utils.YellowWavingFlag:  "YellowWaving",
+	utils.OneLapToGreenFlag: "OneLapToGreen",
+	utils.GreenHeldFlag:     "GreenHeld",
+	utils.TenToGoFlag:       "TenToGo",
+	utils.FiveToGoFlag:      "FiveToGo",
+	utils.RandomWavingFlag:  "RandomWaving",
+	utils.CautionFlag:       "Caution",
+	utils.CautionWavingFlag: "CautionWaving",
 
 	// drivers black flags
-	utils.BlackFlag:      "black",
-	utils.DisqualifyFlag: "disqualify",
-	utils.ServicibleFlag: "servicible", // car is allowed service (not a flag)
-	utils.FurledFlag:     "furled",
-	utils.RepairFlag:     "repair",
+	utils.BlackFlag:      "Black",
+	utils.DisqualifyFlag: "Disqualify",
+	utils.ServicibleFlag: "Servicible", // car is allowed service (not a flag)
+	utils.FurledFlag:     "Furled",
+	utils.RepairFlag:     "Repair",
 
 	// start lights
-	utils.StartHidden: "startHidden",
-	utils.StartReady:  "startReady",
-	utils.StartSet:    "startSet",
-	utils.StartGo:     "startGo",
+	utils.StartHidden: "StartHidden",
+	utils.StartReady:  "StartReady",
+	utils.StartSet:    "StartSet",
+	utils.StartGo:     "StartGo",
 }
 
 var irsdkEngineWarnings = map[utils.EngineWarnings]string{
-	utils.WaterTempWarning:    "waterTempWarning",
-	utils.FuelPressureWarning: "fuelPressureWarning",
-	utils.OilPressureWarning:  "oilPressureWarning",
-	utils.EngineStalled:       "engineStalled",
-	utils.PitSpeedLimiter:     "pitSpeedLimiter",
-	utils.RevLimiterActive:    "revLimiterActive",
+	utils.WaterTempWarning:    "WaterTempWarning",
+	utils.FuelPressureWarning: "FuelPressureWarning",
+	utils.OilPressureWarning:  "OilPressureWarning",
+	utils.EngineStalled:       "EngineStalled",
+	utils.PitSpeedLimiter:     "PitSpeedLimiter",
+	utils.RevLimiterActive:    "RevLimiterActive",
 }
 
 var irsdkCameraStates = map[utils.CameraState]string{
-	utils.IsSessionScreen:       "isSessionScreen",
-	utils.IsScenicActive:        "isScencActive",
-	utils.CamToolActive:         "camToolActive",
-	utils.UIHidden:              "uiHidden",
-	utils.UseAutoShotSelection:  "useAutoShotSelection",
-	utils.UseTemporaryEdits:     "useTemporaryEdits",
-	utils.UseKeyAcceleration:    "useKeyAcceleration",
-	utils.UseKey10xAcceleration: "useKey10xAcceleration",
-	utils.UseMouseAimMode:       "useMouseAimMode",
+	utils.IsSessionScreen:       "IsSessionScreen",
+	utils.IsScenicActive:        "IsScencActive",
+	utils.CamToolActive:         "RamToolActive",
+	utils.UIHidden:              "UiHidden",
+	utils.UseAutoShotSelection:  "UseAutoShotSelection",
+	utils.UseTemporaryEdits:     "UseTemporaryEdits",
+	utils.UseKeyAcceleration:    "UseKeyAcceleration",
+	utils.UseKey10xAcceleration: "UseKey10xAcceleration",
+	utils.UseMouseAimMode:       "UseMouseAimMode",
 }
 
 var irsdkSessionStates = map[utils.SessionState]string{
-	utils.StateInvalid:    "invalid",
-	utils.StateGetInCar:   "getInCar",
-	utils.StateWarmup:     "warmup",
-	utils.StateParadeLaps: "paradeLaps",
-	utils.StateRacing:     "racing",
-	utils.StateCheckered:  "checkered",
-	utils.StateCoolDown:   "coolDown",
+	utils.StateInvalid:    "Invalid",
+	utils.StateGetInCar:   "GetInCar",
+	utils.StateWarmup:     "Warmup",
+	utils.StateParadeLaps: "ParadeLaps",
+	utils.StateRacing:     "Racing",
+	utils.StateCheckered:  "Checkered",
+	utils.StateCoolDown:   "CoolDown",
+}
+
+var irsdkPitSvFlags = map[utils.PitSvFlag]string{
+	utils.LFTireChange: "LFTireChange",
+	utils.RFTireChange: "RFTireChange",
+	utils.LRTireChange: "LRTireChange",
+	utils.RRTireChange: "RRTireChange",
+
+	utils.FuelFill:          "FuelFill",
+	utils.WindshieldTearoff: "WindshieldTearoff",
+	utils.FastRepair:        "FastRepair",
 }
 
 // @TODO: should this accept an io.Reader?
 func (c *Connection) BytesToTelemetryStruct(data []byte) (*TelemetryData, error) {
 	// Create an new struct in the same memory location so reflect values can be
 	// cached
-	td := newTelemetryData()
+	td := NewTelemetryData()
 	td.fieldCache = telemetryData.fieldCache
 	*telemetryData = *td
 	numVars := c.sdk.GetNumVars()
@@ -462,10 +530,12 @@ func (c *Connection) BytesToTelemetryStruct(data []byte) (*TelemetryData, error)
 }
 
 // @TODO: should this accept an io.Reader?
+// @TODO: this shouldn't be on the connection because it can also be used by
+// disk based telemetry (.ibt)
 func (c *Connection) BytesToTelemetryStructFiltered(data []byte, fields []string) *TelemetryData {
 	// Create an new struct in the same memory location so reflect values can be
 	// cached
-	td := newTelemetryData()
+	td := NewTelemetryData()
 	td.fieldCache = telemetryData.fieldCache
 	*telemetryData = *td
 	numVars := c.sdk.GetNumVars()
@@ -596,6 +666,10 @@ func extractBitfieldFromVarHeader(header *utils.VarHeader, data []byte) *irBitfi
 		for bitmask, name := range irsdkEngineWarnings {
 			retVar.fields[name] = bool(uint32(hvar)&uint32(bitmask) != 0)
 		}
+	case "PitSvFlags":
+		for bitmask, name := range irsdkPitSvFlags {
+			retVar.fields[name] = bool(uint32(hvar)&uint32(bitmask) != 0)
+		}
 	default:
 		log.Println("Unknown bitField var:", varName)
 	}
@@ -641,12 +715,13 @@ func extractDoubleFromVarHeader(header *utils.VarHeader, data []byte) *irDoubleV
 	}
 }
 
-func newTelemetryData() *TelemetryData {
+func NewTelemetryData() *TelemetryData {
 	return &TelemetryData{
 		fieldCache:     make(map[string]*reflect.Value),
 		SessionFlags:   make(map[string]bool),
 		CamCameraState: make(map[string]bool),
 		EngineWarnings: make(map[string]bool),
+		PitSvFlags:     make(map[string]bool),
 	}
 }
 

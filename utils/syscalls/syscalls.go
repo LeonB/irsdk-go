@@ -18,7 +18,8 @@ import (
 )
 
 const (
-	HWND_BROADCAST = HWND(0xffff)
+	// HWND_BROADCAST = HWND(0xffff)
+	HWND_BROADCAST = syscall.Handle(0xffff)
 )
 
 type (
@@ -38,7 +39,9 @@ var (
 	wOpenEventW             = kernel32.NewProc("OpenEventW")
 	wWaitForSingleObject    = kernel32.NewProc("WaitForSingleObject")
 	wRegisterWindowMessageA = user32.NewProc("RegisterWindowMessageA")
+	wRegisterWindowMessageW = user32.NewProc("RegisterWindowMessageW")
 	wSendNotifyMessageA     = user32.NewProc("SendNotifyMessageA")
+	wSendNotifyMessageW     = user32.NewProc("SendNotifyMessageW")
 )
 
 func Sleep(timeout time.Duration) error {
@@ -155,6 +158,8 @@ func RegisterWindowMessageA(lpString string) (uint, error) {
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(lpString))), // LPCTSTR
 	)
 
+	fmt.Println("last error:", syscall.GetLastError())
+
 	if msgID == 0 {
 		errMsg := fmt.Sprintf("registerWindowMessageA failed (%s)", err)
 		return 0, errors.New(errMsg)
@@ -163,19 +168,51 @@ func RegisterWindowMessageA(lpString string) (uint, error) {
 	return uint(msgID), nil
 }
 
-func SendNotifyMessage(msgID uint, wParam uint32, lParam uint32) error {
-	hWnd := HWND_BROADCAST
+func RegisterWindowMessageW(lpString string) (uint, error) {
+	msgID, _, err := wRegisterWindowMessageW.Call(
+		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(lpString))), // LPCTSTR
+	)
 
+	fmt.Println("last error:", syscall.GetLastError())
+
+	if msgID == 0 {
+		errMsg := fmt.Sprintf("registerWindowMessageW failed (%s)", err)
+		return 0, errors.New(errMsg)
+	}
+
+	return uint(msgID), nil
+}
+
+func SendNotifyMessageA(msgID uint, wParam uint32, lParam uint32) error {
 	result, _, err := wSendNotifyMessageA.Call(
-		uintptr(hWnd),   // HWND
-		uintptr(msgID),  // UINT
-		uintptr(wParam), // WPARAM
-		uintptr(lParam), // LPARAM
+		uintptr(HWND_BROADCAST), // HWND
+		uintptr(msgID),          // UINT
+		uintptr(wParam),         // WPARAM
+		uintptr(lParam),         // LPARAM
 	)
 
 	fmt.Println(err)
 	if result == 0 {
-		errMsg := fmt.Sprintf("sendNotifyMessage failed (%s)", err)
+		errMsg := fmt.Sprintf("sendNotifyMessageA failed (%s)", err)
+		return errors.New(errMsg)
+	}
+
+	return nil
+}
+
+func SendNotifyMessageW(msgID uint, wParam uint32, lParam uint32) error {
+	result, _, err := wSendNotifyMessageW.Call(
+		uintptr(HWND_BROADCAST), // HWND
+		uintptr(msgID),          // UINT
+		uintptr(wParam),         // WPARAM
+		uintptr(lParam),         // LPARAM
+	)
+
+	fmt.Println("last error:", syscall.GetLastError())
+
+	fmt.Println(err)
+	if result == 0 {
+		errMsg := fmt.Sprintf("sendNotifyMessageW failed (%s)", err)
 		return errors.New(errMsg)
 	}
 
