@@ -19,46 +19,6 @@ type TelemetryReader struct {
 	dataPoints  []*TelemetryData
 }
 
-// Read is a temporary function
-func (tr *TelemetryReader) Read() error {
-	// header, err := tr.GetHeader()
-	// if err != nil {
-	// 	return err
-	// }
-	// fmt.Printf("%+v\n", header)
-
-	// subHeader, err := tr.GetsubHeader()
-	// if err != nil {
-	// 	return err
-	// }
-	// fmt.Printf("%+v\n", subHeader)
-
-	// sessionData, err := tr.GetSessionData()
-	// if err != nil {
-	// 	return err
-	// }
-	// fmt.Printf("%+v\n", sessionData)
-
-	// varHeader, err := tr.GetVarHeader()
-	// if err != nil {
-	// 	return err
-	// }
-
-	datapoints, err := tr.GetAllDataPoints()
-	if err != nil {
-		return err
-	}
-
-	for _, dp := range datapoints {
-		fmt.Println(dp.OnPitRoad)
-	}
-
-	last := len(datapoints) - 1
-	fmt.Printf("%+v\n", datapoints[last])
-
-	return nil
-}
-
 // GetHeader memoizes the ReadHeader function
 func (tr *TelemetryReader) GetHeader() (*utils.Header, error) {
 	var err error

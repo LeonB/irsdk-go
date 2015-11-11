@@ -47,6 +47,7 @@ package utils
 // Constant Definitions
 
 type StatusField int32
+type time_t int32
 
 const (
 	StatusConnected StatusField = 1
@@ -226,7 +227,7 @@ type Header struct {
 
 // sub header used when writing telemetry to disk
 type DiskSubHeader struct {
-	sessionStartDate   int32
+	sessionStartDate   time_t
 	sessionStartTime   float64
 	sessionEndTime     float64
 	sessionLapCount    int32

@@ -12,7 +12,7 @@ import (
 	utils "github.com/leonb/irsdk-go/utils"
 )
 
-var telemetryData = NewTelemetryData()
+var fieldCache = make(map[string]*reflect.Value)
 
 type irCharVar struct {
 	name  string
@@ -57,8 +57,6 @@ type irDoubleVar struct {
 }
 
 type TelemetryData struct {
-	fieldCache map[string]*reflect.Value
-
 	// bools
 	DriverMarker                   bool
 	IsOnTrack                      bool
@@ -332,7 +330,7 @@ func (d *TelemetryData) addVarHeaderData(varHeader *utils.VarHeader, data []byte
 }
 
 func (d *TelemetryData) fieldByName(varName string, kind reflect.Kind) (*reflect.Value, error) {
-	if f, ok := d.fieldCache[varName]; ok {
+	if f, ok := fieldCache[varName]; ok {
 		return f, nil
 	}
 
@@ -343,7 +341,7 @@ func (d *TelemetryData) fieldByName(varName string, kind reflect.Kind) (*reflect
 	f := e.FieldByName(varNameUp)  // Find struct field
 	if f.Kind() == kind {
 		if f.CanSet() {
-			d.fieldCache[varName] = &f
+			fieldCache[varName] = &f
 			return &f, nil
 		}
 	}
@@ -509,8 +507,6 @@ func (c *Connection) BytesToTelemetryStruct(data []byte) (*TelemetryData, error)
 	// Create an new struct in the same memory location so reflect values can be
 	// cached
 	td := NewTelemetryData()
-	td.fieldCache = telemetryData.fieldCache
-	*telemetryData = *td
 	numVars := c.sdk.GetNumVars()
 
 	for i := 0; i <= numVars; i++ {
@@ -523,10 +519,10 @@ func (c *Connection) BytesToTelemetryStruct(data []byte) (*TelemetryData, error)
 			continue
 		}
 
-		telemetryData.addVarHeaderData(varHeader, data)
+		td.addVarHeaderData(varHeader, data)
 	}
 
-	return telemetryData, nil
+	return td, nil
 }
 
 // @TODO: should this accept an io.Reader?
@@ -536,8 +532,6 @@ func (c *Connection) BytesToTelemetryStructFiltered(data []byte, fields []string
 	// Create an new struct in the same memory location so reflect values can be
 	// cached
 	td := NewTelemetryData()
-	td.fieldCache = telemetryData.fieldCache
-	*telemetryData = *td
 	numVars := c.sdk.GetNumVars()
 
 	for i := 0; i <= numVars; i++ {
@@ -552,7 +546,7 @@ func (c *Connection) BytesToTelemetryStructFiltered(data []byte, fields []string
 
 		if fields == nil || len(fields) == 0 {
 			// fields is empty: add everything
-			telemetryData.addVarHeaderData(varHeader, data)
+			td.addVarHeaderData(varHeader, data)
 			continue
 		}
 
@@ -572,10 +566,10 @@ func (c *Connection) BytesToTelemetryStructFiltered(data []byte, fields []string
 			continue
 		}
 
-		telemetryData.addVarHeaderData(varHeader, data)
+		td.addVarHeaderData(varHeader, data)
 	}
 
-	return telemetryData
+	return td
 }
 
 func extractCharFromVarHeader(header *utils.VarHeader, data []byte) *irCharVar {
@@ -717,7 +711,6 @@ func extractDoubleFromVarHeader(header *utils.VarHeader, data []byte) *irDoubleV
 
 func NewTelemetryData() *TelemetryData {
 	return &TelemetryData{
-		fieldCache:     make(map[string]*reflect.Value),
 		SessionFlags:   make(map[string]bool),
 		CamCameraState: make(map[string]bool),
 		EngineWarnings: make(map[string]bool),
