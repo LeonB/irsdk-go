@@ -180,6 +180,75 @@ func (c *Connection) Disconnect() error {
 	return nil
 }
 
+// @TODO: should this accept an io.Reader?
+func (c *Connection) BytesToTelemetryStruct(data []byte) (*TelemetryData, error) {
+	// Create an new struct in the same memory location so reflect values can be
+	// cached
+	td := NewTelemetryData()
+	numVars := c.sdk.GetNumVars()
+
+	for i := 0; i <= numVars; i++ {
+		varHeader, err := c.sdk.GetVarHeaderEntry(i)
+		if err != nil {
+			continue
+		}
+
+		if varHeader == nil {
+			continue
+		}
+
+		td.addVarHeaderData(varHeader, data)
+	}
+
+	return td, nil
+}
+
+// @TODO: should this accept an io.Reader?
+// @TODO: this shouldn't be on the connection because it can also be used by
+// disk based telemetry (.ibt)
+func (c *Connection) BytesToTelemetryStructFiltered(data []byte, fields []string) *TelemetryData {
+	// Create an new struct in the same memory location so reflect values can be
+	// cached
+	td := NewTelemetryData()
+	numVars := c.sdk.GetNumVars()
+
+	for i := 0; i <= numVars; i++ {
+		varHeader, err := c.sdk.GetVarHeaderEntry(i)
+		if err != nil {
+			continue
+		}
+
+		if varHeader == nil {
+			continue
+		}
+
+		if fields == nil || len(fields) == 0 {
+			// fields is empty: add everything
+			td.addVarHeaderData(varHeader, data)
+			continue
+		}
+
+		found := false
+
+		for _, v := range fields {
+			if v == varHeader.Name {
+				// Found varName in fields, skip looping through fields
+				found = true
+				break
+			}
+		}
+
+		if found == false {
+			// var not in fieds: skip varHeader
+			continue
+		}
+
+		td.addVarHeaderData(varHeader, data)
+	}
+
+	return td
+}
+
 // bytesToUtf8 is used to convert stringdata from iRacing to UTF-8 so it can
 // safely be used by different encoder methods (json)
 func bytesToUtf8(b []byte) []byte {

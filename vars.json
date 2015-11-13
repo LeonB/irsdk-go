@@ -1,0 +1,1040 @@
+[
+  {
+    "Type": 5,
+    "Name": "SessionTime",
+    "Desc": "Seconds since session start",
+    "Unit": "s"
+  },
+  {
+    "Type": 2,
+    "Name": "SessionNum",
+    "Desc": "Session number",
+    "Unit": ""
+  },
+  {
+    "Type": 2,
+    "Name": "SessionState",
+    "Desc": "Session state",
+    "Unit": "irsdk_SessionState"
+  },
+  {
+    "Type": 2,
+    "Name": "SessionUniqueID",
+    "Desc": "Session ID",
+    "Unit": ""
+  },
+  {
+    "Type": 5,
+    "Name": "SessionTimeRemain",
+    "Desc": "Seconds left till session ends",
+    "Unit": "s"
+  },
+  {
+    "Type": 2,
+    "Name": "SessionLapsRemain",
+    "Desc": "Laps left till session ends",
+    "Unit": ""
+  },
+  {
+    "Type": 1,
+    "Name": "DriverMarker",
+    "Desc": "Driver activated flag",
+    "Unit": ""
+  },
+  {
+    "Type": 1,
+    "Name": "IsOnTrack",
+    "Desc": "1=Car on track physics running with player in car",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "FrameRate",
+    "Desc": "Average frames per second",
+    "Unit": "fps"
+  },
+  {
+    "Type": 4,
+    "Name": "CpuUsageBG",
+    "Desc": "Percent of available tim bg thread took with a 1 sec avg",
+    "Unit": "%"
+  },
+  {
+    "Type": 2,
+    "Name": "PlayerCarPosition",
+    "Desc": "Players position in race",
+    "Unit": ""
+  },
+  {
+    "Type": 2,
+    "Name": "PlayerCarClassPosition",
+    "Desc": "Players class position in race",
+    "Unit": ""
+  },
+  {
+    "Type": 1,
+    "Name": "OnPitRoad",
+    "Desc": "Is the player car on pit road between the cones",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "SteeringWheelAngle",
+    "Desc": "Steering wheel angle",
+    "Unit": "rad"
+  },
+  {
+    "Type": 4,
+    "Name": "Throttle",
+    "Desc": "0=off throttle to 1=full throttle",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "Brake",
+    "Desc": "0=brake released to 1=max pedal force",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "Clutch",
+    "Desc": "0=disengaged to 1=fully engaged",
+    "Unit": "%"
+  },
+  {
+    "Type": 2,
+    "Name": "Gear",
+    "Desc": "-1=reverse  0=neutral  1..n=current gear",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "RPM",
+    "Desc": "Engine rpm",
+    "Unit": "revs/min"
+  },
+  {
+    "Type": 2,
+    "Name": "Lap",
+    "Desc": "Lap count",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "LapDist",
+    "Desc": "Meters traveled from S/F this lap",
+    "Unit": "m"
+  },
+  {
+    "Type": 4,
+    "Name": "LapDistPct",
+    "Desc": "Percentage distance around lap",
+    "Unit": "%"
+  },
+  {
+    "Type": 2,
+    "Name": "LapBestLap",
+    "Desc": "Players best lap number",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "LapBestLapTime",
+    "Desc": "Players best lap time",
+    "Unit": "s"
+  },
+  {
+    "Type": 4,
+    "Name": "LapLastLapTime",
+    "Desc": "Players last lap time",
+    "Unit": "s"
+  },
+  {
+    "Type": 4,
+    "Name": "LapCurrentLapTime",
+    "Desc": "Estimate of players current lap time as shown in F3 box",
+    "Unit": "s"
+  },
+  {
+    "Type": 2,
+    "Name": "LapLasNLapSeq",
+    "Desc": "Player num consecutive clean laps completed for N average",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "LapLastNLapTime",
+    "Desc": "Player last N average lap time",
+    "Unit": "s"
+  },
+  {
+    "Type": 2,
+    "Name": "LapBestNLapLap",
+    "Desc": "Player last lap in best N average lap time",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "LapBestNLapTime",
+    "Desc": "Player best N average lap time",
+    "Unit": "s"
+  },
+  {
+    "Type": 4,
+    "Name": "LapDeltaToBestLap",
+    "Desc": "Delta time for best lap",
+    "Unit": "s"
+  },
+  {
+    "Type": 4,
+    "Name": "LapDeltaToBestLap_DD",
+    "Desc": "Rate of change of delta time for best lap",
+    "Unit": "s/s"
+  },
+  {
+    "Type": 1,
+    "Name": "LapDeltaToBestLap_OK",
+    "Desc": "Delta time for best lap is valid",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "LapDeltaToOptimalLap",
+    "Desc": "Delta time for optimal lap",
+    "Unit": "s"
+  },
+  {
+    "Type": 4,
+    "Name": "LapDeltaToOptimalLap_DD",
+    "Desc": "Rate of change of delta time for optimal lap",
+    "Unit": "s/s"
+  },
+  {
+    "Type": 1,
+    "Name": "LapDeltaToOptimalLap_OK",
+    "Desc": "Delta time for optimal lap is valid",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "LapDeltaToSessionBestLap",
+    "Desc": "Delta time for session best lap",
+    "Unit": "s"
+  },
+  {
+    "Type": 4,
+    "Name": "LapDeltaToSessionBestLap_DD",
+    "Desc": "Rate of change of delta time for session best lap",
+    "Unit": "s/s"
+  },
+  {
+    "Type": 1,
+    "Name": "LapDeltaToSessionBestLap_OK",
+    "Desc": "Delta time for session best lap is valid",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "LapDeltaToSessionOptimalLap",
+    "Desc": "Delta time for session optimal lap",
+    "Unit": "s"
+  },
+  {
+    "Type": 4,
+    "Name": "LapDeltaToSessionOptimalLap_DD",
+    "Desc": "Rate of change of delta time for session optimal lap",
+    "Unit": "s/s"
+  },
+  {
+    "Type": 1,
+    "Name": "LapDeltaToSessionOptimalLap_OK",
+    "Desc": "Delta time for session optimal lap is valid",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "LapDeltaToSessionLastlLap",
+    "Desc": "Delta time for session last lap",
+    "Unit": "s"
+  },
+  {
+    "Type": 4,
+    "Name": "LapDeltaToSessionLastlLap_DD",
+    "Desc": "Rate of change of delta time for session last lap",
+    "Unit": "s/s"
+  },
+  {
+    "Type": 1,
+    "Name": "LapDeltaToSessionLastlLap_OK",
+    "Desc": "Delta time for session last lap is valid",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "LongAccel",
+    "Desc": "Longitudinal acceleration (including gravity)",
+    "Unit": "m/s^2"
+  },
+  {
+    "Type": 4,
+    "Name": "LatAccel",
+    "Desc": "Lateral acceleration (including gravity)",
+    "Unit": "m/s^2"
+  },
+  {
+    "Type": 4,
+    "Name": "VertAccel",
+    "Desc": "Vertical acceleration (including gravity)",
+    "Unit": "m/s^2"
+  },
+  {
+    "Type": 4,
+    "Name": "RollRate",
+    "Desc": "Roll rate",
+    "Unit": "rad/s"
+  },
+  {
+    "Type": 4,
+    "Name": "PitchRate",
+    "Desc": "Pitch rate",
+    "Unit": "rad/s"
+  },
+  {
+    "Type": 4,
+    "Name": "YawRate",
+    "Desc": "Yaw rate",
+    "Unit": "rad/s"
+  },
+  {
+    "Type": 4,
+    "Name": "Speed",
+    "Desc": "GPS vehicle speed",
+    "Unit": "m/s"
+  },
+  {
+    "Type": 4,
+    "Name": "VelocityX",
+    "Desc": "X velocity",
+    "Unit": "m/s"
+  },
+  {
+    "Type": 4,
+    "Name": "VelocityY",
+    "Desc": "Y velocity",
+    "Unit": "m/s"
+  },
+  {
+    "Type": 4,
+    "Name": "VelocityZ",
+    "Desc": "Z velocity",
+    "Unit": "m/s"
+  },
+  {
+    "Type": 4,
+    "Name": "Yaw",
+    "Desc": "Yaw orientation",
+    "Unit": "rad"
+  },
+  {
+    "Type": 4,
+    "Name": "Pitch",
+    "Desc": "Pitch orientation",
+    "Unit": "rad"
+  },
+  {
+    "Type": 4,
+    "Name": "Roll",
+    "Desc": "Roll orientation",
+    "Unit": "rad"
+  },
+  {
+    "Type": 2,
+    "Name": "EnterExitReset",
+    "Desc": "Indicate action the reset key will take 0 enter 1 exit 2 reset",
+    "Unit": ""
+  },
+  {
+    "Type": 5,
+    "Name": "Lat",
+    "Desc": "Latitude in decimal degrees",
+    "Unit": "deg"
+  },
+  {
+    "Type": 5,
+    "Name": "Lon",
+    "Desc": "Longitude in decimal degrees",
+    "Unit": "deg"
+  },
+  {
+    "Type": 4,
+    "Name": "Alt",
+    "Desc": "Altitude in meters",
+    "Unit": "m"
+  },
+  {
+    "Type": 4,
+    "Name": "TrackTemp",
+    "Desc": "Temperature of track at start/finish line",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "AirTemp",
+    "Desc": "Temperature of air at start/finish line",
+    "Unit": "C"
+  },
+  {
+    "Type": 2,
+    "Name": "WeatherType",
+    "Desc": "Weather type (0=constant  1=dynamic)",
+    "Unit": ""
+  },
+  {
+    "Type": 2,
+    "Name": "Skies",
+    "Desc": "Skies (0=clear/1=p cloudy/2=m cloudy/3=overcast)",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "AirDensity",
+    "Desc": "Density of air at start/finish line",
+    "Unit": "kg/m^3"
+  },
+  {
+    "Type": 4,
+    "Name": "AirPressure",
+    "Desc": "Pressure of air at start/finish line",
+    "Unit": "Hg"
+  },
+  {
+    "Type": 4,
+    "Name": "WindVel",
+    "Desc": "Wind velocity at start/finish line",
+    "Unit": "m/s"
+  },
+  {
+    "Type": 4,
+    "Name": "WindDir",
+    "Desc": "Wind direction at start/finish line",
+    "Unit": "rad"
+  },
+  {
+    "Type": 4,
+    "Name": "RelativeHumidity",
+    "Desc": "Relative Humidity",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "FogLevel",
+    "Desc": "Fog level",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "PitRepairLeft",
+    "Desc": "Time left for mandatory pit repairs if repairs are active",
+    "Unit": "s"
+  },
+  {
+    "Type": 4,
+    "Name": "PitOptRepairLeft",
+    "Desc": "Time left for optional repairs if repairs are active",
+    "Unit": "s"
+  },
+  {
+    "Type": 1,
+    "Name": "IsOnTrackCar",
+    "Desc": "1=Car on track physics running",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "SteeringWheelTorque",
+    "Desc": "Output torque on steering shaft",
+    "Unit": "N*m"
+  },
+  {
+    "Type": 4,
+    "Name": "SteeringWheelPctTorque",
+    "Desc": "Force feedback % max torque on steering shaft unsigned",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "SteeringWheelPctTorqueSign",
+    "Desc": "Force feedback % max torque on steering shaft signed",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "SteeringWheelPctTorqueSignStops",
+    "Desc": "Force feedback % max torque on steering shaft signed stops",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "SteeringWheelPctDamper",
+    "Desc": "Force feedback % max damping",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "SteeringWheelAngleMax",
+    "Desc": "Steering wheel max angle",
+    "Unit": "rad"
+  },
+  {
+    "Type": 4,
+    "Name": "ShiftIndicatorPct",
+    "Desc": "DEPRECATED use DriverCarSLBlinkRPM instead",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "ShiftPowerPct",
+    "Desc": "Friction torque applied to gears when shifting or grinding",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "ShiftGrindRPM",
+    "Desc": "RPM of shifter grinding noise",
+    "Unit": "RPM"
+  },
+  {
+    "Type": 4,
+    "Name": "ThrottleRaw",
+    "Desc": "Raw throttle input 0=off throttle to 1=full throttle",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "BrakeRaw",
+    "Desc": "Raw brake input 0=brake released to 1=max pedal force",
+    "Unit": "%"
+  },
+  {
+    "Type": 3,
+    "Name": "EngineWarnings",
+    "Desc": "Bitfield for warning lights",
+    "Unit": "irsdk_EngineWarnings"
+  },
+  {
+    "Type": 4,
+    "Name": "FuelLevel",
+    "Desc": "Liters of fuel remaining",
+    "Unit": "l"
+  },
+  {
+    "Type": 4,
+    "Name": "FuelLevelPct",
+    "Desc": "Percent fuel remaining",
+    "Unit": "%"
+  },
+  {
+    "Type": 3,
+    "Name": "PitSvFlags",
+    "Desc": "Bitfield of pit service checkboxes",
+    "Unit": "irsdk_PitSvFlags"
+  },
+  {
+    "Type": 4,
+    "Name": "PitSvLFP",
+    "Desc": "Pit service left front tire pressure",
+    "Unit": "kPa"
+  },
+  {
+    "Type": 4,
+    "Name": "PitSvRFP",
+    "Desc": "Pit service right front tire pressure",
+    "Unit": "kPa"
+  },
+  {
+    "Type": 4,
+    "Name": "PitSvLRP",
+    "Desc": "Pit service left rear tire pressure",
+    "Unit": "kPa"
+  },
+  {
+    "Type": 4,
+    "Name": "PitSvRRP",
+    "Desc": "Pit service right rear tire pressure",
+    "Unit": "kPa"
+  },
+  {
+    "Type": 4,
+    "Name": "PitSvFuel",
+    "Desc": "Pit service fuel add amount",
+    "Unit": "l"
+  },
+  {
+    "Type": 4,
+    "Name": "dcBrakeBias",
+    "Desc": "In car brake bias adjustment",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "dcTractionControl",
+    "Desc": "In car traction control adjustment",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "dcABS",
+    "Desc": "In car abs adjustment",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "dcThrottleShape",
+    "Desc": "In car throttle shape adjustment",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "dcFuelMixture",
+    "Desc": "In car fuel mixture adjustment",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "WaterTemp",
+    "Desc": "Engine coolant temp",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "WaterLevel",
+    "Desc": "Engine coolant level",
+    "Unit": "l"
+  },
+  {
+    "Type": 4,
+    "Name": "FuelPress",
+    "Desc": "Engine fuel pressure",
+    "Unit": "bar"
+  },
+  {
+    "Type": 4,
+    "Name": "OilTemp",
+    "Desc": "Engine oil temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "OilPress",
+    "Desc": "Engine oil pressure",
+    "Unit": "bar"
+  },
+  {
+    "Type": 4,
+    "Name": "OilLevel",
+    "Desc": "Engine oil level",
+    "Unit": "l"
+  },
+  {
+    "Type": 4,
+    "Name": "Voltage",
+    "Desc": "Engine voltage",
+    "Unit": "V"
+  },
+  {
+    "Type": 4,
+    "Name": "ManifoldPress",
+    "Desc": "Engine manifold pressure",
+    "Unit": "bar"
+  },
+  {
+    "Type": 4,
+    "Name": "RRbrakeLinePress",
+    "Desc": "RR brake line pressure",
+    "Unit": "bar"
+  },
+  {
+    "Type": 4,
+    "Name": "RRspeed",
+    "Desc": "RR wheel speed",
+    "Unit": "m/s"
+  },
+  {
+    "Type": 4,
+    "Name": "RRpressure",
+    "Desc": "RR tire pressure",
+    "Unit": "kPa"
+  },
+  {
+    "Type": 4,
+    "Name": "RRcoldPressure",
+    "Desc": "RR tire cold pressure  as set in the garage",
+    "Unit": "kPa"
+  },
+  {
+    "Type": 4,
+    "Name": "RRtempL",
+    "Desc": "RR tire left surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "RRtempM",
+    "Desc": "RR tire middle surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "RRtempR",
+    "Desc": "RR tire right surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "RRtempCL",
+    "Desc": "RR tire left carcass temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "RRtempCM",
+    "Desc": "RR tire middle carcass temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "RRtempCR",
+    "Desc": "RR tire right carcass temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "RRwearL",
+    "Desc": "RR tire left percent tread remaining",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "RRwearM",
+    "Desc": "RR tire middle percent tread remaining",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "RRwearR",
+    "Desc": "RR tire right percent tread remaining",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "LRbrakeLinePress",
+    "Desc": "LR brake line pressure",
+    "Unit": "bar"
+  },
+  {
+    "Type": 4,
+    "Name": "LRspeed",
+    "Desc": "LR wheel speed",
+    "Unit": "m/s"
+  },
+  {
+    "Type": 4,
+    "Name": "LRpressure",
+    "Desc": "LR tire pressure",
+    "Unit": "kPa"
+  },
+  {
+    "Type": 4,
+    "Name": "LRcoldPressure",
+    "Desc": "LR tire cold pressure  as set in the garage",
+    "Unit": "kPa"
+  },
+  {
+    "Type": 4,
+    "Name": "LRtempL",
+    "Desc": "LR tire left surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "LRtempM",
+    "Desc": "LR tire middle surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "LRtempR",
+    "Desc": "LR tire right surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "LRtempCL",
+    "Desc": "LR tire left carcass temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "LRtempCM",
+    "Desc": "LR tire middle carcass temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "LRtempCR",
+    "Desc": "LR tire right carcass temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "LRwearL",
+    "Desc": "LR tire left percent tread remaining",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "LRwearM",
+    "Desc": "LR tire middle percent tread remaining",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "LRwearR",
+    "Desc": "LR tire right percent tread remaining",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "RFbrakeLinePress",
+    "Desc": "RF brake line pressure",
+    "Unit": "bar"
+  },
+  {
+    "Type": 4,
+    "Name": "RFspeed",
+    "Desc": "RF wheel speed",
+    "Unit": "m/s"
+  },
+  {
+    "Type": 4,
+    "Name": "RFpressure",
+    "Desc": "RF tire pressure",
+    "Unit": "kPa"
+  },
+  {
+    "Type": 4,
+    "Name": "RFcoldPressure",
+    "Desc": "RF tire cold pressure  as set in the garage",
+    "Unit": "kPa"
+  },
+  {
+    "Type": 4,
+    "Name": "RFtempL",
+    "Desc": "RF tire left surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "RFtempM",
+    "Desc": "RF tire middle surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "RFtempR",
+    "Desc": "RF tire right surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "RFtempCL",
+    "Desc": "RF tire left carcass temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "RFtempCM",
+    "Desc": "RF tire middle carcass temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "RFtempCR",
+    "Desc": "RF tire right carcass temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "RFwearL",
+    "Desc": "RF tire left percent tread remaining",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "RFwearM",
+    "Desc": "RF tire middle percent tread remaining",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "RFwearR",
+    "Desc": "RF tire right percent tread remaining",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "LFbrakeLinePress",
+    "Desc": "LF brake line pressure",
+    "Unit": "bar"
+  },
+  {
+    "Type": 4,
+    "Name": "LFspeed",
+    "Desc": "LF wheel speed",
+    "Unit": "m/s"
+  },
+  {
+    "Type": 4,
+    "Name": "LFpressure",
+    "Desc": "LF tire pressure",
+    "Unit": "kPa"
+  },
+  {
+    "Type": 4,
+    "Name": "LFcoldPressure",
+    "Desc": "LF tire cold pressure  as set in the garage",
+    "Unit": "kPa"
+  },
+  {
+    "Type": 4,
+    "Name": "LFtempL",
+    "Desc": "LF tire left surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "LFtempM",
+    "Desc": "LF tire middle surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "LFtempR",
+    "Desc": "LF tire right surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "LFtempCL",
+    "Desc": "LF tire left carcass temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "LFtempCM",
+    "Desc": "LF tire middle carcass temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "LFtempCR",
+    "Desc": "LF tire right carcass temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "LFwearL",
+    "Desc": "LF tire left percent tread remaining",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "LFwearM",
+    "Desc": "LF tire middle percent tread remaining",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "LFwearR",
+    "Desc": "LF tire right percent tread remaining",
+    "Unit": "%"
+  },
+  {
+    "Type": 4,
+    "Name": "RRshockDefl",
+    "Desc": "RR shock deflection",
+    "Unit": "m"
+  },
+  {
+    "Type": 4,
+    "Name": "RRshockVel",
+    "Desc": "RR shock velocity",
+    "Unit": "m/s"
+  },
+  {
+    "Type": 4,
+    "Name": "LRshockDefl",
+    "Desc": "LR shock deflection",
+    "Unit": "m"
+  },
+  {
+    "Type": 4,
+    "Name": "LRshockVel",
+    "Desc": "LR shock velocity",
+    "Unit": "m/s"
+  },
+  {
+    "Type": 4,
+    "Name": "RFshockDefl",
+    "Desc": "RF shock deflection",
+    "Unit": "m"
+  },
+  {
+    "Type": 4,
+    "Name": "RFshockVel",
+    "Desc": "RF shock velocity",
+    "Unit": "m/s"
+  },
+  {
+    "Type": 4,
+    "Name": "LFshockDefl",
+    "Desc": "LF shock deflection",
+    "Unit": "m"
+  },
+  {
+    "Type": 4,
+    "Name": "LFshockVel",
+    "Desc": "LF shock velocity",
+    "Unit": "m/s"
+  },
+  {
+    "Type": 4,
+    "Name": "LFrideHeight",
+    "Desc": "LF ride height",
+    "Unit": "m"
+  },
+  {
+    "Type": 4,
+    "Name": "RFrideHeight",
+    "Desc": "RF ride height",
+    "Unit": "m"
+  },
+  {
+    "Type": 4,
+    "Name": "LRrideHeight",
+    "Desc": "LR ride height",
+    "Unit": "m"
+  },
+  {
+    "Type": 4,
+    "Name": "RRrideHeight",
+    "Desc": "RR ride height",
+    "Unit": "m"
+  },
+  {
+    "Type": 4,
+    "Name": "CFSRrideHeight",
+    "Desc": "Center front splitter ride height",
+    "Unit": "m"
+  }
+]

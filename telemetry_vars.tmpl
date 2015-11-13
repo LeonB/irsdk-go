@@ -1,0 +1,107 @@
+func (d *TelemetryData) AddIrCharVar(irVar *irCharVar) error {
+	if irVar == nil {
+		return nil
+	}
+
+	{{if index . "char"}}
+	switch irVar.name {
+	{{range index . "char"}}
+	case "{{.Name}}":
+		d.{{ucFirst .Name}} = irVar.value{{end}}
+	default:
+		return fmt.Errorf("Unknown var: %+v", irVar)
+	}
+	{{end}}
+
+	return nil
+}
+
+func (d *TelemetryData) AddIrBoolVar(irVar *irBoolVar) error {
+	if irVar == nil {
+		return nil
+	}
+
+	{{if index . "bool"}}
+	switch irVar.name {
+	{{range index . "bool"}}
+	case "{{.Name}}":
+		d.{{ucFirst .Name}} = irVar.value{{end}}
+	default:
+		return fmt.Errorf("Unknown var: %+v", irVar)
+	}
+	{{end}}
+
+	return nil
+}
+
+func (d *TelemetryData) AddIrIntVar(irVar *irIntVar) error {
+	if irVar == nil {
+		return nil
+	}
+
+	{{if index . "int"}}
+	switch irVar.name {
+	{{range index . "int"}}
+	case "{{.Name}}":
+		d.{{ucFirst .Name}} = irVar.value{{end}}
+	default:
+		return fmt.Errorf("Unknown var: %+v", irVar)
+	}
+	{{end}}
+
+	return nil
+}
+
+func (d *TelemetryData) AddIrBitfieldVar(irVar *irBitfieldVar) error {
+	if irVar == nil {
+		return nil
+	}
+
+	{{if index . "bitfield"}}
+	switch irVar.name {
+	{{range index . "bitfield"}}
+	case "{{.Name}}":
+		d.{{ucFirst .Name}} = irVar.fields{{end}}
+	default:
+		return fmt.Errorf("Unknown var: %+v", irVar)
+	}
+	{{end}}
+
+    return nil
+}
+
+func (d *TelemetryData) AddIrFloatVar(irVar *irFloatVar) error {
+	if irVar == nil {
+		return nil
+	}
+
+	{{if index . "float"}}
+	switch irVar.name {
+	{{range index . "float"}}
+	case "{{.Name}}":
+		d.{{ucFirst .Name}} = irVar.value{{end}}
+	default:
+		return fmt.Errorf("Unknown var: %+v", irVar)
+	}
+	{{end}}
+
+    return nil
+}
+
+func (d *TelemetryData) AddIrDoubleVar(irVar *irDoubleVar) error {
+	if irVar == nil {
+		return nil
+	}
+
+	{{if index . "double"}}
+	switch irVar.name {
+	{{range index . "double"}}
+	case "{{.Name}}":
+		d.{{ucFirst .Name}} = irVar.value{{end}}
+	default:
+		return fmt.Errorf("Unknown var: %+v", irVar)
+	}
+	{{end}}
+
+    return nil
+}

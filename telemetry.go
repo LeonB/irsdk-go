@@ -3,16 +3,12 @@ package irsdk
 import "C"
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"log"
-	"reflect"
 	"unsafe"
 
 	utils "github.com/leonb/irsdk-go/utils"
 )
-
-var fieldCache = make(map[string]*reflect.Value)
 
 type irCharVar struct {
 	name  string
@@ -287,37 +283,37 @@ type TelemetryData struct {
 func (d *TelemetryData) addVarHeaderData(varHeader *utils.VarHeader, data []byte) error {
 	switch varHeader.Type {
 	case utils.CharType:
-		irVar := extractCharFromVarHeader(varHeader, data)
+		irVar := d.extractCharFromVarHeader(varHeader, data)
 		err := d.AddIrCharVar(irVar)
 		if err != nil {
 			log.Println(err)
 		}
 	case utils.BoolType:
-		irVar := extractBoolFromVarHeader(varHeader, data)
+		irVar := d.extractBoolFromVarHeader(varHeader, data)
 		err := d.AddIrBoolVar(irVar)
 		if err != nil {
 			log.Println(err)
 		}
 	case utils.IntType:
-		irVar := extractIntFromVarHeader(varHeader, data)
+		irVar := d.extractIntFromVarHeader(varHeader, data)
 		err := d.AddIrIntVar(irVar)
 		if err != nil {
 			log.Println(err)
 		}
 	case utils.BitfieldType:
-		irVar := extractBitfieldFromVarHeader(varHeader, data)
+		irVar := d.extractBitfieldFromVarHeader(varHeader, data)
 		err := d.AddIrBitfieldVar(irVar)
 		if err != nil {
 			log.Println(err)
 		}
 	case utils.FloatType:
-		irVar := extractFloatFromVarHeader(varHeader, data)
+		irVar := d.extractFloatFromVarHeader(varHeader, data)
 		err := d.AddIrFloatVar(irVar)
 		if err != nil {
 			log.Println(err)
 		}
 	case utils.DoubleType:
-		irVar := extractDoubleFromVarHeader(varHeader, data)
+		irVar := d.extractDoubleFromVarHeader(varHeader, data)
 		err := d.AddIrDoubleVar(irVar)
 		if err != nil {
 			log.Println(err)
@@ -329,27 +325,11 @@ func (d *TelemetryData) addVarHeaderData(varHeader *utils.VarHeader, data []byte
 	return nil
 }
 
-func (d *TelemetryData) fieldByName(varName string, kind reflect.Kind) (*reflect.Value, error) {
-	if f, ok := fieldCache[varName]; ok {
-		return f, nil
-	}
-
-	// Uppercase string because all are stored as public variables
-	varNameUp := ucFirst(varName)
-
-	e := reflect.ValueOf(d).Elem() // Get reference to struct
-	f := e.FieldByName(varNameUp)  // Find struct field
-	if f.Kind() == kind {
-		if f.CanSet() {
-			fieldCache[varName] = &f
-			return &f, nil
-		}
-	}
-
-	return nil, errors.New(fmt.Sprintf("Unknown %v/%v: %v", kind, f.Kind(), varNameUp))
-}
-
 func (d *TelemetryData) AddIrCharVar(irVar *irCharVar) error {
+	if irVar == nil {
+		return nil
+	}
+
 	return nil
 }
 
@@ -358,12 +338,29 @@ func (d *TelemetryData) AddIrBoolVar(irVar *irBoolVar) error {
 		return nil
 	}
 
-	f, err := d.fieldByName(irVar.name, reflect.Bool)
-	if err != nil {
-		return err
+	switch irVar.name {
+	case "DriverMarker":
+		d.DriverMarker = irVar.value
+	case "IsOnTrack":
+		d.IsOnTrack = irVar.value
+	case "OnPitRoad":
+		d.OnPitRoad = irVar.value
+	case "LapDeltaToBestLap_OK":
+		d.LapDeltaToBestLap_OK = irVar.value
+	case "LapDeltaToOptimalLap_OK":
+		d.LapDeltaToOptimalLap_OK = irVar.value
+	case "LapDeltaToSessionBestLap_OK":
+		d.LapDeltaToSessionBestLap_OK = irVar.value
+	case "LapDeltaToSessionOptimalLap_OK":
+		d.LapDeltaToSessionOptimalLap_OK = irVar.value
+	case "LapDeltaToSessionLastlLap_OK":
+		d.LapDeltaToSessionLastlLap_OK = irVar.value
+	case "IsOnTrackCar":
+		d.IsOnTrackCar = irVar.value
+	default:
+		return fmt.Errorf("Unknown var: %+v", irVar)
 	}
 
-	f.SetBool(irVar.value)
 	return nil
 }
 
@@ -372,12 +369,39 @@ func (d *TelemetryData) AddIrIntVar(irVar *irIntVar) error {
 		return nil
 	}
 
-	f, err := d.fieldByName(irVar.name, reflect.Int)
-	if err != nil {
-		return err
+	switch irVar.name {
+	case "SessionNum":
+		d.SessionNum = irVar.value
+	case "SessionState":
+		d.SessionState = irVar.value
+	case "SessionUniqueID":
+		d.SessionUniqueID = irVar.value
+	case "SessionLapsRemain":
+		d.SessionLapsRemain = irVar.value
+	case "PlayerCarPosition":
+		d.PlayerCarPosition = irVar.value
+	case "PlayerCarClassPosition":
+		d.PlayerCarClassPosition = irVar.value
+	case "Gear":
+		d.Gear = irVar.value
+	case "Lap":
+		d.Lap = irVar.value
+	case "LapBestLap":
+		d.LapBestLap = irVar.value
+	case "LapLasNLapSeq":
+		d.LapLasNLapSeq = irVar.value
+	case "LapBestNLapLap":
+		d.LapBestNLapLap = irVar.value
+	case "EnterExitReset":
+		d.EnterExitReset = irVar.value
+	case "WeatherType":
+		d.WeatherType = irVar.value
+	case "Skies":
+		d.Skies = irVar.value
+	default:
+		return fmt.Errorf("Unknown var: %+v", irVar)
 	}
 
-	f.SetInt(int64(irVar.value))
 	return nil
 }
 
@@ -386,16 +410,15 @@ func (d *TelemetryData) AddIrBitfieldVar(irVar *irBitfieldVar) error {
 		return nil
 	}
 
-	f, err := d.fieldByName(irVar.name, reflect.Map)
-	if err != nil {
-		return err
+	switch irVar.name {
+	case "EngineWarnings":
+		d.EngineWarnings = irVar.fields
+	case "PitSvFlags":
+		d.PitSvFlags = irVar.fields
+	default:
+		return fmt.Errorf("Unknown var: %+v", irVar)
 	}
 
-	for key, val := range irVar.fields {
-		rKey := reflect.ValueOf(key)
-		rVal := reflect.ValueOf(val)
-		f.SetMapIndex(rKey, rVal)
-	}
 	return nil
 }
 
@@ -404,12 +427,299 @@ func (d *TelemetryData) AddIrFloatVar(irVar *irFloatVar) error {
 		return nil
 	}
 
-	f, err := d.fieldByName(irVar.name, reflect.Float32)
-	if err != nil {
-		return err
+	switch irVar.name {
+	case "FrameRate":
+		d.FrameRate = irVar.value
+	case "CpuUsageBG":
+		d.CpuUsageBG = irVar.value
+	case "SteeringWheelAngle":
+		d.SteeringWheelAngle = irVar.value
+	case "Throttle":
+		d.Throttle = irVar.value
+	case "Brake":
+		d.Brake = irVar.value
+	case "Clutch":
+		d.Clutch = irVar.value
+	case "RPM":
+		d.RPM = irVar.value
+	case "LapDist":
+		d.LapDist = irVar.value
+	case "LapDistPct":
+		d.LapDistPct = irVar.value
+	case "LapBestLapTime":
+		d.LapBestLapTime = irVar.value
+	case "LapLastLapTime":
+		d.LapLastLapTime = irVar.value
+	case "LapCurrentLapTime":
+		d.LapCurrentLapTime = irVar.value
+	case "LapLastNLapTime":
+		d.LapLastNLapTime = irVar.value
+	case "LapBestNLapTime":
+		d.LapBestNLapTime = irVar.value
+	case "LapDeltaToBestLap":
+		d.LapDeltaToBestLap = irVar.value
+	case "LapDeltaToBestLap_DD":
+		d.LapDeltaToBestLap_DD = irVar.value
+	case "LapDeltaToOptimalLap":
+		d.LapDeltaToOptimalLap = irVar.value
+	case "LapDeltaToOptimalLap_DD":
+		d.LapDeltaToOptimalLap_DD = irVar.value
+	case "LapDeltaToSessionBestLap":
+		d.LapDeltaToSessionBestLap = irVar.value
+	case "LapDeltaToSessionBestLap_DD":
+		d.LapDeltaToSessionBestLap_DD = irVar.value
+	case "LapDeltaToSessionOptimalLap":
+		d.LapDeltaToSessionOptimalLap = irVar.value
+	case "LapDeltaToSessionOptimalLap_DD":
+		d.LapDeltaToSessionOptimalLap_DD = irVar.value
+	case "LapDeltaToSessionLastlLap":
+		d.LapDeltaToSessionLastlLap = irVar.value
+	case "LapDeltaToSessionLastlLap_DD":
+		d.LapDeltaToSessionLastlLap_DD = irVar.value
+	case "LongAccel":
+		d.LongAccel = irVar.value
+	case "LatAccel":
+		d.LatAccel = irVar.value
+	case "VertAccel":
+		d.VertAccel = irVar.value
+	case "RollRate":
+		d.RollRate = irVar.value
+	case "PitchRate":
+		d.PitchRate = irVar.value
+	case "YawRate":
+		d.YawRate = irVar.value
+	case "Speed":
+		d.Speed = irVar.value
+	case "VelocityX":
+		d.VelocityX = irVar.value
+	case "VelocityY":
+		d.VelocityY = irVar.value
+	case "VelocityZ":
+		d.VelocityZ = irVar.value
+	case "Yaw":
+		d.Yaw = irVar.value
+	case "Pitch":
+		d.Pitch = irVar.value
+	case "Roll":
+		d.Roll = irVar.value
+	case "Alt":
+		d.Alt = irVar.value
+	case "TrackTemp":
+		d.TrackTemp = irVar.value
+	case "AirTemp":
+		d.AirTemp = irVar.value
+	case "AirDensity":
+		d.AirDensity = irVar.value
+	case "AirPressure":
+		d.AirPressure = irVar.value
+	case "WindVel":
+		d.WindVel = irVar.value
+	case "WindDir":
+		d.WindDir = irVar.value
+	case "RelativeHumidity":
+		d.RelativeHumidity = irVar.value
+	case "FogLevel":
+		d.FogLevel = irVar.value
+	case "PitRepairLeft":
+		d.PitRepairLeft = irVar.value
+	case "PitOptRepairLeft":
+		d.PitOptRepairLeft = irVar.value
+	case "SteeringWheelTorque":
+		d.SteeringWheelTorque = irVar.value
+	case "SteeringWheelPctTorque":
+		d.SteeringWheelPctTorque = irVar.value
+	case "SteeringWheelPctTorqueSign":
+		d.SteeringWheelPctTorqueSign = irVar.value
+	case "SteeringWheelPctTorqueSignStops":
+		d.SteeringWheelPctTorqueSignStops = irVar.value
+	case "SteeringWheelPctDamper":
+		d.SteeringWheelPctDamper = irVar.value
+	case "SteeringWheelAngleMax":
+		d.SteeringWheelAngleMax = irVar.value
+	case "ShiftIndicatorPct":
+		d.ShiftIndicatorPct = irVar.value
+	case "ShiftPowerPct":
+		d.ShiftPowerPct = irVar.value
+	case "ShiftGrindRPM":
+		d.ShiftGrindRPM = irVar.value
+	case "ThrottleRaw":
+		d.ThrottleRaw = irVar.value
+	case "BrakeRaw":
+		d.BrakeRaw = irVar.value
+	case "FuelLevel":
+		d.FuelLevel = irVar.value
+	case "FuelLevelPct":
+		d.FuelLevelPct = irVar.value
+	case "PitSvLFP":
+		d.PitSvLFP = irVar.value
+	case "PitSvRFP":
+		d.PitSvRFP = irVar.value
+	case "PitSvLRP":
+		d.PitSvLRP = irVar.value
+	case "PitSvRRP":
+		d.PitSvRRP = irVar.value
+	case "PitSvFuel":
+		d.PitSvFuel = irVar.value
+	case "dcBrakeBias":
+		d.DcBrakeBias = irVar.value
+	case "dcTractionControl":
+		d.DcTractionControl = irVar.value
+	case "dcABS":
+		d.DcABS = irVar.value
+	case "dcThrottleShape":
+		d.DcThrottleShape = irVar.value
+	case "dcFuelMixture":
+		d.DcFuelMixture = irVar.value
+	case "WaterTemp":
+		d.WaterTemp = irVar.value
+	case "WaterLevel":
+		d.WaterLevel = irVar.value
+	case "FuelPress":
+		d.FuelPress = irVar.value
+	case "OilTemp":
+		d.OilTemp = irVar.value
+	case "OilPress":
+		d.OilPress = irVar.value
+	case "OilLevel":
+		d.OilLevel = irVar.value
+	case "Voltage":
+		d.Voltage = irVar.value
+	case "ManifoldPress":
+		d.ManifoldPress = irVar.value
+	case "RRbrakeLinePress":
+		d.RRbrakeLinePress = irVar.value
+	case "RRspeed":
+		d.RRspeed = irVar.value
+	case "RRpressure":
+		d.RRpressure = irVar.value
+	case "RRcoldPressure":
+		d.RRcoldPressure = irVar.value
+	case "RRtempL":
+		d.RRtempL = irVar.value
+	case "RRtempM":
+		d.RRtempM = irVar.value
+	case "RRtempR":
+		d.RRtempR = irVar.value
+	case "RRtempCL":
+		d.RRtempCL = irVar.value
+	case "RRtempCM":
+		d.RRtempCM = irVar.value
+	case "RRtempCR":
+		d.RRtempCR = irVar.value
+	case "RRwearL":
+		d.RRwearL = irVar.value
+	case "RRwearM":
+		d.RRwearM = irVar.value
+	case "RRwearR":
+		d.RRwearR = irVar.value
+	case "LRbrakeLinePress":
+		d.LRbrakeLinePress = irVar.value
+	case "LRspeed":
+		d.LRspeed = irVar.value
+	case "LRpressure":
+		d.LRpressure = irVar.value
+	case "LRcoldPressure":
+		d.LRcoldPressure = irVar.value
+	case "LRtempL":
+		d.LRtempL = irVar.value
+	case "LRtempM":
+		d.LRtempM = irVar.value
+	case "LRtempR":
+		d.LRtempR = irVar.value
+	case "LRtempCL":
+		d.LRtempCL = irVar.value
+	case "LRtempCM":
+		d.LRtempCM = irVar.value
+	case "LRtempCR":
+		d.LRtempCR = irVar.value
+	case "LRwearL":
+		d.LRwearL = irVar.value
+	case "LRwearM":
+		d.LRwearM = irVar.value
+	case "LRwearR":
+		d.LRwearR = irVar.value
+	case "RFbrakeLinePress":
+		d.RFbrakeLinePress = irVar.value
+	case "RFspeed":
+		d.RFspeed = irVar.value
+	case "RFpressure":
+		d.RFpressure = irVar.value
+	case "RFcoldPressure":
+		d.RFcoldPressure = irVar.value
+	case "RFtempL":
+		d.RFtempL = irVar.value
+	case "RFtempM":
+		d.RFtempM = irVar.value
+	case "RFtempR":
+		d.RFtempR = irVar.value
+	case "RFtempCL":
+		d.RFtempCL = irVar.value
+	case "RFtempCM":
+		d.RFtempCM = irVar.value
+	case "RFtempCR":
+		d.RFtempCR = irVar.value
+	case "RFwearL":
+		d.RFwearL = irVar.value
+	case "RFwearM":
+		d.RFwearM = irVar.value
+	case "RFwearR":
+		d.RFwearR = irVar.value
+	case "LFbrakeLinePress":
+		d.LFbrakeLinePress = irVar.value
+	case "LFspeed":
+		d.LFspeed = irVar.value
+	case "LFpressure":
+		d.LFpressure = irVar.value
+	case "LFcoldPressure":
+		d.LFcoldPressure = irVar.value
+	case "LFtempL":
+		d.LFtempL = irVar.value
+	case "LFtempM":
+		d.LFtempM = irVar.value
+	case "LFtempR":
+		d.LFtempR = irVar.value
+	case "LFtempCL":
+		d.LFtempCL = irVar.value
+	case "LFtempCM":
+		d.LFtempCM = irVar.value
+	case "LFtempCR":
+		d.LFtempCR = irVar.value
+	case "LFwearL":
+		d.LFwearL = irVar.value
+	case "LFwearM":
+		d.LFwearM = irVar.value
+	case "LFwearR":
+		d.LFwearR = irVar.value
+	case "RRshockDefl":
+		d.RRshockDefl = irVar.value
+	case "RRshockVel":
+		d.RRshockVel = irVar.value
+	case "LRshockDefl":
+		d.LRshockDefl = irVar.value
+	case "LRshockVel":
+		d.LRshockVel = irVar.value
+	case "RFshockDefl":
+		d.RFshockDefl = irVar.value
+	case "RFshockVel":
+		d.RFshockVel = irVar.value
+	case "LFshockDefl":
+		d.LFshockDefl = irVar.value
+	case "LFshockVel":
+		d.LFshockVel = irVar.value
+	case "LFrideHeight":
+		d.LFrideHeight = irVar.value
+	case "RFrideHeight":
+		d.RFrideHeight = irVar.value
+	case "LRrideHeight":
+		d.LRrideHeight = irVar.value
+	case "RRrideHeight":
+		d.RRrideHeight = irVar.value
+	case "CFSRrideHeight":
+		d.CFSRrideHeight = irVar.value
+	default:
+		return fmt.Errorf("Unknown var: %+v", irVar)
 	}
 
-	f.SetFloat(float64(irVar.value))
 	return nil
 }
 
@@ -418,12 +728,19 @@ func (d *TelemetryData) AddIrDoubleVar(irVar *irDoubleVar) error {
 		return nil
 	}
 
-	f, err := d.fieldByName(irVar.name, reflect.Float64)
-	if err != nil {
-		return err
+	switch irVar.name {
+	case "SessionTime":
+		d.SessionTime = irVar.value
+	case "SessionTimeRemain":
+		d.SessionTimeRemain = irVar.value
+	case "Lat":
+		d.Lat = irVar.value
+	case "Lon":
+		d.Lon = irVar.value
+	default:
+		return fmt.Errorf("Unknown var: %+v", irVar)
 	}
 
-	f.SetFloat(irVar.value)
 	return nil
 }
 
@@ -502,81 +819,7 @@ var irsdkPitSvFlags = map[utils.PitSvFlag]string{
 	utils.FastRepair:        "FastRepair",
 }
 
-// @TODO: should this accept an io.Reader?
-func (c *Connection) BytesToTelemetryStruct(data []byte) (*TelemetryData, error) {
-	// Create an new struct in the same memory location so reflect values can be
-	// cached
-	td := NewTelemetryData()
-	numVars := c.sdk.GetNumVars()
-
-	for i := 0; i <= numVars; i++ {
-		varHeader, err := c.sdk.GetVarHeaderEntry(i)
-		if err != nil {
-			continue
-		}
-
-		if varHeader == nil {
-			continue
-		}
-
-		td.addVarHeaderData(varHeader, data)
-	}
-
-	return td, nil
-}
-
-// @TODO: should this accept an io.Reader?
-// @TODO: this shouldn't be on the connection because it can also be used by
-// disk based telemetry (.ibt)
-func (c *Connection) BytesToTelemetryStructFiltered(data []byte, fields []string) *TelemetryData {
-	// Create an new struct in the same memory location so reflect values can be
-	// cached
-	td := NewTelemetryData()
-	numVars := c.sdk.GetNumVars()
-
-	for i := 0; i <= numVars; i++ {
-		varHeader, err := c.sdk.GetVarHeaderEntry(i)
-		if err != nil {
-			continue
-		}
-
-		if varHeader == nil {
-			continue
-		}
-
-		if fields == nil || len(fields) == 0 {
-			// fields is empty: add everything
-			td.addVarHeaderData(varHeader, data)
-			continue
-		}
-
-		varName := utils.CToGoString(varHeader.Name[:])
-		found := false
-
-		for _, v := range fields {
-			if v == varName {
-				// Found varName in fields, skip looping through fields
-				found = true
-				break
-			}
-		}
-
-		if found == false {
-			// var not in fieds: skip varHeader
-			continue
-		}
-
-		td.addVarHeaderData(varHeader, data)
-	}
-
-	return td
-}
-
-func extractCharFromVarHeader(header *utils.VarHeader, data []byte) *irCharVar {
-	varName := utils.CToGoString(header.Name[:])
-	varDesc := utils.CToGoString(header.Desc[:])
-	varUnit := utils.CToGoString(header.Unit[:])
-
+func (d *TelemetryData) extractCharFromVarHeader(header *utils.VarHeader, data []byte) *irCharVar {
 	dataPtr := uintptr(unsafe.Pointer(&data[0]))
 	offset := uintptr(header.Offset)
 	varPtr := dataPtr + offset
@@ -584,18 +827,14 @@ func extractCharFromVarHeader(header *utils.VarHeader, data []byte) *irCharVar {
 	hvar := *(*C.char)(unsafe.Pointer(varPtr))
 
 	return &irCharVar{
-		name:  varName,
-		desc:  varDesc,
+		name:  header.Name,
+		desc:  header.Desc,
 		value: byte(hvar),
-		unit:  varUnit,
+		unit:  header.Unit,
 	}
 }
 
-func extractBoolFromVarHeader(header *utils.VarHeader, data []byte) *irBoolVar {
-	varName := utils.CToGoString(header.Name[:])
-	varDesc := utils.CToGoString(header.Desc[:])
-	varUnit := utils.CToGoString(header.Unit[:])
-
+func (d *TelemetryData) extractBoolFromVarHeader(header *utils.VarHeader, data []byte) *irBoolVar {
 	dataPtr := uintptr(unsafe.Pointer(&data[0]))
 	offset := uintptr(header.Offset)
 	varPtr := dataPtr + offset
@@ -603,18 +842,14 @@ func extractBoolFromVarHeader(header *utils.VarHeader, data []byte) *irBoolVar {
 	hvar := *(*bool)(unsafe.Pointer(varPtr))
 
 	return &irBoolVar{
-		name:  varName,
-		desc:  varDesc,
+		name:  header.Name,
+		desc:  header.Desc,
 		value: hvar,
-		unit:  varUnit,
+		unit:  header.Unit,
 	}
 }
 
-func extractIntFromVarHeader(header *utils.VarHeader, data []byte) *irIntVar {
-	varName := utils.CToGoString(header.Name[:])
-	varDesc := utils.CToGoString(header.Desc[:])
-	varUnit := utils.CToGoString(header.Unit[:])
-
+func (d *TelemetryData) extractIntFromVarHeader(header *utils.VarHeader, data []byte) *irIntVar {
 	dataPtr := uintptr(unsafe.Pointer(&data[0]))
 	offset := uintptr(header.Offset)
 	varPtr := dataPtr + offset
@@ -622,18 +857,14 @@ func extractIntFromVarHeader(header *utils.VarHeader, data []byte) *irIntVar {
 	hvar := *(*C.int)(unsafe.Pointer(varPtr))
 
 	return &irIntVar{
-		name:  varName,
-		desc:  varDesc,
+		name:  header.Name,
+		desc:  header.Desc,
 		value: int(hvar),
-		unit:  varUnit,
+		unit:  header.Unit,
 	}
 }
 
-func extractBitfieldFromVarHeader(header *utils.VarHeader, data []byte) *irBitfieldVar {
-	varName := utils.CToGoString(header.Name[:])
-	varDesc := utils.CToGoString(header.Desc[:])
-	varUnit := utils.CToGoString(header.Unit[:])
-
+func (d *TelemetryData) extractBitfieldFromVarHeader(header *utils.VarHeader, data []byte) *irBitfieldVar {
 	dataPtr := uintptr(unsafe.Pointer(&data[0]))
 	offset := uintptr(header.Offset)
 	varPtr := dataPtr + offset
@@ -641,13 +872,13 @@ func extractBitfieldFromVarHeader(header *utils.VarHeader, data []byte) *irBitfi
 	hvar := *(*uint32)(unsafe.Pointer(varPtr))
 
 	retVar := &irBitfieldVar{
-		name:   varName,
-		desc:   varDesc,
+		name:   header.Name,
+		desc:   header.Desc,
 		fields: make(map[string]bool),
-		unit:   varUnit,
+		unit:   header.Unit,
 	}
 
-	switch varName {
+	switch header.Name {
 	case "SessionFlags":
 		for bitmask, name := range irsdkFlags {
 			retVar.fields[name] = bool(uint32(hvar)&uint32(bitmask) != 0)
@@ -665,17 +896,13 @@ func extractBitfieldFromVarHeader(header *utils.VarHeader, data []byte) *irBitfi
 			retVar.fields[name] = bool(uint32(hvar)&uint32(bitmask) != 0)
 		}
 	default:
-		log.Println("Unknown bitField var:", varName)
+		log.Println("Unknown bitField var:", header.Name)
 	}
 
 	return retVar
 }
 
-func extractFloatFromVarHeader(header *utils.VarHeader, data []byte) *irFloatVar {
-	varName := utils.CToGoString(header.Name[:])
-	varDesc := utils.CToGoString(header.Desc[:])
-	varUnit := utils.CToGoString(header.Unit[:])
-
+func (d *TelemetryData) extractFloatFromVarHeader(header *utils.VarHeader, data []byte) *irFloatVar {
 	dataPtr := uintptr(unsafe.Pointer(&data[0]))
 	offset := uintptr(header.Offset)
 	varPtr := dataPtr + offset
@@ -683,18 +910,14 @@ func extractFloatFromVarHeader(header *utils.VarHeader, data []byte) *irFloatVar
 	hvar := *(*C.float)(unsafe.Pointer(varPtr))
 
 	return &irFloatVar{
-		name:  varName,
-		desc:  varDesc,
+		name:  header.Name,
+		desc:  header.Desc,
 		value: float32(hvar),
-		unit:  varUnit,
+		unit:  header.Unit,
 	}
 }
 
-func extractDoubleFromVarHeader(header *utils.VarHeader, data []byte) *irDoubleVar {
-	varName := utils.CToGoString(header.Name[:])
-	varDesc := utils.CToGoString(header.Desc[:])
-	varUnit := utils.CToGoString(header.Unit[:])
-
+func (d *TelemetryData) extractDoubleFromVarHeader(header *utils.VarHeader, data []byte) *irDoubleVar {
 	dataPtr := uintptr(unsafe.Pointer(&data[0]))
 	offset := uintptr(header.Offset)
 	varPtr := dataPtr + offset
@@ -702,15 +925,16 @@ func extractDoubleFromVarHeader(header *utils.VarHeader, data []byte) *irDoubleV
 	hvar := *(*C.double)(unsafe.Pointer(varPtr))
 
 	return &irDoubleVar{
-		name:  varName,
-		desc:  varDesc,
+		name:  header.Name,
+		desc:  header.Desc,
 		value: float64(hvar),
-		unit:  varUnit,
+		unit:  header.Unit,
 	}
 }
 
 func NewTelemetryData() *TelemetryData {
 	return &TelemetryData{
+		// fieldCache:     make(map[string]*reflect.Value),
 		SessionFlags:   make(map[string]bool),
 		CamCameraState: make(map[string]bool),
 		EngineWarnings: make(map[string]bool),

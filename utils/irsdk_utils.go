@@ -200,8 +200,7 @@ func (ir *Irsdk) VarNameToIndex(name string) (int, error) {
 			if err != nil {
 				return -1, err
 			}
-			pVarName := CToGoString(pVar.Name[:])
-			if pVar != nil && pVarName == name {
+			if pVar != nil && pVar.Name == name {
 				return index, nil
 			}
 		}
@@ -219,8 +218,7 @@ func (ir *Irsdk) VarNameToOffset(name string) (int, error) {
 			if err != nil {
 				return -1, err
 			}
-			pVarName := CToGoString(pVar.Name[:])
-			if pVar != nil && pVarName == name {
+			if pVar != nil && pVar.Name == name {
 				return int(pVar.Offset), nil
 			}
 		}

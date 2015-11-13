@@ -186,17 +186,28 @@ const (
 //----
 //
 
-type VarHeader struct {
+type VarHeaderRaw struct {
 	Type   VarType // VarType
-	Offset int32   // offset fron start of buffer row
-	Count  int32   // number of entrys (array)
+	Offset int32   `json:"-"` // offset fron start of buffer row
+	Count  int32   `json:"-"` // number of entrys (array)
 	// so length in bytes would be VarTypeBytes[type] * count
 
-	Pad [1]int32 // (16 byte align)
+	Pad [1]int32 `json:"-"` // (16 byte align)
 
 	Name [MAX_STRING]byte
 	Desc [MAX_DESC]byte
 	Unit [MAX_STRING]byte // something like "kg/m^2"
+}
+
+type VarHeader struct {
+	Type   VarType // VarType
+	Offset int32   `json:"-"` // offset fron start of buffer row
+	Count  int32   `json:"-"` // number of entrys (array)
+	// so length in bytes would be VarTypeBytes[type] * count
+
+	Name string
+	Desc string
+	Unit string // something like "kg/m^2"
 }
 
 type VarBuf struct {

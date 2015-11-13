@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"runtime/pprof"
@@ -119,6 +120,16 @@ func main() {
 							return
 						}
 
+						// Start profiling
+						pf, err := os.Create("cpu.prof")
+						if err != nil {
+							fmt.Fprintln(os.Stdout, err)
+							return
+						}
+
+						pprof.StartCPUProfile(pf)
+						defer pprof.StopCPUProfile()
+
 						tr := irsdk.NewTelemetryReader(f)
 
 						// @TODO: profile GetAllDataPoints()
@@ -127,12 +138,12 @@ func main() {
 							fmt.Fprintln(os.Stderr, err)
 						}
 
-						for _, dp := range datapoints {
-							fmt.Println(dp.OnPitRoad)
-						}
+						// first := 0
+						// fmt.Printf("%+v\n", datapoints[first])
 
 						last := len(datapoints) - 1
-						fmt.Printf("%+v\n", datapoints[last])
+						fmt.Printf("%+v\n", datapoints[last].RPM)
+						fmt.Printf("%+v\n", datapoints[last].IsOnTrack)
 
 						return
 					},
@@ -144,6 +155,45 @@ func main() {
 					Action: func(c *cli.Context) {
 						err := "Not yet implemented"
 						fmt.Fprintln(os.Stderr, err)
+						return
+					},
+				},
+				{
+					Name:  "varheaders",
+					Usage: "dump varheaders from disk telemetry",
+					Flags: dumpFlags,
+					Action: func(c *cli.Context) {
+						filename := "telemetry-test.ibt"
+						f, err := os.Open(filename)
+						if err != nil {
+							fmt.Fprintln(os.Stdout, err)
+							return
+						}
+
+						tr := irsdk.NewTelemetryReader(f)
+
+						// @TODO: profile GetAllDataPoints()
+						varHeaders, err := tr.GetVarHeaders()
+						if err != nil {
+							fmt.Fprintln(os.Stderr, err)
+						}
+
+						format := c.String("format")
+						switch format {
+						case "raw", "struct":
+							fmt.Printf("%+v\n", varHeaders)
+						case "json":
+							jsonData, err := json.MarshalIndent(varHeaders, "", "  ") // convert to JSON
+							if err != nil {
+								fmt.Fprintln(os.Stderr, err)
+							}
+							fmt.Println(string(jsonData))
+						default:
+							err := fmt.Sprintf("Unknow format: %v", format)
+							fmt.Fprintln(os.Stdout, err)
+							return
+						}
+
 						return
 					},
 				},
@@ -177,7 +227,7 @@ func main() {
 						}
 
 						fps := 60
-						duration := 60
+						duration := 10
 						loops := fps * duration
 						// conn.SetMaxFPS(fps)
 
