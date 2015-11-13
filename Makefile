@@ -7,7 +7,7 @@ GOWINE=CGO_ENABLED=1 GOOS=windows GOARCH=386 $(GO)
 
 build: irsdk
 
-irsdk: *.go utils/*.go bin/irsdk/*.go utils/bindata.go api.go
+irsdk: *.go utils/*.go bin/irsdk/*.go utils/bindata.go
 	$(GO) build ./bin/irsdk
 	
 irsdk.exe: utils/c_wrapper_windows.go
