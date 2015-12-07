@@ -1,6 +1,8 @@
-utils/bindata.go
-utils/assets/*
-!utils/assets/.gitkeep
+bindata.go
+assets/*
+!assets/.gitkeep
 cpu.prof
 ctags
 !vendor/*
+irsdk
+terminalhud
