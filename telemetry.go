@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"log"
 	"unsafe"
-
-	utils "github.com/leonb/irsdk-go/utils"
 )
 
 type irCharVar struct {
@@ -280,39 +278,39 @@ type TelemetryData struct {
 	Lon float64
 }
 
-func (d *TelemetryData) addVarHeaderData(varHeader *utils.VarHeader, data []byte) error {
+func (d *TelemetryData) addVarHeaderData(varHeader *VarHeader, data []byte) error {
 	switch varHeader.Type {
-	case utils.CharType:
+	case CharType:
 		irVar := d.extractCharFromVarHeader(varHeader, data)
 		err := d.AddIrCharVar(irVar)
 		if err != nil {
 			log.Println(err)
 		}
-	case utils.BoolType:
+	case BoolType:
 		irVar := d.extractBoolFromVarHeader(varHeader, data)
 		err := d.AddIrBoolVar(irVar)
 		if err != nil {
 			log.Println(err)
 		}
-	case utils.IntType:
+	case IntType:
 		irVar := d.extractIntFromVarHeader(varHeader, data)
 		err := d.AddIrIntVar(irVar)
 		if err != nil {
 			log.Println(err)
 		}
-	case utils.BitfieldType:
+	case BitfieldType:
 		irVar := d.extractBitfieldFromVarHeader(varHeader, data)
 		err := d.AddIrBitfieldVar(irVar)
 		if err != nil {
 			log.Println(err)
 		}
-	case utils.FloatType:
+	case FloatType:
 		irVar := d.extractFloatFromVarHeader(varHeader, data)
 		err := d.AddIrFloatVar(irVar)
 		if err != nil {
 			log.Println(err)
 		}
-	case utils.DoubleType:
+	case DoubleType:
 		irVar := d.extractDoubleFromVarHeader(varHeader, data)
 		err := d.AddIrDoubleVar(irVar)
 		if err != nil {
@@ -343,6 +341,14 @@ func (d *TelemetryData) AddIrBoolVar(irVar *irBoolVar) error {
 		d.DriverMarker = irVar.value
 	case "IsOnTrack":
 		d.IsOnTrack = irVar.value
+	case "IsReplayPlaying":
+		d.IsReplayPlaying = irVar.value
+	case "IsDiskLoggingEnabled":
+		d.IsDiskLoggingEnabled = irVar.value
+	case "IsDiskLoggingActive":
+		d.IsDiskLoggingActive = irVar.value
+	case "CarIdxOnPitRoad":
+		d.CarIdxOnPitRoad = irVar.value
 	case "OnPitRoad":
 		d.OnPitRoad = irVar.value
 	case "LapDeltaToBestLap_OK":
@@ -357,6 +363,10 @@ func (d *TelemetryData) AddIrBoolVar(irVar *irBoolVar) error {
 		d.LapDeltaToSessionLastlLap_OK = irVar.value
 	case "IsOnTrackCar":
 		d.IsOnTrackCar = irVar.value
+	case "IsInGarage":
+		d.IsInGarage = irVar.value
+	case "ReplayPlaySlowMotion":
+		d.ReplayPlaySlowMotion = irVar.value
 	default:
 		return fmt.Errorf("Unknown var: %+v", irVar)
 	}
@@ -378,14 +388,38 @@ func (d *TelemetryData) AddIrIntVar(irVar *irIntVar) error {
 		d.SessionUniqueID = irVar.value
 	case "SessionLapsRemain":
 		d.SessionLapsRemain = irVar.value
+	case "RadioTransmitCarIdx":
+		d.RadioTransmitCarIdx = irVar.value
+	case "RadioTransmitRadioIdx":
+		d.RadioTransmitRadioIdx = irVar.value
+	case "RadioTransmitFrequencyIdx":
+		d.RadioTransmitFrequencyIdx = irVar.value
+	case "DisplayUnits":
+		d.DisplayUnits = irVar.value
+	case "ReplayFrameNum":
+		d.ReplayFrameNum = irVar.value
+	case "ReplayFrameNumEnd":
+		d.ReplayFrameNumEnd = irVar.value
 	case "PlayerCarPosition":
 		d.PlayerCarPosition = irVar.value
 	case "PlayerCarClassPosition":
 		d.PlayerCarClassPosition = irVar.value
+	case "CarIdxLap":
+		d.CarIdxLap = irVar.value
+	case "CarIdxTrackSurface":
+		d.CarIdxTrackSurface = irVar.value
+	case "CarIdxPosition":
+		d.CarIdxPosition = irVar.value
+	case "CarIdxClassPosition":
+		d.CarIdxClassPosition = irVar.value
+	case "CarIdxGear":
+		d.CarIdxGear = irVar.value
 	case "Gear":
 		d.Gear = irVar.value
 	case "Lap":
 		d.Lap = irVar.value
+	case "RaceLaps":
+		d.RaceLaps = irVar.value
 	case "LapBestLap":
 		d.LapBestLap = irVar.value
 	case "LapLasNLapSeq":
@@ -398,6 +432,20 @@ func (d *TelemetryData) AddIrIntVar(irVar *irIntVar) error {
 		d.WeatherType = irVar.value
 	case "Skies":
 		d.Skies = irVar.value
+	case "DCLapStatus":
+		d.DCLapStatus = irVar.value
+	case "DCDriversSoFar":
+		d.DCDriversSoFar = irVar.value
+	case "CamCarIdx":
+		d.CamCarIdx = irVar.value
+	case "CamCameraNumber":
+		d.CamCameraNumber = irVar.value
+	case "CamGroupNumber":
+		d.CamGroupNumber = irVar.value
+	case "ReplayPlaySpeed":
+		d.ReplayPlaySpeed = irVar.value
+	case "ReplaySessionNum":
+		d.ReplaySessionNum = irVar.value
 	default:
 		return fmt.Errorf("Unknown var: %+v", irVar)
 	}
@@ -411,6 +459,10 @@ func (d *TelemetryData) AddIrBitfieldVar(irVar *irBitfieldVar) error {
 	}
 
 	switch irVar.name {
+	case "SessionFlags":
+		d.SessionFlags = irVar.fields
+	case "CamCameraState":
+		d.CamCameraState = irVar.fields
 	case "EngineWarnings":
 		d.EngineWarnings = irVar.fields
 	case "PitSvFlags":
@@ -432,6 +484,16 @@ func (d *TelemetryData) AddIrFloatVar(irVar *irFloatVar) error {
 		d.FrameRate = irVar.value
 	case "CpuUsageBG":
 		d.CpuUsageBG = irVar.value
+	case "CarIdxLapDistPct":
+		d.CarIdxLapDistPct = irVar.value
+	case "CarIdxF2Time":
+		d.CarIdxF2Time = irVar.value
+	case "CarIdxEstTime":
+		d.CarIdxEstTime = irVar.value
+	case "CarIdxSteer":
+		d.CarIdxSteer = irVar.value
+	case "CarIdxRPM":
+		d.CarIdxRPM = irVar.value
 	case "SteeringWheelAngle":
 		d.SteeringWheelAngle = irVar.value
 	case "Throttle":
@@ -502,8 +564,6 @@ func (d *TelemetryData) AddIrFloatVar(irVar *irFloatVar) error {
 		d.Pitch = irVar.value
 	case "Roll":
 		d.Roll = irVar.value
-	case "Alt":
-		d.Alt = irVar.value
 	case "TrackTemp":
 		d.TrackTemp = irVar.value
 	case "AirTemp":
@@ -546,6 +606,8 @@ func (d *TelemetryData) AddIrFloatVar(irVar *irFloatVar) error {
 		d.ThrottleRaw = irVar.value
 	case "BrakeRaw":
 		d.BrakeRaw = irVar.value
+	case "SteeringWheelPeakForceNm":
+		d.SteeringWheelPeakForceNm = irVar.value
 	case "FuelLevel":
 		d.FuelLevel = irVar.value
 	case "FuelLevelPct":
@@ -588,18 +650,8 @@ func (d *TelemetryData) AddIrFloatVar(irVar *irFloatVar) error {
 		d.ManifoldPress = irVar.value
 	case "RRbrakeLinePress":
 		d.RRbrakeLinePress = irVar.value
-	case "RRspeed":
-		d.RRspeed = irVar.value
-	case "RRpressure":
-		d.RRpressure = irVar.value
 	case "RRcoldPressure":
 		d.RRcoldPressure = irVar.value
-	case "RRtempL":
-		d.RRtempL = irVar.value
-	case "RRtempM":
-		d.RRtempM = irVar.value
-	case "RRtempR":
-		d.RRtempR = irVar.value
 	case "RRtempCL":
 		d.RRtempCL = irVar.value
 	case "RRtempCM":
@@ -614,18 +666,8 @@ func (d *TelemetryData) AddIrFloatVar(irVar *irFloatVar) error {
 		d.RRwearR = irVar.value
 	case "LRbrakeLinePress":
 		d.LRbrakeLinePress = irVar.value
-	case "LRspeed":
-		d.LRspeed = irVar.value
-	case "LRpressure":
-		d.LRpressure = irVar.value
 	case "LRcoldPressure":
 		d.LRcoldPressure = irVar.value
-	case "LRtempL":
-		d.LRtempL = irVar.value
-	case "LRtempM":
-		d.LRtempM = irVar.value
-	case "LRtempR":
-		d.LRtempR = irVar.value
 	case "LRtempCL":
 		d.LRtempCL = irVar.value
 	case "LRtempCM":
@@ -640,18 +682,8 @@ func (d *TelemetryData) AddIrFloatVar(irVar *irFloatVar) error {
 		d.LRwearR = irVar.value
 	case "RFbrakeLinePress":
 		d.RFbrakeLinePress = irVar.value
-	case "RFspeed":
-		d.RFspeed = irVar.value
-	case "RFpressure":
-		d.RFpressure = irVar.value
 	case "RFcoldPressure":
 		d.RFcoldPressure = irVar.value
-	case "RFtempL":
-		d.RFtempL = irVar.value
-	case "RFtempM":
-		d.RFtempM = irVar.value
-	case "RFtempR":
-		d.RFtempR = irVar.value
 	case "RFtempCL":
 		d.RFtempCL = irVar.value
 	case "RFtempCM":
@@ -666,18 +698,8 @@ func (d *TelemetryData) AddIrFloatVar(irVar *irFloatVar) error {
 		d.RFwearR = irVar.value
 	case "LFbrakeLinePress":
 		d.LFbrakeLinePress = irVar.value
-	case "LFspeed":
-		d.LFspeed = irVar.value
-	case "LFpressure":
-		d.LFpressure = irVar.value
 	case "LFcoldPressure":
 		d.LFcoldPressure = irVar.value
-	case "LFtempL":
-		d.LFtempL = irVar.value
-	case "LFtempM":
-		d.LFtempM = irVar.value
-	case "LFtempR":
-		d.LFtempR = irVar.value
 	case "LFtempCL":
 		d.LFtempCL = irVar.value
 	case "LFtempCM":
@@ -706,6 +728,48 @@ func (d *TelemetryData) AddIrFloatVar(irVar *irFloatVar) error {
 		d.LFshockDefl = irVar.value
 	case "LFshockVel":
 		d.LFshockVel = irVar.value
+	case "Alt":
+		d.Alt = irVar.value
+	case "RRspeed":
+		d.RRspeed = irVar.value
+	case "RRpressure":
+		d.RRpressure = irVar.value
+	case "RRtempL":
+		d.RRtempL = irVar.value
+	case "RRtempM":
+		d.RRtempM = irVar.value
+	case "RRtempR":
+		d.RRtempR = irVar.value
+	case "LRspeed":
+		d.LRspeed = irVar.value
+	case "LRpressure":
+		d.LRpressure = irVar.value
+	case "LRtempL":
+		d.LRtempL = irVar.value
+	case "LRtempM":
+		d.LRtempM = irVar.value
+	case "LRtempR":
+		d.LRtempR = irVar.value
+	case "RFspeed":
+		d.RFspeed = irVar.value
+	case "RFpressure":
+		d.RFpressure = irVar.value
+	case "RFtempL":
+		d.RFtempL = irVar.value
+	case "RFtempM":
+		d.RFtempM = irVar.value
+	case "RFtempR":
+		d.RFtempR = irVar.value
+	case "LFspeed":
+		d.LFspeed = irVar.value
+	case "LFpressure":
+		d.LFpressure = irVar.value
+	case "LFtempL":
+		d.LFtempL = irVar.value
+	case "LFtempM":
+		d.LFtempM = irVar.value
+	case "LFtempR":
+		d.LFtempR = irVar.value
 	case "LFrideHeight":
 		d.LFrideHeight = irVar.value
 	case "RFrideHeight":
@@ -733,6 +797,8 @@ func (d *TelemetryData) AddIrDoubleVar(irVar *irDoubleVar) error {
 		d.SessionTime = irVar.value
 	case "SessionTimeRemain":
 		d.SessionTimeRemain = irVar.value
+	case "ReplaySessionTime":
+		d.ReplaySessionTime = irVar.value
 	case "Lat":
 		d.Lat = irVar.value
 	case "Lon":
@@ -744,82 +810,82 @@ func (d *TelemetryData) AddIrDoubleVar(irVar *irDoubleVar) error {
 	return nil
 }
 
-var irsdkFlags = map[utils.Flags]string{
+var irsdkFlags = map[Flags]string{
 	// global flags
-	utils.CheckeredFlag:     "Checkered",
-	utils.WhiteFlag:         "White",
-	utils.GreenFlag:         "Green",
-	utils.YellowFlag:        "Yellow",
-	utils.RedFlag:           "Red",
-	utils.BlueFlag:          "Blue",
-	utils.DebrisFlag:        "Debris",
-	utils.CrossedFlag:       "Crossed",
-	utils.YellowWavingFlag:  "YellowWaving",
-	utils.OneLapToGreenFlag: "OneLapToGreen",
-	utils.GreenHeldFlag:     "GreenHeld",
-	utils.TenToGoFlag:       "TenToGo",
-	utils.FiveToGoFlag:      "FiveToGo",
-	utils.RandomWavingFlag:  "RandomWaving",
-	utils.CautionFlag:       "Caution",
-	utils.CautionWavingFlag: "CautionWaving",
+	CheckeredFlag:     "Checkered",
+	WhiteFlag:         "White",
+	GreenFlag:         "Green",
+	YellowFlag:        "Yellow",
+	RedFlag:           "Red",
+	BlueFlag:          "Blue",
+	DebrisFlag:        "Debris",
+	CrossedFlag:       "Crossed",
+	YellowWavingFlag:  "YellowWaving",
+	OneLapToGreenFlag: "OneLapToGreen",
+	GreenHeldFlag:     "GreenHeld",
+	TenToGoFlag:       "TenToGo",
+	FiveToGoFlag:      "FiveToGo",
+	RandomWavingFlag:  "RandomWaving",
+	CautionFlag:       "Caution",
+	CautionWavingFlag: "CautionWaving",
 
 	// drivers black flags
-	utils.BlackFlag:      "Black",
-	utils.DisqualifyFlag: "Disqualify",
-	utils.ServicibleFlag: "Servicible", // car is allowed service (not a flag)
-	utils.FurledFlag:     "Furled",
-	utils.RepairFlag:     "Repair",
+	BlackFlag:      "Black",
+	DisqualifyFlag: "Disqualify",
+	ServicibleFlag: "Servicible", // car is allowed service (not a flag)
+	FurledFlag:     "Furled",
+	RepairFlag:     "Repair",
 
 	// start lights
-	utils.StartHidden: "StartHidden",
-	utils.StartReady:  "StartReady",
-	utils.StartSet:    "StartSet",
-	utils.StartGo:     "StartGo",
+	StartHidden: "StartHidden",
+	StartReady:  "StartReady",
+	StartSet:    "StartSet",
+	StartGo:     "StartGo",
 }
 
-var irsdkEngineWarnings = map[utils.EngineWarnings]string{
-	utils.WaterTempWarning:    "WaterTempWarning",
-	utils.FuelPressureWarning: "FuelPressureWarning",
-	utils.OilPressureWarning:  "OilPressureWarning",
-	utils.EngineStalled:       "EngineStalled",
-	utils.PitSpeedLimiter:     "PitSpeedLimiter",
-	utils.RevLimiterActive:    "RevLimiterActive",
+var irsdkEngineWarnings = map[EngineWarnings]string{
+	WaterTempWarning:    "WaterTempWarning",
+	FuelPressureWarning: "FuelPressureWarning",
+	OilPressureWarning:  "OilPressureWarning",
+	EngineStalled:       "EngineStalled",
+	PitSpeedLimiter:     "PitSpeedLimiter",
+	RevLimiterActive:    "RevLimiterActive",
 }
 
-var irsdkCameraStates = map[utils.CameraState]string{
-	utils.IsSessionScreen:       "IsSessionScreen",
-	utils.IsScenicActive:        "IsScencActive",
-	utils.CamToolActive:         "RamToolActive",
-	utils.UIHidden:              "UiHidden",
-	utils.UseAutoShotSelection:  "UseAutoShotSelection",
-	utils.UseTemporaryEdits:     "UseTemporaryEdits",
-	utils.UseKeyAcceleration:    "UseKeyAcceleration",
-	utils.UseKey10xAcceleration: "UseKey10xAcceleration",
-	utils.UseMouseAimMode:       "UseMouseAimMode",
+var irsdkCameraStates = map[CameraState]string{
+	IsSessionScreen:       "IsSessionScreen",
+	IsScenicActive:        "IsScencActive",
+	CamToolActive:         "RamToolActive",
+	UIHidden:              "UiHidden",
+	UseAutoShotSelection:  "UseAutoShotSelection",
+	UseTemporaryEdits:     "UseTemporaryEdits",
+	UseKeyAcceleration:    "UseKeyAcceleration",
+	UseKey10xAcceleration: "UseKey10xAcceleration",
+	UseMouseAimMode:       "UseMouseAimMode",
 }
 
-var irsdkSessionStates = map[utils.SessionState]string{
-	utils.StateInvalid:    "Invalid",
-	utils.StateGetInCar:   "GetInCar",
-	utils.StateWarmup:     "Warmup",
-	utils.StateParadeLaps: "ParadeLaps",
-	utils.StateRacing:     "Racing",
-	utils.StateCheckered:  "Checkered",
-	utils.StateCoolDown:   "CoolDown",
+var irsdkSessionStates = map[SessionState]string{
+	StateInvalid:    "Invalid",
+	StateGetInCar:   "GetInCar",
+	StateWarmup:     "Warmup",
+	StateParadeLaps: "ParadeLaps",
+	StateRacing:     "Racing",
+	StateCheckered:  "Checkered",
+	StateCoolDown:   "CoolDown",
 }
 
-var irsdkPitSvFlags = map[utils.PitSvFlag]string{
-	utils.LFTireChange: "LFTireChange",
-	utils.RFTireChange: "RFTireChange",
-	utils.LRTireChange: "LRTireChange",
-	utils.RRTireChange: "RRTireChange",
+var irsdkPitSvFlags = map[PitSvFlag]string{
+	LFTireChange: "LFTireChange",
+	RFTireChange: "RFTireChange",
+	LRTireChange: "LRTireChange",
+	RRTireChange: "RRTireChange",
 
-	utils.FuelFill:          "FuelFill",
-	utils.WindshieldTearoff: "WindshieldTearoff",
-	utils.FastRepair:        "FastRepair",
+	FuelFill:          "FuelFill",
+	WindshieldTearoff: "WindshieldTearoff",
+	FastRepair:        "FastRepair",
 }
 
-func (d *TelemetryData) extractCharFromVarHeader(header *utils.VarHeader, data []byte) *irCharVar {
+func (d *TelemetryData) extractCharFromVarHeader(header *VarHeader, data []byte) *irCharVar {
 	dataPtr := uintptr(unsafe.Pointer(&data[0]))
 	offset := uintptr(header.Offset)
 	varPtr := dataPtr + offset
@@ -834,7 +900,7 @@ func (d *TelemetryData) extractCharFromVarHeader(header *utils.VarHeader, data [
 	}
 }
 
-func (d *TelemetryData) extractBoolFromVarHeader(header *utils.VarHeader, data []byte) *irBoolVar {
+func (d *TelemetryData) extractBoolFromVarHeader(header *VarHeader, data []byte) *irBoolVar {
 	dataPtr := uintptr(unsafe.Pointer(&data[0]))
 	offset := uintptr(header.Offset)
 	varPtr := dataPtr + offset
@@ -849,7 +915,7 @@ func (d *TelemetryData) extractBoolFromVarHeader(header *utils.VarHeader, data [
 	}
 }
 
-func (d *TelemetryData) extractIntFromVarHeader(header *utils.VarHeader, data []byte) *irIntVar {
+func (d *TelemetryData) extractIntFromVarHeader(header *VarHeader, data []byte) *irIntVar {
 	dataPtr := uintptr(unsafe.Pointer(&data[0]))
 	offset := uintptr(header.Offset)
 	varPtr := dataPtr + offset
@@ -864,7 +930,7 @@ func (d *TelemetryData) extractIntFromVarHeader(header *utils.VarHeader, data []
 	}
 }
 
-func (d *TelemetryData) extractBitfieldFromVarHeader(header *utils.VarHeader, data []byte) *irBitfieldVar {
+func (d *TelemetryData) extractBitfieldFromVarHeader(header *VarHeader, data []byte) *irBitfieldVar {
 	dataPtr := uintptr(unsafe.Pointer(&data[0]))
 	offset := uintptr(header.Offset)
 	varPtr := dataPtr + offset
@@ -902,7 +968,7 @@ func (d *TelemetryData) extractBitfieldFromVarHeader(header *utils.VarHeader, da
 	return retVar
 }
 
-func (d *TelemetryData) extractFloatFromVarHeader(header *utils.VarHeader, data []byte) *irFloatVar {
+func (d *TelemetryData) extractFloatFromVarHeader(header *VarHeader, data []byte) *irFloatVar {
 	dataPtr := uintptr(unsafe.Pointer(&data[0]))
 	offset := uintptr(header.Offset)
 	varPtr := dataPtr + offset
@@ -917,7 +983,7 @@ func (d *TelemetryData) extractFloatFromVarHeader(header *utils.VarHeader, data 
 	}
 }
 
-func (d *TelemetryData) extractDoubleFromVarHeader(header *utils.VarHeader, data []byte) *irDoubleVar {
+func (d *TelemetryData) extractDoubleFromVarHeader(header *VarHeader, data []byte) *irDoubleVar {
 	dataPtr := uintptr(unsafe.Pointer(&data[0]))
 	offset := uintptr(header.Offset)
 	varPtr := dataPtr + offset

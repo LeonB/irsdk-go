@@ -1,4 +1,4 @@
-package utils
+package irsdk
 
 /*
  The IRSDK is a simple api that lets clients access telemetry data from the
@@ -54,6 +54,26 @@ const (
 )
 
 type VarType int32
+
+// Stringer method
+func (v VarType) String() string {
+	switch v {
+	case CharType:
+		return "char"
+	case BoolType:
+		return "bool"
+	case IntType:
+		return "int"
+	case BitfieldType:
+		return "bitfield"
+	case FloatType:
+		return "float"
+	case DoubleType:
+		return "double"
+	default:
+		return "unkown"
+	}
+}
 
 const (
 	// 1 byte

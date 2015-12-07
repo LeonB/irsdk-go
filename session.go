@@ -1,11 +1,6 @@
 package irsdk
 
-import (
-	"fmt"
-	"io/ioutil"
-
-	yaml "gopkg.in/yaml.v2"
-)
+import yaml "gopkg.in/yaml.v2"
 
 type SessionData struct {
 	WeekendInfo   WeekendInfo   `yaml:"WeekendInfo"`
@@ -262,11 +257,6 @@ func NewSessionDataFromBytes(yamlData []byte) (*SessionData, error) {
 	// Convert yaml to struct
 	err := yaml.Unmarshal(yamlData, &sessionData)
 	if err != nil || sessionData == nil {
-		fmt.Println(string(yamlData[:]))
-		ioutil.WriteFile("fucked.yml", yamlData, 0644)
-	}
-
-	if err != nil {
 		return nil, err
 	}
 

@@ -1,9 +1,10 @@
-package utils
+package irsdk
 
 import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"time"
 )
 
@@ -170,16 +171,6 @@ func (ir *Irsdk) IsConnected() bool {
 	return false
 }
 
-func (ir *Irsdk) GetSessionInfoStr() []byte {
-	if ir.isInitialized {
-		header := ir.c.header
-		startByte := header.SessionInfoOffset
-		length := header.SessionInfoLen
-		return ir.c.sharedMem[startByte:length]
-	}
-	return nil
-}
-
 func (ir *Irsdk) GetVarHeaderEntry(index int) (*VarHeader, error) {
 	if ir.isInitialized {
 		header := ir.c.header
@@ -241,8 +232,8 @@ func (ir *Irsdk) BroadcastMsg(msg BroadcastMsg, var1 uint16, var2 uint16, var3 u
 	fmt.Println("wParam", wParam)
 	fmt.Println("lParam", lParam)
 
-	wParam2 := uint16(msg) | var1 << 16
-	lParam2 := var2 | var3 << 16
+	wParam2 := uint16(msg) | var1<<16
+	lParam2 := var2 | var3<<16
 
 	fmt.Println("wParam2", wParam2)
 	fmt.Println("lParam2", lParam2)
@@ -290,6 +281,9 @@ func (ir *Irsdk) copyTelemetryData(varBufN int) ([]byte, error) {
 	startByte := int(header.VarBuf[varBufN].BufOffset)
 	endByte := startByte + bufLen
 
+	fmt.Println("Writing shared mem to memmap.dat")
+	ioutil.WriteFile("memmap.dat", ir.c.sharedMem, 0600)
+
 	data := make([]byte, bufLen)
 	copy(data, ir.c.sharedMem[startByte:endByte])
 
@@ -297,7 +291,19 @@ func (ir *Irsdk) copyTelemetryData(varBufN int) ([]byte, error) {
 }
 
 func (ir *Irsdk) GetHeader() (*Header, error) {
-	return ir.c.header, nil
+	return ir.c.getHeader()
+}
+
+func (ir *Irsdk) GetSessionData() (*SessionData, error) {
+	if !ir.isInitialized {
+		err := ir.Startup()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	tr := NewTelemetryReader(ir.c.sharedMem)
+	return tr.GetSessionData()
 }
 
 func (ir *Irsdk) GetLastValidTime() time.Time {
@@ -311,4 +317,15 @@ func MAKELONG(lo, hi uint16) uint32 {
 func CToGoString(c []byte) string {
 	i := bytes.IndexByte(c, 0)
 	return string(c[:i])
+}
+
+func CToGoString2(c []byte) string {
+	n := -1
+	for i, b := range c {
+		if b == 0 {
+			break
+		}
+		n = i
+	}
+	return string(c[:n+1])
 }

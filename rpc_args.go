@@ -1,4 +1,4 @@
-package utils
+package irsdk
 
 type OpenFileMappingArgs struct {
 	LpName string

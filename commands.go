@@ -3,15 +3,13 @@ package irsdk
 import "C"
 import (
 	"fmt"
-
-	utils "github.com/leonb/irsdk-go/utils"
 )
 
 func testBroadcastMsg() {
-	sdk := utils.Irsdk{}
+	sdk := Irsdk{}
 	err := sdk.BroadcastMsg(
-		utils.BroadcastChatComand,
-		uint16(utils.ChatCommand_BeginChat),
+		BroadcastChatComand,
+		uint16(ChatCommand_BeginChat),
 		0,
 		0,
 	)
@@ -22,8 +20,8 @@ func testBroadcastMsg() {
 	chatMacro := 1
 	fmt.Printf("Sending chat macro %d\n", chatMacro)
 	err = sdk.BroadcastMsg(
-		utils.BroadcastChatComand,
-		uint16(utils.ChatCommand_Macro),
+		BroadcastChatComand,
+		uint16(ChatCommand_Macro),
 		uint16(chatMacro),
 		0,
 	)

@@ -1,6 +1,6 @@
 // -build windows
 
-package utils
+package irsdk
 
 import (
 	"errors"
@@ -22,7 +22,7 @@ var (
 )
 
 const (
-	RPC_COMMAND      = "utils/assets/ir-syscalls-rpc.exe"
+	RPC_COMMAND      = "assets/ir-syscalls-rpc.exe"
 	DATA_CHANGE_TICK = time.Duration(time.Millisecond * 9)
 )
 
@@ -34,6 +34,8 @@ type CWrapper struct {
 
 	mmapFile *os.File
 	client   *rpc.Client
+
+	telemetryReader *TelemetryReader
 }
 
 func (cw *CWrapper) startup() error {
@@ -58,6 +60,10 @@ func (cw *CWrapper) startup() error {
 		if err != nil {
 			return err
 		}
+
+		cw.telemetryReader = &TelemetryReader{
+			data: cw.sharedMem,
+		}
 	}
 
 	if cw.sharedMemPtr == nil {
@@ -69,6 +75,7 @@ func (cw *CWrapper) startup() error {
 
 	if cw.header == nil {
 		cw.header, err = cw.getHeader()
+		fmt.Printf("%+v\n", cw.header)
 		if err != nil {
 			return err
 		}

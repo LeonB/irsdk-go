@@ -8,8 +8,6 @@ import (
 
 	"golang.org/x/text/encoding/charmap"
 	"golang.org/x/text/transform"
-
-	"github.com/leonb/irsdk-go/utils"
 )
 
 var (
@@ -17,7 +15,7 @@ var (
 )
 
 func NewConnection() (*Connection, error) {
-	sdk, err := utils.NewIrsdk()
+	sdk, err := NewIrsdk()
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +30,7 @@ func NewConnection() (*Connection, error) {
 
 type Connection struct {
 	timeout        time.Duration
-	sdk            *utils.Irsdk
+	sdk            *Irsdk
 	maxFPS         int
 	lastUpdateTime time.Time
 }
@@ -51,7 +49,7 @@ func (c *Connection) IsConnected() bool {
 	return c.sdk.IsConnected()
 }
 
-func (c *Connection) GetHeader() (*utils.Header, error) {
+func (c *Connection) GetHeader() (*Header, error) {
 	return c.sdk.GetHeader()
 }
 
@@ -85,33 +83,13 @@ func (c *Connection) GetTelemetryDataFiltered(fields []string) (*TelemetryData, 
 	return nil, nil
 }
 
-func (c *Connection) GetRawSessionData() ([]byte, error) {
-	b := c.sdk.GetSessionInfoStr()
-	if b == nil {
-		return nil, nil
-	}
-
-	sep := []byte("\n...")
-	pieces := bytes.Split(b, sep)
-	if len(pieces) > 0 {
-		return pieces[0], nil
-	}
-
-	return b, nil
+func (c *Connection) GetSessionDataBytes() ([]byte, error) {
+	tr := NewTelemetryReader(c.sdk.c.sharedMem)
+	return tr.GetSessionDataBytes()
 }
 
 func (c *Connection) GetSessionData() (*SessionData, error) {
-	b, err := c.GetRawSessionData()
-	if err != nil {
-		return nil, err
-	}
-
-	if b == nil {
-		return nil, ErrEmptySessionData
-	}
-
-	b = bytesToUtf8(b)
-	return NewSessionDataFromBytes(b)
+	return c.sdk.GetSessionData()
 }
 
 func (c *Connection) SendCommand() error {

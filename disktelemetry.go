@@ -3,24 +3,21 @@ package irsdk
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
-	"io"
 	"unsafe"
-
-	"github.com/leonb/irsdk-go/utils"
 )
 
 type TelemetryReader struct {
-	data        io.ReadSeeker
-	header      *utils.Header
-	subHeader   *utils.DiskSubHeader
+	data        []byte
+	header      *Header
+	subHeader   *DiskSubHeader
 	sessionData *SessionData
-	varHeaders  []*utils.VarHeader
-	dataPoints  []*TelemetryData
+
+	varHeaders []*VarHeader
+	dataPoints []*TelemetryData
 }
 
 // GetHeader memoizes the ReadHeader function
-func (tr *TelemetryReader) GetHeader() (*utils.Header, error) {
+func (tr *TelemetryReader) GetHeader() (*Header, error) {
 	var err error
 
 	if tr.header == nil {
@@ -32,19 +29,8 @@ func (tr *TelemetryReader) GetHeader() (*utils.Header, error) {
 }
 
 // ReadHeader tries to read the main header from the file
-func (tr *TelemetryReader) ReadHeader() (*utils.Header, error) {
-	header := &utils.Header{}
-
-	// Create byte slice big enough for header data
-	size := binary.Size(header)
-	b := make([]byte, size)
-
-	// Jump to right position in file
-	startByte := 0
-	tr.data.Seek(int64(startByte), 0) // 0 = relative to the origin of the file
-
-	// Read data from file into byteslice
-	_, err := tr.data.Read(b)
+func (tr *TelemetryReader) ReadHeader() (*Header, error) {
+	b, err := tr.GetLocationBytes()
 	if err != nil {
 		return nil, err
 	}
@@ -53,12 +39,31 @@ func (tr *TelemetryReader) ReadHeader() (*utils.Header, error) {
 	bPtr := uintptr(unsafe.Pointer(&b[0]))
 
 	// Point header struct to the location of the bytes
-	header = (*utils.Header)(unsafe.Pointer(bPtr))
+	header := (*Header)(unsafe.Pointer(bPtr))
 	return header, nil
 }
 
+func (tr *TelemetryReader) GetLocationBytes() ([]byte, error) {
+	start, size, err := tr.GetHeaderLocation()
+	if err != nil {
+		return nil, err
+	}
+
+	end := start + size
+	return tr.data[start:end], nil
+}
+
+func (tr *TelemetryReader) GetHeaderLocation() (int, int, error) {
+	startByte := 0
+
+	header := &Header{}
+	// Create byte slice big enough for header data
+	size := binary.Size(header)
+	return startByte, size, nil
+}
+
 // GetHeader memoizes the ReadSubHeader function
-func (tr *TelemetryReader) GetsubHeader() (*utils.DiskSubHeader, error) {
+func (tr *TelemetryReader) GetsubHeader() (*DiskSubHeader, error) {
 	var err error
 
 	if tr.subHeader == nil {
@@ -71,25 +76,8 @@ func (tr *TelemetryReader) GetsubHeader() (*utils.DiskSubHeader, error) {
 
 // ReadSubHeader reads the second header specialiy for telemtry data saved to
 // .ibt files
-func (tr *TelemetryReader) ReadSubHeader() (*utils.DiskSubHeader, error) {
-	header, err := tr.GetHeader()
-	if err != nil {
-		return nil, err
-	}
-
-	subHeader := &utils.DiskSubHeader{}
-	headerSize := binary.Size(header)
-	subHeaderSize := binary.Size(subHeader)
-	startByte := headerSize
-
-	// Create byte slice big enough for subHeader data
-	b := make([]byte, subHeaderSize)
-
-	// Jump to right position in file
-	tr.data.Seek(int64(startByte), 0) // 0 = relative to the origin of the file
-
-	// Read data from file into byteslice
-	_, err = tr.data.Read(b)
+func (tr *TelemetryReader) ReadSubHeader() (*DiskSubHeader, error) {
+	b, err := tr.GetSubHeaderBytes()
 	if err != nil {
 		return nil, err
 	}
@@ -98,8 +86,31 @@ func (tr *TelemetryReader) ReadSubHeader() (*utils.DiskSubHeader, error) {
 	bPtr := uintptr(unsafe.Pointer(&b[0]))
 
 	// Point subHeader struct to the location of the bytes
-	subHeader = (*utils.DiskSubHeader)(unsafe.Pointer(bPtr))
+	subHeader := (*DiskSubHeader)(unsafe.Pointer(bPtr))
 	return subHeader, nil
+}
+
+func (tr *TelemetryReader) GetSubHeaderBytes() ([]byte, error) {
+	start, size, err := tr.GetSubHeaderLocation()
+	if err != nil {
+		return nil, err
+	}
+
+	end := start + size
+	return tr.data[start:end], nil
+}
+
+func (tr *TelemetryReader) GetSubHeaderLocation() (int, int, error) {
+	header, err := tr.GetHeader()
+	if err != nil {
+		return 0, 0, err
+	}
+
+	subHeader := &DiskSubHeader{}
+	headerSize := binary.Size(header)
+	subHeaderSize := binary.Size(subHeader)
+	start := headerSize
+	return start, subHeaderSize, nil
 }
 
 // GetSessionData memoizes the ReadSubHeader function
@@ -115,28 +126,9 @@ func (tr *TelemetryReader) GetSessionData() (*SessionData, error) {
 }
 
 func (tr *TelemetryReader) ReadSessionData() (*SessionData, error) {
-	header, err := tr.GetHeader()
+	b, err := tr.GetSessionDataBytes()
 	if err != nil {
 		return nil, err
-	}
-
-	// Copied from GetSessionInfoStr()
-	startByte := header.SessionInfoOffset
-	sessionSize := header.SessionInfoLen
-
-	// Create byte slice big enough for subHeader data
-	b := make([]byte, sessionSize)
-
-	// Jump to right position in file
-	tr.data.Seek(int64(startByte), 0) // 0 = relative to the origin of the file
-
-	// Read data from file into byteslice
-	_, err = tr.data.Read(b)
-	if err != nil {
-		return nil, err
-	}
-	if b == nil {
-		return nil, nil
 	}
 
 	// Copied from GetRawSessionData()
@@ -151,12 +143,33 @@ func (tr *TelemetryReader) ReadSessionData() (*SessionData, error) {
 	}
 
 	b = bytesToUtf8(pieces[0])
-	fmt.Printf("%v\n", b)
 	return NewSessionDataFromBytes(b)
 }
 
+func (tr *TelemetryReader) GetSessionDataBytes() ([]byte, error) {
+	start, size, err := tr.GetSessionDataLocation()
+	if err != nil {
+		return nil, err
+	}
+
+	end := start + size
+	return tr.data[start:end], nil
+}
+
+func (tr *TelemetryReader) GetSessionDataLocation() (int, int, error) {
+	header, err := tr.GetHeader()
+	if err != nil {
+		return 0, 0, err
+	}
+
+	// Copied from GetSessionInfoStr()
+	start := int(header.SessionInfoOffset)
+	size := int(header.SessionInfoLen)
+	return start, size, nil
+}
+
 // GetVarHeaders memoizes the ReadHeader function
-func (tr *TelemetryReader) GetVarHeaders() ([]*utils.VarHeader, error) {
+func (tr *TelemetryReader) GetVarHeaders() ([]*VarHeader, error) {
 	var err error
 
 	if tr.varHeaders == nil {
@@ -169,17 +182,17 @@ func (tr *TelemetryReader) GetVarHeaders() ([]*utils.VarHeader, error) {
 
 // ReadVarHeaders reads the second header specialiy for telemtry data saved to
 // .ibt files
-func (tr *TelemetryReader) ReadVarHeaders() ([]*utils.VarHeader, error) {
+func (tr *TelemetryReader) ReadVarHeaders() ([]*VarHeader, error) {
 	header, err := tr.GetHeader()
 	if err != nil {
 		return nil, err
 	}
 
 	numVars := int(header.NumVars)
-	varHeaders := make([]*utils.VarHeader, numVars)
+	varHeaders := make([]*VarHeader, numVars)
 
 	for i := 0; i < numVars; i++ {
-		vh, err := tr.ReadVarHeaderN(i)
+		vh, err := tr.ReadVarHeaderEntry(i)
 		if err != nil {
 			return nil, err
 		}
@@ -189,8 +202,8 @@ func (tr *TelemetryReader) ReadVarHeaders() ([]*utils.VarHeader, error) {
 	return varHeaders, nil
 }
 
-func (tr *TelemetryReader) ReadVarHeaderN(i int) (*utils.VarHeader, error) {
-	b, err := tr.GetBytesVarHeaderN(i)
+func (tr *TelemetryReader) ReadVarHeaderEntry(i int) (*VarHeader, error) {
+	b, err := tr.GetVarHeaderEntryBytes(i)
 	if err != nil {
 		return nil, err
 	}
@@ -199,50 +212,46 @@ func (tr *TelemetryReader) ReadVarHeaderN(i int) (*utils.VarHeader, error) {
 	bPtr := uintptr(unsafe.Pointer(&b[0]))
 
 	// Point varHeader struct to the location of the bytes
-	varHeaderRaw := (*utils.VarHeaderRaw)(unsafe.Pointer(bPtr))
+	varHeaderRaw := (*VarHeaderRaw)(unsafe.Pointer(bPtr))
 
-	varHeader := &utils.VarHeader{
+	varHeader := &VarHeader{
 		Type:   varHeaderRaw.Type,
 		Offset: varHeaderRaw.Offset,
 		Count:  varHeaderRaw.Count,
 
-		Name: utils.CToGoString(varHeaderRaw.Name[:]),
-		Desc: utils.CToGoString(varHeaderRaw.Desc[:]),
-		Unit: utils.CToGoString(varHeaderRaw.Unit[:]),
+		Name: CToGoString(varHeaderRaw.Name[:]),
+		Desc: CToGoString(varHeaderRaw.Desc[:]),
+		Unit: CToGoString(varHeaderRaw.Unit[:]),
 	}
 
 	return varHeader, nil
 }
 
-func (tr *TelemetryReader) GetBytesVarHeaderN(i int) ([]byte, error) {
-	header, err := tr.GetHeader()
+func (tr *TelemetryReader) GetVarHeaderEntryBytes(i int) ([]byte, error) {
+	start, size, err := tr.GetVarHeaderEntryLocation(i)
 	if err != nil {
 		return nil, err
 	}
 
-	varHeaderRaw := &utils.VarHeaderRaw{}
-	startByte := int(header.VarHeaderOffset)
-	varHeaderSize := int(binary.Size(varHeaderRaw))
+	end := start + size
+	return tr.data[start:end], nil
+}
+
+func (tr *TelemetryReader) GetVarHeaderEntryLocation(i int) (int, int, error) {
+	header, err := tr.GetHeader()
+	if err != nil {
+		return 0, 0, err
+	}
+
+	varHeaderRaw := &VarHeaderRaw{}
+	startVarHeaders := int(header.VarHeaderOffset)
+	size := int(binary.Size(varHeaderRaw))
 
 	// Get offset to jump to
-	offset := i * varHeaderSize
+	offset := i * size
+	start := startVarHeaders + offset
 
-	// Jump to right position in file
-	tr.data.Seek(int64(startByte+offset), 0) // 0 = relative to the origin of the file
-
-	// Create byte slice big enough for varHeader data
-	b := make([]byte, varHeaderSize)
-
-	// Read data from file into byteslice
-	n, err := tr.data.Read(b)
-	if err != nil  && err != io.EOF {
-		return nil, err
-	}
-	if n <= 0 {
-		return nil, nil
-	}
-	
-	return b, nil
+	return start, size, nil
 }
 
 // GetVarBufs memoizes the ReadHeader function
@@ -289,7 +298,7 @@ func (tr *TelemetryReader) ReadAllDataPoints() ([]*TelemetryData, error) {
 
 // ReadDataPointN reads a specific datapoint (TelemetryData)
 func (tr *TelemetryReader) ReadDataPointN(i int) (*TelemetryData, error) {
-	b, err := tr.GetBytesDataPointN(i)
+	b, err := tr.GetDataPointEntryBytes(i)
 	if err != nil {
 		return nil, err
 	}
@@ -318,40 +327,42 @@ func (tr *TelemetryReader) ReadDataPointN(i int) (*TelemetryData, error) {
 	return td, nil
 }
 
-func (tr *TelemetryReader) GetBytesDataPointN(i int) ([]byte, error) {
-	header, err := tr.GetHeader()
+func (tr *TelemetryReader) GetDataPointEntryBytes(i int) ([]byte, error) {
+	start, size, err := tr.GetLocationDataPointEntryLocation(i)
 	if err != nil {
 		return nil, err
 	}
 
-	latest := header.GetLatestVarBufN()
-	startByte := int(header.VarBuf[latest].BufOffset)
-	varBufSize := int(header.BufLen)
+	end := start + size
 
-	// Create byte slice big enough for telemetrydata
-	b := make([]byte, varBufSize)
-
-	// Get offset to jump to
-	offset := i * varBufSize
-
-	// Jump to right position in file
-	tr.data.Seek(int64(startByte+offset), 0) // 0 = relative to the origin of the file
-
-	// // Read data from file into byteslice
-	n, err := tr.data.Read(b)
-	if err != nil  && err != io.EOF {
-		return nil, err
-	}
-	if n <= 0 {
+	// check if byteslice contains enough bytes
+	if end > len(tr.data) {
 		return nil, nil
 	}
 
-	return b, nil
+	return tr.data[start:end], nil
+}
+
+func (tr *TelemetryReader) GetLocationDataPointEntryLocation(i int) (int, int, error) {
+	header, err := tr.GetHeader()
+	if err != nil {
+		return 0, 0, err
+	}
+
+	latest := header.GetLatestVarBufN()
+	varBufStart := int(header.VarBuf[latest].BufOffset)
+	varBufSize := int(header.BufLen)
+
+	// Get offset to jump to
+	offset := i * varBufSize
+	start := varBufStart + offset
+
+	return start, varBufSize, nil
 }
 
 // NewTelemetryReader intializes a new TelemetryReader object based on an
 // io.ReadSeeker
-func NewTelemetryReader(data io.ReadSeeker) *TelemetryReader {
+func NewTelemetryReader(data []byte) *TelemetryReader {
 	return &TelemetryReader{
 		data: data,
 	}
