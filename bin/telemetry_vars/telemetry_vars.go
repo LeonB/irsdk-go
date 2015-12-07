@@ -6,34 +6,20 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"text/template"
+
+	"github.com/egonelbre/slice"
 )
 
-type varHeader struct {
-	Type VarType // VarType
-	Name string
-	Desc string
-	Unit string // something like "kg/m^2"
+type jsonVar struct {
+	Type       string
+	Name       string
+	Desc       string
+	Unit       string
+	MemMapData bool
+	DiskData   bool
 }
-
-type VarType int32
-
-const (
-	// 1 byte
-	CharType VarType = iota
-	BoolType VarType = iota
-
-	// 4 bytes
-	IntType      VarType = iota
-	BitfieldType VarType = iota
-	FloatType    VarType = iota
-
-	// 8 bytes
-	DoubleType VarType = iota
-
-	// index, don't use
-	ETCount = iota
-)
 
 func main() {
 	jsonData, e := ioutil.ReadFile("vars.json")
@@ -42,27 +28,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	vars := []varHeader{}
+	vars := []jsonVar{}
 	json.Unmarshal(jsonData, &vars)
 
-	varsPerType := make(map[string][]varHeader)
+	// Group variables per variable type (float, bool, etc.)
+	varsPerType := make(map[string][]jsonVar)
 	for _, v := range vars {
-		switch v.Type {
-		case CharType:
-			varsPerType["char"] = append(varsPerType["char"], v)
-		case BoolType:
-			varsPerType["bool"] = append(varsPerType["bool"], v)
-		case IntType:
-			varsPerType["int"] = append(varsPerType["int"], v)
-		case BitfieldType:
-			varsPerType["bitfield"] = append(varsPerType["bitfield"], v)
-		case FloatType:
-			varsPerType["float"] = append(varsPerType["float"], v)
-		case DoubleType:
-			varsPerType["double"] = append(varsPerType["double"], v)
-		default:
-			panic("Unknown type")
-		}
+		varsPerType[v.Type] = append(varsPerType[v.Type], v)
+	}
+
+	// Sort variables on name
+	for _, vars := range varsPerType {
+		slice.Sort(vars, func(i, j int) bool {
+			nameA := strings.ToLower(vars[i].Name)
+			nameB := strings.ToLower(vars[j].Name)
+			return nameA < nameB
+		})
 	}
 
 	tmpl, err := template.New("telemetry_vars.tmpl").

@@ -323,6 +323,7 @@ func (d *TelemetryData) addVarHeaderData(varHeader *VarHeader, data []byte) erro
 	return nil
 }
 
+// go:generate go run bin/telemetry_vars/telemetry_vars.go
 func (d *TelemetryData) AddIrCharVar(irVar *irCharVar) error {
 	if irVar == nil {
 		return nil
@@ -337,34 +338,34 @@ func (d *TelemetryData) AddIrBoolVar(irVar *irBoolVar) error {
 	}
 
 	switch irVar.name {
-	case "DriverMarker":
-		d.DriverMarker = irVar.value
-	case "IsOnTrack":
-		d.IsOnTrack = irVar.value
-	case "IsReplayPlaying":
-		d.IsReplayPlaying = irVar.value
-	case "IsDiskLoggingEnabled":
-		d.IsDiskLoggingEnabled = irVar.value
-	case "IsDiskLoggingActive":
-		d.IsDiskLoggingActive = irVar.value
 	case "CarIdxOnPitRoad":
 		d.CarIdxOnPitRoad = irVar.value
-	case "OnPitRoad":
-		d.OnPitRoad = irVar.value
+	case "DriverMarker":
+		d.DriverMarker = irVar.value
+	case "IsDiskLoggingActive":
+		d.IsDiskLoggingActive = irVar.value
+	case "IsDiskLoggingEnabled":
+		d.IsDiskLoggingEnabled = irVar.value
+	case "IsInGarage":
+		d.IsInGarage = irVar.value
+	case "IsOnTrack":
+		d.IsOnTrack = irVar.value
+	case "IsOnTrackCar":
+		d.IsOnTrackCar = irVar.value
+	case "IsReplayPlaying":
+		d.IsReplayPlaying = irVar.value
 	case "LapDeltaToBestLap_OK":
 		d.LapDeltaToBestLap_OK = irVar.value
 	case "LapDeltaToOptimalLap_OK":
 		d.LapDeltaToOptimalLap_OK = irVar.value
 	case "LapDeltaToSessionBestLap_OK":
 		d.LapDeltaToSessionBestLap_OK = irVar.value
-	case "LapDeltaToSessionOptimalLap_OK":
-		d.LapDeltaToSessionOptimalLap_OK = irVar.value
 	case "LapDeltaToSessionLastlLap_OK":
 		d.LapDeltaToSessionLastlLap_OK = irVar.value
-	case "IsOnTrackCar":
-		d.IsOnTrackCar = irVar.value
-	case "IsInGarage":
-		d.IsInGarage = irVar.value
+	case "LapDeltaToSessionOptimalLap_OK":
+		d.LapDeltaToSessionOptimalLap_OK = irVar.value
+	case "OnPitRoad":
+		d.OnPitRoad = irVar.value
 	case "ReplayPlaySlowMotion":
 		d.ReplayPlaySlowMotion = irVar.value
 	default:
@@ -380,72 +381,72 @@ func (d *TelemetryData) AddIrIntVar(irVar *irIntVar) error {
 	}
 
 	switch irVar.name {
+	case "CamCameraNumber":
+		d.CamCameraNumber = irVar.value
+	case "CamCarIdx":
+		d.CamCarIdx = irVar.value
+	case "CamGroupNumber":
+		d.CamGroupNumber = irVar.value
+	case "CarIdxClassPosition":
+		d.CarIdxClassPosition = irVar.value
+	case "CarIdxGear":
+		d.CarIdxGear = irVar.value
+	case "CarIdxLap":
+		d.CarIdxLap = irVar.value
+	case "CarIdxPosition":
+		d.CarIdxPosition = irVar.value
+	case "CarIdxTrackSurface":
+		d.CarIdxTrackSurface = irVar.value
+	case "DCDriversSoFar":
+		d.DCDriversSoFar = irVar.value
+	case "DCLapStatus":
+		d.DCLapStatus = irVar.value
+	case "DisplayUnits":
+		d.DisplayUnits = irVar.value
+	case "EnterExitReset":
+		d.EnterExitReset = irVar.value
+	case "Gear":
+		d.Gear = irVar.value
+	case "Lap":
+		d.Lap = irVar.value
+	case "LapBestLap":
+		d.LapBestLap = irVar.value
+	case "LapBestNLapLap":
+		d.LapBestNLapLap = irVar.value
+	case "LapLasNLapSeq":
+		d.LapLasNLapSeq = irVar.value
+	case "PlayerCarClassPosition":
+		d.PlayerCarClassPosition = irVar.value
+	case "PlayerCarPosition":
+		d.PlayerCarPosition = irVar.value
+	case "RaceLaps":
+		d.RaceLaps = irVar.value
+	case "RadioTransmitCarIdx":
+		d.RadioTransmitCarIdx = irVar.value
+	case "RadioTransmitFrequencyIdx":
+		d.RadioTransmitFrequencyIdx = irVar.value
+	case "RadioTransmitRadioIdx":
+		d.RadioTransmitRadioIdx = irVar.value
+	case "ReplayFrameNum":
+		d.ReplayFrameNum = irVar.value
+	case "ReplayFrameNumEnd":
+		d.ReplayFrameNumEnd = irVar.value
+	case "ReplayPlaySpeed":
+		d.ReplayPlaySpeed = irVar.value
+	case "ReplaySessionNum":
+		d.ReplaySessionNum = irVar.value
+	case "SessionLapsRemain":
+		d.SessionLapsRemain = irVar.value
 	case "SessionNum":
 		d.SessionNum = irVar.value
 	case "SessionState":
 		d.SessionState = irVar.value
 	case "SessionUniqueID":
 		d.SessionUniqueID = irVar.value
-	case "SessionLapsRemain":
-		d.SessionLapsRemain = irVar.value
-	case "RadioTransmitCarIdx":
-		d.RadioTransmitCarIdx = irVar.value
-	case "RadioTransmitRadioIdx":
-		d.RadioTransmitRadioIdx = irVar.value
-	case "RadioTransmitFrequencyIdx":
-		d.RadioTransmitFrequencyIdx = irVar.value
-	case "DisplayUnits":
-		d.DisplayUnits = irVar.value
-	case "ReplayFrameNum":
-		d.ReplayFrameNum = irVar.value
-	case "ReplayFrameNumEnd":
-		d.ReplayFrameNumEnd = irVar.value
-	case "PlayerCarPosition":
-		d.PlayerCarPosition = irVar.value
-	case "PlayerCarClassPosition":
-		d.PlayerCarClassPosition = irVar.value
-	case "CarIdxLap":
-		d.CarIdxLap = irVar.value
-	case "CarIdxTrackSurface":
-		d.CarIdxTrackSurface = irVar.value
-	case "CarIdxPosition":
-		d.CarIdxPosition = irVar.value
-	case "CarIdxClassPosition":
-		d.CarIdxClassPosition = irVar.value
-	case "CarIdxGear":
-		d.CarIdxGear = irVar.value
-	case "Gear":
-		d.Gear = irVar.value
-	case "Lap":
-		d.Lap = irVar.value
-	case "RaceLaps":
-		d.RaceLaps = irVar.value
-	case "LapBestLap":
-		d.LapBestLap = irVar.value
-	case "LapLasNLapSeq":
-		d.LapLasNLapSeq = irVar.value
-	case "LapBestNLapLap":
-		d.LapBestNLapLap = irVar.value
-	case "EnterExitReset":
-		d.EnterExitReset = irVar.value
-	case "WeatherType":
-		d.WeatherType = irVar.value
 	case "Skies":
 		d.Skies = irVar.value
-	case "DCLapStatus":
-		d.DCLapStatus = irVar.value
-	case "DCDriversSoFar":
-		d.DCDriversSoFar = irVar.value
-	case "CamCarIdx":
-		d.CamCarIdx = irVar.value
-	case "CamCameraNumber":
-		d.CamCameraNumber = irVar.value
-	case "CamGroupNumber":
-		d.CamGroupNumber = irVar.value
-	case "ReplayPlaySpeed":
-		d.ReplayPlaySpeed = irVar.value
-	case "ReplaySessionNum":
-		d.ReplaySessionNum = irVar.value
+	case "WeatherType":
+		d.WeatherType = irVar.value
 	default:
 		return fmt.Errorf("Unknown var: %+v", irVar)
 	}
@@ -459,14 +460,14 @@ func (d *TelemetryData) AddIrBitfieldVar(irVar *irBitfieldVar) error {
 	}
 
 	switch irVar.name {
-	case "SessionFlags":
-		d.SessionFlags = irVar.fields
 	case "CamCameraState":
 		d.CamCameraState = irVar.fields
 	case "EngineWarnings":
 		d.EngineWarnings = irVar.fields
 	case "PitSvFlags":
 		d.PitSvFlags = irVar.fields
+	case "SessionFlags":
+		d.SessionFlags = irVar.fields
 	default:
 		return fmt.Errorf("Unknown var: %+v", irVar)
 	}
@@ -480,44 +481,60 @@ func (d *TelemetryData) AddIrFloatVar(irVar *irFloatVar) error {
 	}
 
 	switch irVar.name {
-	case "FrameRate":
-		d.FrameRate = irVar.value
-	case "CpuUsageBG":
-		d.CpuUsageBG = irVar.value
-	case "CarIdxLapDistPct":
-		d.CarIdxLapDistPct = irVar.value
-	case "CarIdxF2Time":
-		d.CarIdxF2Time = irVar.value
-	case "CarIdxEstTime":
-		d.CarIdxEstTime = irVar.value
-	case "CarIdxSteer":
-		d.CarIdxSteer = irVar.value
-	case "CarIdxRPM":
-		d.CarIdxRPM = irVar.value
-	case "SteeringWheelAngle":
-		d.SteeringWheelAngle = irVar.value
-	case "Throttle":
-		d.Throttle = irVar.value
+	case "AirDensity":
+		d.AirDensity = irVar.value
+	case "AirPressure":
+		d.AirPressure = irVar.value
+	case "AirTemp":
+		d.AirTemp = irVar.value
+	case "Alt":
+		d.Alt = irVar.value
 	case "Brake":
 		d.Brake = irVar.value
+	case "BrakeRaw":
+		d.BrakeRaw = irVar.value
+	case "CarIdxEstTime":
+		d.CarIdxEstTime = irVar.value
+	case "CarIdxF2Time":
+		d.CarIdxF2Time = irVar.value
+	case "CarIdxLapDistPct":
+		d.CarIdxLapDistPct = irVar.value
+	case "CarIdxRPM":
+		d.CarIdxRPM = irVar.value
+	case "CarIdxSteer":
+		d.CarIdxSteer = irVar.value
+	case "CFSRrideHeight":
+		d.CFSRrideHeight = irVar.value
 	case "Clutch":
 		d.Clutch = irVar.value
-	case "RPM":
-		d.RPM = irVar.value
-	case "LapDist":
-		d.LapDist = irVar.value
-	case "LapDistPct":
-		d.LapDistPct = irVar.value
+	case "CpuUsageBG":
+		d.CpuUsageBG = irVar.value
+	case "dcABS":
+		d.DcABS = irVar.value
+	case "dcBrakeBias":
+		d.DcBrakeBias = irVar.value
+	case "dcFuelMixture":
+		d.DcFuelMixture = irVar.value
+	case "dcThrottleShape":
+		d.DcThrottleShape = irVar.value
+	case "dcTractionControl":
+		d.DcTractionControl = irVar.value
+	case "FogLevel":
+		d.FogLevel = irVar.value
+	case "FrameRate":
+		d.FrameRate = irVar.value
+	case "FuelLevel":
+		d.FuelLevel = irVar.value
+	case "FuelLevelPct":
+		d.FuelLevelPct = irVar.value
+	case "FuelPress":
+		d.FuelPress = irVar.value
 	case "LapBestLapTime":
 		d.LapBestLapTime = irVar.value
-	case "LapLastLapTime":
-		d.LapLastLapTime = irVar.value
-	case "LapCurrentLapTime":
-		d.LapCurrentLapTime = irVar.value
-	case "LapLastNLapTime":
-		d.LapLastNLapTime = irVar.value
 	case "LapBestNLapTime":
 		d.LapBestNLapTime = irVar.value
+	case "LapCurrentLapTime":
+		d.LapCurrentLapTime = irVar.value
 	case "LapDeltaToBestLap":
 		d.LapDeltaToBestLap = irVar.value
 	case "LapDeltaToBestLap_DD":
@@ -530,256 +547,240 @@ func (d *TelemetryData) AddIrFloatVar(irVar *irFloatVar) error {
 		d.LapDeltaToSessionBestLap = irVar.value
 	case "LapDeltaToSessionBestLap_DD":
 		d.LapDeltaToSessionBestLap_DD = irVar.value
-	case "LapDeltaToSessionOptimalLap":
-		d.LapDeltaToSessionOptimalLap = irVar.value
-	case "LapDeltaToSessionOptimalLap_DD":
-		d.LapDeltaToSessionOptimalLap_DD = irVar.value
 	case "LapDeltaToSessionLastlLap":
 		d.LapDeltaToSessionLastlLap = irVar.value
 	case "LapDeltaToSessionLastlLap_DD":
 		d.LapDeltaToSessionLastlLap_DD = irVar.value
-	case "LongAccel":
-		d.LongAccel = irVar.value
+	case "LapDeltaToSessionOptimalLap":
+		d.LapDeltaToSessionOptimalLap = irVar.value
+	case "LapDeltaToSessionOptimalLap_DD":
+		d.LapDeltaToSessionOptimalLap_DD = irVar.value
+	case "LapDist":
+		d.LapDist = irVar.value
+	case "LapDistPct":
+		d.LapDistPct = irVar.value
+	case "LapLastLapTime":
+		d.LapLastLapTime = irVar.value
+	case "LapLastNLapTime":
+		d.LapLastNLapTime = irVar.value
 	case "LatAccel":
 		d.LatAccel = irVar.value
-	case "VertAccel":
-		d.VertAccel = irVar.value
-	case "RollRate":
-		d.RollRate = irVar.value
-	case "PitchRate":
-		d.PitchRate = irVar.value
-	case "YawRate":
-		d.YawRate = irVar.value
-	case "Speed":
-		d.Speed = irVar.value
-	case "VelocityX":
-		d.VelocityX = irVar.value
-	case "VelocityY":
-		d.VelocityY = irVar.value
-	case "VelocityZ":
-		d.VelocityZ = irVar.value
-	case "Yaw":
-		d.Yaw = irVar.value
-	case "Pitch":
-		d.Pitch = irVar.value
-	case "Roll":
-		d.Roll = irVar.value
-	case "TrackTemp":
-		d.TrackTemp = irVar.value
-	case "AirTemp":
-		d.AirTemp = irVar.value
-	case "AirDensity":
-		d.AirDensity = irVar.value
-	case "AirPressure":
-		d.AirPressure = irVar.value
-	case "WindVel":
-		d.WindVel = irVar.value
-	case "WindDir":
-		d.WindDir = irVar.value
-	case "RelativeHumidity":
-		d.RelativeHumidity = irVar.value
-	case "FogLevel":
-		d.FogLevel = irVar.value
-	case "PitRepairLeft":
-		d.PitRepairLeft = irVar.value
-	case "PitOptRepairLeft":
-		d.PitOptRepairLeft = irVar.value
-	case "SteeringWheelTorque":
-		d.SteeringWheelTorque = irVar.value
-	case "SteeringWheelPctTorque":
-		d.SteeringWheelPctTorque = irVar.value
-	case "SteeringWheelPctTorqueSign":
-		d.SteeringWheelPctTorqueSign = irVar.value
-	case "SteeringWheelPctTorqueSignStops":
-		d.SteeringWheelPctTorqueSignStops = irVar.value
-	case "SteeringWheelPctDamper":
-		d.SteeringWheelPctDamper = irVar.value
-	case "SteeringWheelAngleMax":
-		d.SteeringWheelAngleMax = irVar.value
-	case "ShiftIndicatorPct":
-		d.ShiftIndicatorPct = irVar.value
-	case "ShiftPowerPct":
-		d.ShiftPowerPct = irVar.value
-	case "ShiftGrindRPM":
-		d.ShiftGrindRPM = irVar.value
-	case "ThrottleRaw":
-		d.ThrottleRaw = irVar.value
-	case "BrakeRaw":
-		d.BrakeRaw = irVar.value
-	case "SteeringWheelPeakForceNm":
-		d.SteeringWheelPeakForceNm = irVar.value
-	case "FuelLevel":
-		d.FuelLevel = irVar.value
-	case "FuelLevelPct":
-		d.FuelLevelPct = irVar.value
-	case "PitSvLFP":
-		d.PitSvLFP = irVar.value
-	case "PitSvRFP":
-		d.PitSvRFP = irVar.value
-	case "PitSvLRP":
-		d.PitSvLRP = irVar.value
-	case "PitSvRRP":
-		d.PitSvRRP = irVar.value
-	case "PitSvFuel":
-		d.PitSvFuel = irVar.value
-	case "dcBrakeBias":
-		d.DcBrakeBias = irVar.value
-	case "dcTractionControl":
-		d.DcTractionControl = irVar.value
-	case "dcABS":
-		d.DcABS = irVar.value
-	case "dcThrottleShape":
-		d.DcThrottleShape = irVar.value
-	case "dcFuelMixture":
-		d.DcFuelMixture = irVar.value
-	case "WaterTemp":
-		d.WaterTemp = irVar.value
-	case "WaterLevel":
-		d.WaterLevel = irVar.value
-	case "FuelPress":
-		d.FuelPress = irVar.value
-	case "OilTemp":
-		d.OilTemp = irVar.value
-	case "OilPress":
-		d.OilPress = irVar.value
-	case "OilLevel":
-		d.OilLevel = irVar.value
-	case "Voltage":
-		d.Voltage = irVar.value
-	case "ManifoldPress":
-		d.ManifoldPress = irVar.value
-	case "RRbrakeLinePress":
-		d.RRbrakeLinePress = irVar.value
-	case "RRcoldPressure":
-		d.RRcoldPressure = irVar.value
-	case "RRtempCL":
-		d.RRtempCL = irVar.value
-	case "RRtempCM":
-		d.RRtempCM = irVar.value
-	case "RRtempCR":
-		d.RRtempCR = irVar.value
-	case "RRwearL":
-		d.RRwearL = irVar.value
-	case "RRwearM":
-		d.RRwearM = irVar.value
-	case "RRwearR":
-		d.RRwearR = irVar.value
-	case "LRbrakeLinePress":
-		d.LRbrakeLinePress = irVar.value
-	case "LRcoldPressure":
-		d.LRcoldPressure = irVar.value
-	case "LRtempCL":
-		d.LRtempCL = irVar.value
-	case "LRtempCM":
-		d.LRtempCM = irVar.value
-	case "LRtempCR":
-		d.LRtempCR = irVar.value
-	case "LRwearL":
-		d.LRwearL = irVar.value
-	case "LRwearM":
-		d.LRwearM = irVar.value
-	case "LRwearR":
-		d.LRwearR = irVar.value
-	case "RFbrakeLinePress":
-		d.RFbrakeLinePress = irVar.value
-	case "RFcoldPressure":
-		d.RFcoldPressure = irVar.value
-	case "RFtempCL":
-		d.RFtempCL = irVar.value
-	case "RFtempCM":
-		d.RFtempCM = irVar.value
-	case "RFtempCR":
-		d.RFtempCR = irVar.value
-	case "RFwearL":
-		d.RFwearL = irVar.value
-	case "RFwearM":
-		d.RFwearM = irVar.value
-	case "RFwearR":
-		d.RFwearR = irVar.value
 	case "LFbrakeLinePress":
 		d.LFbrakeLinePress = irVar.value
 	case "LFcoldPressure":
 		d.LFcoldPressure = irVar.value
+	case "LFpressure":
+		d.LFpressure = irVar.value
+	case "LFrideHeight":
+		d.LFrideHeight = irVar.value
+	case "LFshockDefl":
+		d.LFshockDefl = irVar.value
+	case "LFshockVel":
+		d.LFshockVel = irVar.value
+	case "LFspeed":
+		d.LFspeed = irVar.value
 	case "LFtempCL":
 		d.LFtempCL = irVar.value
 	case "LFtempCM":
 		d.LFtempCM = irVar.value
 	case "LFtempCR":
 		d.LFtempCR = irVar.value
-	case "LFwearL":
-		d.LFwearL = irVar.value
-	case "LFwearM":
-		d.LFwearM = irVar.value
-	case "LFwearR":
-		d.LFwearR = irVar.value
-	case "RRshockDefl":
-		d.RRshockDefl = irVar.value
-	case "RRshockVel":
-		d.RRshockVel = irVar.value
-	case "LRshockDefl":
-		d.LRshockDefl = irVar.value
-	case "LRshockVel":
-		d.LRshockVel = irVar.value
-	case "RFshockDefl":
-		d.RFshockDefl = irVar.value
-	case "RFshockVel":
-		d.RFshockVel = irVar.value
-	case "LFshockDefl":
-		d.LFshockDefl = irVar.value
-	case "LFshockVel":
-		d.LFshockVel = irVar.value
-	case "Alt":
-		d.Alt = irVar.value
-	case "RRspeed":
-		d.RRspeed = irVar.value
-	case "RRpressure":
-		d.RRpressure = irVar.value
-	case "RRtempL":
-		d.RRtempL = irVar.value
-	case "RRtempM":
-		d.RRtempM = irVar.value
-	case "RRtempR":
-		d.RRtempR = irVar.value
-	case "LRspeed":
-		d.LRspeed = irVar.value
-	case "LRpressure":
-		d.LRpressure = irVar.value
-	case "LRtempL":
-		d.LRtempL = irVar.value
-	case "LRtempM":
-		d.LRtempM = irVar.value
-	case "LRtempR":
-		d.LRtempR = irVar.value
-	case "RFspeed":
-		d.RFspeed = irVar.value
-	case "RFpressure":
-		d.RFpressure = irVar.value
-	case "RFtempL":
-		d.RFtempL = irVar.value
-	case "RFtempM":
-		d.RFtempM = irVar.value
-	case "RFtempR":
-		d.RFtempR = irVar.value
-	case "LFspeed":
-		d.LFspeed = irVar.value
-	case "LFpressure":
-		d.LFpressure = irVar.value
 	case "LFtempL":
 		d.LFtempL = irVar.value
 	case "LFtempM":
 		d.LFtempM = irVar.value
 	case "LFtempR":
 		d.LFtempR = irVar.value
-	case "LFrideHeight":
-		d.LFrideHeight = irVar.value
-	case "RFrideHeight":
-		d.RFrideHeight = irVar.value
+	case "LFwearL":
+		d.LFwearL = irVar.value
+	case "LFwearM":
+		d.LFwearM = irVar.value
+	case "LFwearR":
+		d.LFwearR = irVar.value
+	case "LongAccel":
+		d.LongAccel = irVar.value
+	case "LRbrakeLinePress":
+		d.LRbrakeLinePress = irVar.value
+	case "LRcoldPressure":
+		d.LRcoldPressure = irVar.value
+	case "LRpressure":
+		d.LRpressure = irVar.value
 	case "LRrideHeight":
 		d.LRrideHeight = irVar.value
+	case "LRshockDefl":
+		d.LRshockDefl = irVar.value
+	case "LRshockVel":
+		d.LRshockVel = irVar.value
+	case "LRspeed":
+		d.LRspeed = irVar.value
+	case "LRtempCL":
+		d.LRtempCL = irVar.value
+	case "LRtempCM":
+		d.LRtempCM = irVar.value
+	case "LRtempCR":
+		d.LRtempCR = irVar.value
+	case "LRtempL":
+		d.LRtempL = irVar.value
+	case "LRtempM":
+		d.LRtempM = irVar.value
+	case "LRtempR":
+		d.LRtempR = irVar.value
+	case "LRwearL":
+		d.LRwearL = irVar.value
+	case "LRwearM":
+		d.LRwearM = irVar.value
+	case "LRwearR":
+		d.LRwearR = irVar.value
+	case "ManifoldPress":
+		d.ManifoldPress = irVar.value
+	case "OilLevel":
+		d.OilLevel = irVar.value
+	case "OilPress":
+		d.OilPress = irVar.value
+	case "OilTemp":
+		d.OilTemp = irVar.value
+	case "Pitch":
+		d.Pitch = irVar.value
+	case "PitchRate":
+		d.PitchRate = irVar.value
+	case "PitOptRepairLeft":
+		d.PitOptRepairLeft = irVar.value
+	case "PitRepairLeft":
+		d.PitRepairLeft = irVar.value
+	case "PitSvFuel":
+		d.PitSvFuel = irVar.value
+	case "PitSvLFP":
+		d.PitSvLFP = irVar.value
+	case "PitSvLRP":
+		d.PitSvLRP = irVar.value
+	case "PitSvRFP":
+		d.PitSvRFP = irVar.value
+	case "PitSvRRP":
+		d.PitSvRRP = irVar.value
+	case "RelativeHumidity":
+		d.RelativeHumidity = irVar.value
+	case "RFbrakeLinePress":
+		d.RFbrakeLinePress = irVar.value
+	case "RFcoldPressure":
+		d.RFcoldPressure = irVar.value
+	case "RFpressure":
+		d.RFpressure = irVar.value
+	case "RFrideHeight":
+		d.RFrideHeight = irVar.value
+	case "RFshockDefl":
+		d.RFshockDefl = irVar.value
+	case "RFshockVel":
+		d.RFshockVel = irVar.value
+	case "RFspeed":
+		d.RFspeed = irVar.value
+	case "RFtempCL":
+		d.RFtempCL = irVar.value
+	case "RFtempCM":
+		d.RFtempCM = irVar.value
+	case "RFtempCR":
+		d.RFtempCR = irVar.value
+	case "RFtempL":
+		d.RFtempL = irVar.value
+	case "RFtempM":
+		d.RFtempM = irVar.value
+	case "RFtempR":
+		d.RFtempR = irVar.value
+	case "RFwearL":
+		d.RFwearL = irVar.value
+	case "RFwearM":
+		d.RFwearM = irVar.value
+	case "RFwearR":
+		d.RFwearR = irVar.value
+	case "Roll":
+		d.Roll = irVar.value
+	case "RollRate":
+		d.RollRate = irVar.value
+	case "RPM":
+		d.RPM = irVar.value
+	case "RRbrakeLinePress":
+		d.RRbrakeLinePress = irVar.value
+	case "RRcoldPressure":
+		d.RRcoldPressure = irVar.value
+	case "RRpressure":
+		d.RRpressure = irVar.value
 	case "RRrideHeight":
 		d.RRrideHeight = irVar.value
-	case "CFSRrideHeight":
-		d.CFSRrideHeight = irVar.value
+	case "RRshockDefl":
+		d.RRshockDefl = irVar.value
+	case "RRshockVel":
+		d.RRshockVel = irVar.value
+	case "RRspeed":
+		d.RRspeed = irVar.value
+	case "RRtempCL":
+		d.RRtempCL = irVar.value
+	case "RRtempCM":
+		d.RRtempCM = irVar.value
+	case "RRtempCR":
+		d.RRtempCR = irVar.value
+	case "RRtempL":
+		d.RRtempL = irVar.value
+	case "RRtempM":
+		d.RRtempM = irVar.value
+	case "RRtempR":
+		d.RRtempR = irVar.value
+	case "RRwearL":
+		d.RRwearL = irVar.value
+	case "RRwearM":
+		d.RRwearM = irVar.value
+	case "RRwearR":
+		d.RRwearR = irVar.value
+	case "ShiftGrindRPM":
+		d.ShiftGrindRPM = irVar.value
+	case "ShiftIndicatorPct":
+		d.ShiftIndicatorPct = irVar.value
+	case "ShiftPowerPct":
+		d.ShiftPowerPct = irVar.value
+	case "Speed":
+		d.Speed = irVar.value
+	case "SteeringWheelAngle":
+		d.SteeringWheelAngle = irVar.value
+	case "SteeringWheelAngleMax":
+		d.SteeringWheelAngleMax = irVar.value
+	case "SteeringWheelPctDamper":
+		d.SteeringWheelPctDamper = irVar.value
+	case "SteeringWheelPctTorque":
+		d.SteeringWheelPctTorque = irVar.value
+	case "SteeringWheelPctTorqueSign":
+		d.SteeringWheelPctTorqueSign = irVar.value
+	case "SteeringWheelPctTorqueSignStops":
+		d.SteeringWheelPctTorqueSignStops = irVar.value
+	case "SteeringWheelPeakForceNm":
+		d.SteeringWheelPeakForceNm = irVar.value
+	case "SteeringWheelTorque":
+		d.SteeringWheelTorque = irVar.value
+	case "Throttle":
+		d.Throttle = irVar.value
+	case "ThrottleRaw":
+		d.ThrottleRaw = irVar.value
+	case "TrackTemp":
+		d.TrackTemp = irVar.value
+	case "VelocityX":
+		d.VelocityX = irVar.value
+	case "VelocityY":
+		d.VelocityY = irVar.value
+	case "VelocityZ":
+		d.VelocityZ = irVar.value
+	case "VertAccel":
+		d.VertAccel = irVar.value
+	case "Voltage":
+		d.Voltage = irVar.value
+	case "WaterLevel":
+		d.WaterLevel = irVar.value
+	case "WaterTemp":
+		d.WaterTemp = irVar.value
+	case "WindDir":
+		d.WindDir = irVar.value
+	case "WindVel":
+		d.WindVel = irVar.value
+	case "Yaw":
+		d.Yaw = irVar.value
+	case "YawRate":
+		d.YawRate = irVar.value
 	default:
 		return fmt.Errorf("Unknown var: %+v", irVar)
 	}
@@ -793,16 +794,16 @@ func (d *TelemetryData) AddIrDoubleVar(irVar *irDoubleVar) error {
 	}
 
 	switch irVar.name {
-	case "SessionTime":
-		d.SessionTime = irVar.value
-	case "SessionTimeRemain":
-		d.SessionTimeRemain = irVar.value
-	case "ReplaySessionTime":
-		d.ReplaySessionTime = irVar.value
 	case "Lat":
 		d.Lat = irVar.value
 	case "Lon":
 		d.Lon = irVar.value
+	case "ReplaySessionTime":
+		d.ReplaySessionTime = irVar.value
+	case "SessionTime":
+		d.SessionTime = irVar.value
+	case "SessionTimeRemain":
+		d.SessionTimeRemain = irVar.value
 	default:
 		return fmt.Errorf("Unknown var: %+v", irVar)
 	}

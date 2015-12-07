@@ -3,3 +3,4 @@ utils/assets/*
 !utils/assets/.gitkeep
 cpu.prof
 ctags
+!vendor/*

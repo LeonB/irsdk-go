@@ -6,7 +6,7 @@ import (
 	"unsafe"
 )
 
-type TelemetryReader struct {
+type BytesReader struct {
 	data        []byte
 	header      *Header
 	subHeader   *DiskSubHeader
@@ -17,20 +17,20 @@ type TelemetryReader struct {
 }
 
 // GetHeader memoizes the ReadHeader function
-func (tr *TelemetryReader) GetHeader() (*Header, error) {
+func (br *BytesReader) GetHeader() (*Header, error) {
 	var err error
 
-	if tr.header == nil {
-		tr.header, err = tr.ReadHeader()
-		return tr.header, err
+	if br.header == nil {
+		br.header, err = br.ReadHeader()
+		return br.header, err
 	}
 
-	return tr.header, err
+	return br.header, err
 }
 
 // ReadHeader tries to read the main header from the file
-func (tr *TelemetryReader) ReadHeader() (*Header, error) {
-	b, err := tr.GetLocationBytes()
+func (br *BytesReader) ReadHeader() (*Header, error) {
+	b, err := br.GetLocationBytes()
 	if err != nil {
 		return nil, err
 	}
@@ -43,17 +43,17 @@ func (tr *TelemetryReader) ReadHeader() (*Header, error) {
 	return header, nil
 }
 
-func (tr *TelemetryReader) GetLocationBytes() ([]byte, error) {
-	start, size, err := tr.GetHeaderLocation()
+func (br *BytesReader) GetLocationBytes() ([]byte, error) {
+	start, size, err := br.GetHeaderLocation()
 	if err != nil {
 		return nil, err
 	}
 
 	end := start + size
-	return tr.data[start:end], nil
+	return br.data[start:end], nil
 }
 
-func (tr *TelemetryReader) GetHeaderLocation() (int, int, error) {
+func (br *BytesReader) GetHeaderLocation() (int, int, error) {
 	startByte := 0
 
 	header := &Header{}
@@ -63,21 +63,21 @@ func (tr *TelemetryReader) GetHeaderLocation() (int, int, error) {
 }
 
 // GetHeader memoizes the ReadSubHeader function
-func (tr *TelemetryReader) GetsubHeader() (*DiskSubHeader, error) {
+func (br *BytesReader) GetsubHeader() (*DiskSubHeader, error) {
 	var err error
 
-	if tr.subHeader == nil {
-		tr.subHeader, err = tr.ReadSubHeader()
-		return tr.subHeader, err
+	if br.subHeader == nil {
+		br.subHeader, err = br.ReadSubHeader()
+		return br.subHeader, err
 	}
 
-	return tr.subHeader, err
+	return br.subHeader, err
 }
 
 // ReadSubHeader reads the second header specialiy for telemtry data saved to
 // .ibt files
-func (tr *TelemetryReader) ReadSubHeader() (*DiskSubHeader, error) {
-	b, err := tr.GetSubHeaderBytes()
+func (br *BytesReader) ReadSubHeader() (*DiskSubHeader, error) {
+	b, err := br.GetSubHeaderBytes()
 	if err != nil {
 		return nil, err
 	}
@@ -90,18 +90,18 @@ func (tr *TelemetryReader) ReadSubHeader() (*DiskSubHeader, error) {
 	return subHeader, nil
 }
 
-func (tr *TelemetryReader) GetSubHeaderBytes() ([]byte, error) {
-	start, size, err := tr.GetSubHeaderLocation()
+func (br *BytesReader) GetSubHeaderBytes() ([]byte, error) {
+	start, size, err := br.GetSubHeaderLocation()
 	if err != nil {
 		return nil, err
 	}
 
 	end := start + size
-	return tr.data[start:end], nil
+	return br.data[start:end], nil
 }
 
-func (tr *TelemetryReader) GetSubHeaderLocation() (int, int, error) {
-	header, err := tr.GetHeader()
+func (br *BytesReader) GetSubHeaderLocation() (int, int, error) {
+	header, err := br.GetHeader()
 	if err != nil {
 		return 0, 0, err
 	}
@@ -114,19 +114,19 @@ func (tr *TelemetryReader) GetSubHeaderLocation() (int, int, error) {
 }
 
 // GetSessionData memoizes the ReadSubHeader function
-func (tr *TelemetryReader) GetSessionData() (*SessionData, error) {
+func (br *BytesReader) GetSessionData() (*SessionData, error) {
 	var err error
 
-	if tr.sessionData == nil {
-		tr.sessionData, err = tr.ReadSessionData()
-		return tr.sessionData, err
+	if br.sessionData == nil {
+		br.sessionData, err = br.ReadSessionData()
+		return br.sessionData, err
 	}
 
-	return tr.sessionData, err
+	return br.sessionData, err
 }
 
-func (tr *TelemetryReader) ReadSessionData() (*SessionData, error) {
-	b, err := tr.GetSessionDataBytes()
+func (br *BytesReader) ReadSessionData() (*SessionData, error) {
+	b, err := br.GetSessionDataBytes()
 	if err != nil {
 		return nil, err
 	}
@@ -146,18 +146,18 @@ func (tr *TelemetryReader) ReadSessionData() (*SessionData, error) {
 	return NewSessionDataFromBytes(b)
 }
 
-func (tr *TelemetryReader) GetSessionDataBytes() ([]byte, error) {
-	start, size, err := tr.GetSessionDataLocation()
+func (br *BytesReader) GetSessionDataBytes() ([]byte, error) {
+	start, size, err := br.GetSessionDataLocation()
 	if err != nil {
 		return nil, err
 	}
 
 	end := start + size
-	return tr.data[start:end], nil
+	return br.data[start:end], nil
 }
 
-func (tr *TelemetryReader) GetSessionDataLocation() (int, int, error) {
-	header, err := tr.GetHeader()
+func (br *BytesReader) GetSessionDataLocation() (int, int, error) {
+	header, err := br.GetHeader()
 	if err != nil {
 		return 0, 0, err
 	}
@@ -169,21 +169,21 @@ func (tr *TelemetryReader) GetSessionDataLocation() (int, int, error) {
 }
 
 // GetVarHeaders memoizes the ReadHeader function
-func (tr *TelemetryReader) GetVarHeaders() ([]*VarHeader, error) {
+func (br *BytesReader) GetVarHeaders() ([]*VarHeader, error) {
 	var err error
 
-	if tr.varHeaders == nil {
-		tr.varHeaders, err = tr.ReadVarHeaders()
-		return tr.varHeaders, err
+	if br.varHeaders == nil {
+		br.varHeaders, err = br.ReadVarHeaders()
+		return br.varHeaders, err
 	}
 
-	return tr.varHeaders, err
+	return br.varHeaders, err
 }
 
 // ReadVarHeaders reads the second header specialiy for telemtry data saved to
 // .ibt files
-func (tr *TelemetryReader) ReadVarHeaders() ([]*VarHeader, error) {
-	header, err := tr.GetHeader()
+func (br *BytesReader) ReadVarHeaders() ([]*VarHeader, error) {
+	header, err := br.GetHeader()
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +192,7 @@ func (tr *TelemetryReader) ReadVarHeaders() ([]*VarHeader, error) {
 	varHeaders := make([]*VarHeader, numVars)
 
 	for i := 0; i < numVars; i++ {
-		vh, err := tr.ReadVarHeaderEntry(i)
+		vh, err := br.ReadVarHeaderEntry(i)
 		if err != nil {
 			return nil, err
 		}
@@ -202,8 +202,8 @@ func (tr *TelemetryReader) ReadVarHeaders() ([]*VarHeader, error) {
 	return varHeaders, nil
 }
 
-func (tr *TelemetryReader) ReadVarHeaderEntry(i int) (*VarHeader, error) {
-	b, err := tr.GetVarHeaderEntryBytes(i)
+func (br *BytesReader) ReadVarHeaderEntry(i int) (*VarHeader, error) {
+	b, err := br.GetVarHeaderEntryBytes(i)
 	if err != nil {
 		return nil, err
 	}
@@ -227,18 +227,18 @@ func (tr *TelemetryReader) ReadVarHeaderEntry(i int) (*VarHeader, error) {
 	return varHeader, nil
 }
 
-func (tr *TelemetryReader) GetVarHeaderEntryBytes(i int) ([]byte, error) {
-	start, size, err := tr.GetVarHeaderEntryLocation(i)
+func (br *BytesReader) GetVarHeaderEntryBytes(i int) ([]byte, error) {
+	start, size, err := br.GetVarHeaderEntryLocation(i)
 	if err != nil {
 		return nil, err
 	}
 
 	end := start + size
-	return tr.data[start:end], nil
+	return br.data[start:end], nil
 }
 
-func (tr *TelemetryReader) GetVarHeaderEntryLocation(i int) (int, int, error) {
-	header, err := tr.GetHeader()
+func (br *BytesReader) GetVarHeaderEntryLocation(i int) (int, int, error) {
+	header, err := br.GetHeader()
 	if err != nil {
 		return 0, 0, err
 	}
@@ -255,19 +255,19 @@ func (tr *TelemetryReader) GetVarHeaderEntryLocation(i int) (int, int, error) {
 }
 
 // GetVarBufs memoizes the ReadHeader function
-func (tr *TelemetryReader) GetAllDataPoints() ([]*TelemetryData, error) {
+func (br *BytesReader) GetAllDataPoints() ([]*TelemetryData, error) {
 	var err error
 
-	if tr.dataPoints == nil {
-		tr.dataPoints, err = tr.ReadAllDataPoints()
-		return tr.dataPoints, err
+	if br.dataPoints == nil {
+		br.dataPoints, err = br.ReadAllDataPoints()
+		return br.dataPoints, err
 	}
 
-	return tr.dataPoints, err
+	return br.dataPoints, err
 }
 
 // ReadAllDataPoints reads all datapoints (TelemetrydDat) from the file / memmap
-func (tr *TelemetryReader) ReadAllDataPoints() ([]*TelemetryData, error) {
+func (br *BytesReader) ReadAllDataPoints() ([]*TelemetryData, error) {
 	// diskSubHeader.sessionRecordCount should have the total number of
 	// telemetrydatapoints
 	//
@@ -280,7 +280,7 @@ func (tr *TelemetryReader) ReadAllDataPoints() ([]*TelemetryData, error) {
 
 	i := 0
 	for {
-		td, err := tr.ReadDataPointN(i)
+		td, err := br.ReadDataPointN(i)
 		if err != nil {
 			return nil, err
 		}
@@ -297,8 +297,8 @@ func (tr *TelemetryReader) ReadAllDataPoints() ([]*TelemetryData, error) {
 }
 
 // ReadDataPointN reads a specific datapoint (TelemetryData)
-func (tr *TelemetryReader) ReadDataPointN(i int) (*TelemetryData, error) {
-	b, err := tr.GetDataPointEntryBytes(i)
+func (br *BytesReader) ReadDataPointN(i int) (*TelemetryData, error) {
+	b, err := br.GetDataPointEntryBytes(i)
 	if err != nil {
 		return nil, err
 	}
@@ -308,7 +308,7 @@ func (tr *TelemetryReader) ReadDataPointN(i int) (*TelemetryData, error) {
 	}
 
 	// Collect varHeaders
-	varHeaders, err := tr.GetVarHeaders()
+	varHeaders, err := br.GetVarHeaders()
 	if err != nil {
 		return nil, err
 	}
@@ -327,8 +327,8 @@ func (tr *TelemetryReader) ReadDataPointN(i int) (*TelemetryData, error) {
 	return td, nil
 }
 
-func (tr *TelemetryReader) GetDataPointEntryBytes(i int) ([]byte, error) {
-	start, size, err := tr.GetLocationDataPointEntryLocation(i)
+func (br *BytesReader) GetDataPointEntryBytes(i int) ([]byte, error) {
+	start, size, err := br.GetLocationDataPointEntryLocation(i)
 	if err != nil {
 		return nil, err
 	}
@@ -336,15 +336,15 @@ func (tr *TelemetryReader) GetDataPointEntryBytes(i int) ([]byte, error) {
 	end := start + size
 
 	// check if byteslice contains enough bytes
-	if end > len(tr.data) {
+	if end > len(br.data) {
 		return nil, nil
 	}
 
-	return tr.data[start:end], nil
+	return br.data[start:end], nil
 }
 
-func (tr *TelemetryReader) GetLocationDataPointEntryLocation(i int) (int, int, error) {
-	header, err := tr.GetHeader()
+func (br *BytesReader) GetLocationDataPointEntryLocation(i int) (int, int, error) {
+	header, err := br.GetHeader()
 	if err != nil {
 		return 0, 0, err
 	}
@@ -362,8 +362,8 @@ func (tr *TelemetryReader) GetLocationDataPointEntryLocation(i int) (int, int, e
 
 // NewTelemetryReader intializes a new TelemetryReader object based on an
 // io.ReadSeeker
-func NewTelemetryReader(data []byte) *TelemetryReader {
-	return &TelemetryReader{
+func NewTelemetryReader(data []byte) *BytesReader {
+	return &BytesReader{
 		data: data,
 	}
 }

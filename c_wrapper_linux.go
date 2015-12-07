@@ -35,7 +35,7 @@ type CWrapper struct {
 	mmapFile *os.File
 	client   *rpc.Client
 
-	telemetryReader *TelemetryReader
+	telemetryReader *BytesReader
 }
 
 func (cw *CWrapper) startup() error {
@@ -61,7 +61,7 @@ func (cw *CWrapper) startup() error {
 			return err
 		}
 
-		cw.telemetryReader = &TelemetryReader{
+		cw.telemetryReader = &BytesReader{
 			data: cw.sharedMem,
 		}
 	}
