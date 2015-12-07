@@ -24,6 +24,12 @@
     "Unit": ""
   },
   {
+    "Type": 3,
+    "Name": "SessionFlags",
+    "Desc": "Session flags",
+    "Unit": "irsdk_Flags"
+  },
+  {
     "Type": 5,
     "Name": "SessionTimeRemain",
     "Desc": "Seconds left till session ends",
@@ -36,6 +42,30 @@
     "Unit": ""
   },
   {
+    "Type": 2,
+    "Name": "RadioTransmitCarIdx",
+    "Desc": "The car index of the current person speaking on the radio",
+    "Unit": ""
+  },
+  {
+    "Type": 2,
+    "Name": "RadioTransmitRadioIdx",
+    "Desc": "The radio index of the current person speaking on the radio",
+    "Unit": ""
+  },
+  {
+    "Type": 2,
+    "Name": "RadioTransmitFrequencyIdx",
+    "Desc": "The frequency index of the current person speaking on the radio",
+    "Unit": ""
+  },
+  {
+    "Type": 2,
+    "Name": "DisplayUnits",
+    "Desc": "Default units for the user interface 0 = english 1 = metric",
+    "Unit": ""
+  },
+  {
     "Type": 1,
     "Name": "DriverMarker",
     "Desc": "Driver activated flag",
@@ -45,6 +75,36 @@
     "Type": 1,
     "Name": "IsOnTrack",
     "Desc": "1=Car on track physics running with player in car",
+    "Unit": ""
+  },
+  {
+    "Type": 1,
+    "Name": "IsReplayPlaying",
+    "Desc": "0=replay not playing  1=replay playing",
+    "Unit": ""
+  },
+  {
+    "Type": 2,
+    "Name": "ReplayFrameNum",
+    "Desc": "Integer replay frame number (60 per second)",
+    "Unit": ""
+  },
+  {
+    "Type": 2,
+    "Name": "ReplayFrameNumEnd",
+    "Desc": "Integer replay frame number from end of tape",
+    "Unit": ""
+  },
+  {
+    "Type": 1,
+    "Name": "IsDiskLoggingEnabled",
+    "Desc": "0=disk based telemetry turned off  1=turned on",
+    "Unit": ""
+  },
+  {
+    "Type": 1,
+    "Name": "IsDiskLoggingActive",
+    "Desc": "0=disk based telemetry file not being written  1=being written",
     "Unit": ""
   },
   {
@@ -72,9 +132,75 @@
     "Unit": ""
   },
   {
+    "Type": 2,
+    "Name": "CarIdxLap",
+    "Desc": "Lap count by car index",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "CarIdxLapDistPct",
+    "Desc": "Percentage distance around lap by car index",
+    "Unit": "%"
+  },
+  {
+    "Type": 2,
+    "Name": "CarIdxTrackSurface",
+    "Desc": "Track surface type by car index",
+    "Unit": "irsdk_TrkLoc"
+  },
+  {
+    "Type": 1,
+    "Name": "CarIdxOnPitRoad",
+    "Desc": "On pit road between the cones by car index",
+    "Unit": ""
+  },
+  {
+    "Type": 2,
+    "Name": "CarIdxPosition",
+    "Desc": "Cars position in race by car index",
+    "Unit": ""
+  },
+  {
+    "Type": 2,
+    "Name": "CarIdxClassPosition",
+    "Desc": "Cars class position in race by car index",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "CarIdxF2Time",
+    "Desc": "Race time behind leader or fastest lap time otherwise",
+    "Unit": "s"
+  },
+  {
+    "Type": 4,
+    "Name": "CarIdxEstTime",
+    "Desc": "Estimated time to reach current location on track",
+    "Unit": "s"
+  },
+  {
     "Type": 1,
     "Name": "OnPitRoad",
     "Desc": "Is the player car on pit road between the cones",
+    "Unit": ""
+  },
+  {
+    "Type": 4,
+    "Name": "CarIdxSteer",
+    "Desc": "Steering wheel angle by car index",
+    "Unit": "rad"
+  },
+  {
+    "Type": 4,
+    "Name": "CarIdxRPM",
+    "Desc": "Engine rpm by car index",
+    "Unit": "revs/min"
+  },
+  {
+    "Type": 2,
+    "Name": "CarIdxGear",
+    "Desc": "-1=reverse  0=neutral  1..n=current gear by car index",
     "Unit": ""
   },
   {
@@ -130,6 +256,12 @@
     "Name": "LapDistPct",
     "Desc": "Percentage distance around lap",
     "Unit": "%"
+  },
+  {
+    "Type": 2,
+    "Name": "RaceLaps",
+    "Desc": "Laps completed in race",
+    "Unit": ""
   },
   {
     "Type": 2,
@@ -354,24 +486,6 @@
     "Unit": ""
   },
   {
-    "Type": 5,
-    "Name": "Lat",
-    "Desc": "Latitude in decimal degrees",
-    "Unit": "deg"
-  },
-  {
-    "Type": 5,
-    "Name": "Lon",
-    "Desc": "Longitude in decimal degrees",
-    "Unit": "deg"
-  },
-  {
-    "Type": 4,
-    "Name": "Alt",
-    "Desc": "Altitude in meters",
-    "Unit": "m"
-  },
-  {
     "Type": 4,
     "Name": "TrackTemp",
     "Desc": "Temperature of track at start/finish line",
@@ -432,6 +546,18 @@
     "Unit": "%"
   },
   {
+    "Type": 2,
+    "Name": "DCLapStatus",
+    "Desc": "Status of driver change lap requirements",
+    "Unit": ""
+  },
+  {
+    "Type": 2,
+    "Name": "DCDriversSoFar",
+    "Desc": "Number of team drivers who have run a stint",
+    "Unit": ""
+  },
+  {
     "Type": 4,
     "Name": "PitRepairLeft",
     "Desc": "Time left for mandatory pit repairs if repairs are active",
@@ -444,9 +570,39 @@
     "Unit": "s"
   },
   {
+    "Type": 2,
+    "Name": "CamCarIdx",
+    "Desc": "Active camera's focus car index",
+    "Unit": ""
+  },
+  {
+    "Type": 2,
+    "Name": "CamCameraNumber",
+    "Desc": "Active camera number",
+    "Unit": ""
+  },
+  {
+    "Type": 2,
+    "Name": "CamGroupNumber",
+    "Desc": "Active camera group number",
+    "Unit": ""
+  },
+  {
+    "Type": 3,
+    "Name": "CamCameraState",
+    "Desc": "State of camera system",
+    "Unit": "irsdk_CameraState"
+  },
+  {
     "Type": 1,
     "Name": "IsOnTrackCar",
     "Desc": "1=Car on track physics running",
+    "Unit": ""
+  },
+  {
+    "Type": 1,
+    "Name": "IsInGarage",
+    "Desc": "1=Car in garage physics running",
     "Unit": ""
   },
   {
@@ -516,6 +672,12 @@
     "Unit": "%"
   },
   {
+    "Type": 4,
+    "Name": "SteeringWheelPeakForceNm",
+    "Desc": "Peak torque mapping to direct input units for FFB",
+    "Unit": "N*m"
+  },
+  {
     "Type": 3,
     "Name": "EngineWarnings",
     "Desc": "Bitfield for warning lights",
@@ -568,6 +730,30 @@
     "Name": "PitSvFuel",
     "Desc": "Pit service fuel add amount",
     "Unit": "l"
+  },
+  {
+    "Type": 2,
+    "Name": "ReplayPlaySpeed",
+    "Desc": "Replay playback speed",
+    "Unit": ""
+  },
+  {
+    "Type": 1,
+    "Name": "ReplayPlaySlowMotion",
+    "Desc": "0=not slow motion  1=replay is in slow motion",
+    "Unit": ""
+  },
+  {
+    "Type": 5,
+    "Name": "ReplaySessionTime",
+    "Desc": "Seconds since replay session start",
+    "Unit": "s"
+  },
+  {
+    "Type": 2,
+    "Name": "ReplaySessionNum",
+    "Desc": "Replay session number",
+    "Unit": ""
   },
   {
     "Type": 4,
@@ -655,39 +841,9 @@
   },
   {
     "Type": 4,
-    "Name": "RRspeed",
-    "Desc": "RR wheel speed",
-    "Unit": "m/s"
-  },
-  {
-    "Type": 4,
-    "Name": "RRpressure",
-    "Desc": "RR tire pressure",
-    "Unit": "kPa"
-  },
-  {
-    "Type": 4,
     "Name": "RRcoldPressure",
     "Desc": "RR tire cold pressure  as set in the garage",
     "Unit": "kPa"
-  },
-  {
-    "Type": 4,
-    "Name": "RRtempL",
-    "Desc": "RR tire left surface temperature",
-    "Unit": "C"
-  },
-  {
-    "Type": 4,
-    "Name": "RRtempM",
-    "Desc": "RR tire middle surface temperature",
-    "Unit": "C"
-  },
-  {
-    "Type": 4,
-    "Name": "RRtempR",
-    "Desc": "RR tire right surface temperature",
-    "Unit": "C"
   },
   {
     "Type": 4,
@@ -733,39 +889,9 @@
   },
   {
     "Type": 4,
-    "Name": "LRspeed",
-    "Desc": "LR wheel speed",
-    "Unit": "m/s"
-  },
-  {
-    "Type": 4,
-    "Name": "LRpressure",
-    "Desc": "LR tire pressure",
-    "Unit": "kPa"
-  },
-  {
-    "Type": 4,
     "Name": "LRcoldPressure",
     "Desc": "LR tire cold pressure  as set in the garage",
     "Unit": "kPa"
-  },
-  {
-    "Type": 4,
-    "Name": "LRtempL",
-    "Desc": "LR tire left surface temperature",
-    "Unit": "C"
-  },
-  {
-    "Type": 4,
-    "Name": "LRtempM",
-    "Desc": "LR tire middle surface temperature",
-    "Unit": "C"
-  },
-  {
-    "Type": 4,
-    "Name": "LRtempR",
-    "Desc": "LR tire right surface temperature",
-    "Unit": "C"
   },
   {
     "Type": 4,
@@ -811,39 +937,9 @@
   },
   {
     "Type": 4,
-    "Name": "RFspeed",
-    "Desc": "RF wheel speed",
-    "Unit": "m/s"
-  },
-  {
-    "Type": 4,
-    "Name": "RFpressure",
-    "Desc": "RF tire pressure",
-    "Unit": "kPa"
-  },
-  {
-    "Type": 4,
     "Name": "RFcoldPressure",
     "Desc": "RF tire cold pressure  as set in the garage",
     "Unit": "kPa"
-  },
-  {
-    "Type": 4,
-    "Name": "RFtempL",
-    "Desc": "RF tire left surface temperature",
-    "Unit": "C"
-  },
-  {
-    "Type": 4,
-    "Name": "RFtempM",
-    "Desc": "RF tire middle surface temperature",
-    "Unit": "C"
-  },
-  {
-    "Type": 4,
-    "Name": "RFtempR",
-    "Desc": "RF tire right surface temperature",
-    "Unit": "C"
   },
   {
     "Type": 4,
@@ -889,39 +985,9 @@
   },
   {
     "Type": 4,
-    "Name": "LFspeed",
-    "Desc": "LF wheel speed",
-    "Unit": "m/s"
-  },
-  {
-    "Type": 4,
-    "Name": "LFpressure",
-    "Desc": "LF tire pressure",
-    "Unit": "kPa"
-  },
-  {
-    "Type": 4,
     "Name": "LFcoldPressure",
     "Desc": "LF tire cold pressure  as set in the garage",
     "Unit": "kPa"
-  },
-  {
-    "Type": 4,
-    "Name": "LFtempL",
-    "Desc": "LF tire left surface temperature",
-    "Unit": "C"
-  },
-  {
-    "Type": 4,
-    "Name": "LFtempM",
-    "Desc": "LF tire middle surface temperature",
-    "Unit": "C"
-  },
-  {
-    "Type": 4,
-    "Name": "LFtempR",
-    "Desc": "LF tire right surface temperature",
-    "Unit": "C"
   },
   {
     "Type": 4,
@@ -1006,6 +1072,144 @@
     "Name": "LFshockVel",
     "Desc": "LF shock velocity",
     "Unit": "m/s"
+  },
+  {
+    "Type": 5,
+    "Name": "Lat",
+    "Desc": "Latitude in decimal degrees",
+    "Unit": "deg"
+  },
+  {
+    "Type": 5,
+    "Name": "Lon",
+    "Desc": "Longitude in decimal degrees",
+    "Unit": "deg"
+  },
+  {
+    "Type": 4,
+    "Name": "Alt",
+    "Desc": "Altitude in meters",
+    "Unit": "m"
+  },
+  {
+    "Type": 4,
+    "Name": "RRspeed",
+    "Desc": "RR wheel speed",
+    "Unit": "m/s"
+  },
+  {
+    "Type": 4,
+    "Name": "RRpressure",
+    "Desc": "RR tire pressure",
+    "Unit": "kPa"
+  },
+  {
+    "Type": 4,
+    "Name": "RRtempL",
+    "Desc": "RR tire left surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "RRtempM",
+    "Desc": "RR tire middle surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "RRtempR",
+    "Desc": "RR tire right surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "LRspeed",
+    "Desc": "LR wheel speed",
+    "Unit": "m/s"
+  },
+  {
+    "Type": 4,
+    "Name": "LRpressure",
+    "Desc": "LR tire pressure",
+    "Unit": "kPa"
+  },
+  {
+    "Type": 4,
+    "Name": "LRtempL",
+    "Desc": "LR tire left surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "LRtempM",
+    "Desc": "LR tire middle surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "LRtempR",
+    "Desc": "LR tire right surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "RFspeed",
+    "Desc": "RF wheel speed",
+    "Unit": "m/s"
+  },
+  {
+    "Type": 4,
+    "Name": "RFpressure",
+    "Desc": "RF tire pressure",
+    "Unit": "kPa"
+  },
+  {
+    "Type": 4,
+    "Name": "RFtempL",
+    "Desc": "RF tire left surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "RFtempM",
+    "Desc": "RF tire middle surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "RFtempR",
+    "Desc": "RF tire right surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "LFspeed",
+    "Desc": "LF wheel speed",
+    "Unit": "m/s"
+  },
+  {
+    "Type": 4,
+    "Name": "LFpressure",
+    "Desc": "LF tire pressure",
+    "Unit": "kPa"
+  },
+  {
+    "Type": 4,
+    "Name": "LFtempL",
+    "Desc": "LF tire left surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "LFtempM",
+    "Desc": "LF tire middle surface temperature",
+    "Unit": "C"
+  },
+  {
+    "Type": 4,
+    "Name": "LFtempR",
+    "Desc": "LF tire right surface temperature",
+    "Unit": "C"
   },
   {
     "Type": 4,
