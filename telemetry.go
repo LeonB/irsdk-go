@@ -1,12 +1,19 @@
 package irsdk
 
-import "C"
 import (
 	"bytes"
 	"fmt"
 	"log"
 	"unsafe"
 )
+
+// Make own ctypes so I don't have to import "C"
+// I don't know if this is correct
+// Are there differences in 32/64 bit machines?
+type Ctype_char int32
+type Ctype_int int32
+type Ctype_float float32
+type Ctype_double float64
 
 type irCharVar struct {
 	name  string
@@ -891,7 +898,7 @@ func (d *TelemetryData) extractCharFromVarHeader(header *VarHeader, data []byte)
 	offset := uintptr(header.Offset)
 	varPtr := dataPtr + offset
 
-	hvar := *(*C.char)(unsafe.Pointer(varPtr))
+	hvar := *(*Ctype_char)(unsafe.Pointer(varPtr))
 
 	return &irCharVar{
 		name:  header.Name,
@@ -921,7 +928,7 @@ func (d *TelemetryData) extractIntFromVarHeader(header *VarHeader, data []byte) 
 	offset := uintptr(header.Offset)
 	varPtr := dataPtr + offset
 
-	hvar := *(*C.int)(unsafe.Pointer(varPtr))
+	hvar := *(*Ctype_int)(unsafe.Pointer(varPtr))
 
 	return &irIntVar{
 		name:  header.Name,
@@ -974,7 +981,7 @@ func (d *TelemetryData) extractFloatFromVarHeader(header *VarHeader, data []byte
 	offset := uintptr(header.Offset)
 	varPtr := dataPtr + offset
 
-	hvar := *(*C.float)(unsafe.Pointer(varPtr))
+	hvar := *(*Ctype_float)(unsafe.Pointer(varPtr))
 
 	return &irFloatVar{
 		name:  header.Name,
@@ -989,7 +996,7 @@ func (d *TelemetryData) extractDoubleFromVarHeader(header *VarHeader, data []byt
 	offset := uintptr(header.Offset)
 	varPtr := dataPtr + offset
 
-	hvar := *(*C.double)(unsafe.Pointer(varPtr))
+	hvar := *(*Ctype_double)(unsafe.Pointer(varPtr))
 
 	return &irDoubleVar{
 		name:  header.Name,
