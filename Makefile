@@ -3,7 +3,7 @@ all: build
 WINE=/opt/iracing/bin/wine --bottle default
 WINECC=i686-w64-mingw32-gcc
 GO=go
-GOWINE=CGO_ENABLED=1 GOOS=windows GOARCH=386 $(GO)
+GOWINE=CGO_ENABLED=0 GOOS=windows GOARCH=386 $(GO)
 
 build: irsdk
 

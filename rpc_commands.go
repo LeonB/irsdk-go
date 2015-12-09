@@ -1,11 +1,11 @@
 // +build windows
 
-package utils
+package irsdk
 
 import (
 	"unsafe"
 
-	syscalls "github.com/leonb/irsdk-go/utils/syscalls"
+	syscalls "github.com/leonb/irsdk-go/syscalls"
 )
 
 type RpcCommands struct{}

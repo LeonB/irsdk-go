@@ -1,6 +1,6 @@
 // +build windows
 
-package syscalls
+package irsdk
 
 /*
 // for timeBeginPeriod()
@@ -8,7 +8,6 @@ package syscalls
 // for RegisterWindowMessageA() and SendMessage()
 #pragma comment(lib, "User32")
 */
-import "C"
 import (
 	"errors"
 	"fmt"
